@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Acuse de Movimiento</title>
+  <style>
+    /* Estilos generales */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333333;
+    }
+    .main-container {
+      max-width: 600px;
+      margin: 20px auto;
+      background-color: #ffffff;
+      border: 1px solid #dddddd;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .header {
+      background-color: #1976d2;
+      color: #ffffff;
+      padding: 20px;
+      text-align: center;
+    }
+    .header img {
+      display: block;
+      margin: 0 auto 10px auto;
+      max-width: 150px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .content {
+      padding: 20px;
+    }
+    .content p {
+      line-height: 1.5;
+      margin: 15px 0;
+    }
+    .content ul {
+      margin: 15px 0;
+      padding-left: 20px;
+    }
+    .content li {
+      margin: 8px 0;
+    }
+    .footer {
+      background-color: #f4f4f4;
+      text-align: center;
+      padding: 15px;
+      font-size: 0.9em;
+      color: #777777;
+    }
+    /* Responsivo básico */
+    @media only screen and (max-width: 600px) {
+      .main-container {
+        width: 100%;
+        margin: 0 auto;
+        border: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Encabezado con color de fondo y logo -->
+    <div class="header">
+      <!-- Ajusta el atributo src a "cid:bodegappLogo" si envías la imagen como adjunto en Nodemailer -->
+      <img src="cid:bodegappLogo" alt="Bodegapp Logo" />
+      <h1>Acuse de Movimiento de {{modulo}}</h1>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="content">
+      <p>Estimado cliente,</p>
+      <p>Se ha registrado la siguiente actualización de estado en su solicitud:</p>
+      <ul>
+        <li><strong>ID de Solicitud:</strong> {{solicitudId}}</li>
+        <li><strong>Estado Anterior:</strong> {{estadoAnterior}}</li>
+        <li><strong>Estado Actual:</strong> {{estadoActual}}</li>
+        <li><strong>Fecha de Actualización:</strong> {{fechaActualizacion}}</li>
+      </ul>
+      <p>Si tiene alguna pregunta, no dude en contactarnos.</p>
+      <p>Gracias por confiar en nosotros.</p>
+    </div>
+
+    <!-- Pie de página -->
+    <div class="footer">
+      &copy; 2025 Bodegapp. Todos los derechos reservados.
+    </div>
+  </div>
+</body>
+</html>

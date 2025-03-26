@@ -1,0 +1,1 @@
+import{y as t}from"./index-BzoUKLuT.js";const e=t("UserStore",{state:()=>({massAction:""}),getters:{getMassAction:s=>s.massAction},actions:{setMassAction(s){this.massAction!==s&&(this.massAction=s,console.log(`massAction set: ${this.massAction}`))}}});export{e as u};

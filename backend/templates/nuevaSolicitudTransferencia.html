@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Nueva Solicitud de Transferencia</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      color: #333;
+    }
+    .header {
+      background-color: #f4f4f4;
+      padding: 10px;
+      text-align: center;
+    }
+    .content {
+      margin: 20px;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 0.9em;
+      color: #777;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Nueva Solicitud de {{tipoSolicitud}}</h1>
+  </div>
+  <div class="content">
+    <p>{{userName}},</p>
+    <p>Su solicitud de transferencia ha sido creada exitosamente. A continuación, se detallan los datos de la solicitud:</p>
+    <ul>
+      <li><strong>Nº Solicitud:</strong> {{consecutivo}}</li>
+      <li><strong>Fecha de Solicitud:</strong> {{fechaSolicitud}}</li>
+    </ul>
+
+    {{{ itemsTable}}}
+
+    <img src={{qrCodeImage}} alt="Código QR" width="200" height="200" />
+    <p>Recuerde que para continuar con el proceso, se generará un código QR para su solicitud.</p>
+    <p>Gracias por confiar en nosotros.</p>
+  </div>
+  <div class="footer">
+    <p>&copy; 2025 Bodegapp. Todos los derechos reservados.</p>
+  </div>
+</body>
+</html>

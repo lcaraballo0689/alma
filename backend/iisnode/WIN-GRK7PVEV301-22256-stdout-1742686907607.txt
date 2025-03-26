@@ -1,0 +1,42 @@
+{
+  user: 'JohnDoe',
+  requestId: '12345',
+  level: 'info',
+  message: 'Mensaje informativo.',
+  timestamp: '2025-03-22 18:41:49'
+}
+{
+  message: 'Advertencia importante.',
+  level: 'warn',
+  timestamp: '2025-03-22 18:41:49'
+}
+{
+  level: 'error',
+  message: '¡Error crítico! Algo salió mal',
+  stack: 'Error: Algo salió mal\n' +
+    '    at Object.<anonymous> (C:\\aplicacion\\bodegaapp\\backend\\logger.js:73:33)\n' +
+    '    at Module._compile (node:internal/modules/cjs/loader:1546:14)\n' +
+    '    at Object..js (node:internal/modules/cjs/loader:1689:10)\n' +
+    '    at Module.load (node:internal/modules/cjs/loader:1318:32)\n' +
+    '    at Function._load (node:internal/modules/cjs/loader:1128:12)\n' +
+    '    at TracingChannel.traceSync (node:diagnostics_channel:315:14)\n' +
+    '    at wrapModuleLoad (node:internal/modules/cjs/loader:218:24)\n' +
+    '    at Module.require (node:internal/modules/cjs/loader:1340:12)\n' +
+    '    at require (node:internal/modules/helpers:141:16)\n' +
+    '    at Object.<anonymous> (C:\\aplicacion\\bodegaapp\\backend\\services\\email.service.js:6:16)',
+  timestamp: '2025-03-22 18:41:49'
+}
+{
+  message: 'Error fatal de la aplicación.',
+  level: 'fatal',
+  timestamp: '2025-03-22 18:41:49'
+}
+Conexión a la base de datos establecida.
+Servidor en marcha en http://localhost:\\.\pipe\9c4af368-1d64-4b13-b458-85f251b5ac7a
+[0mGET /api/login [33m404[0m 4.257 ms - 148[0m
+{
+  message: 'Transporte SMTP configurado correctamente.',
+  level: 'info',
+  timestamp: '2025-03-22 18:41:50'
+}
+[0mGET /api/login [33m404[0m 2.676 ms - 148[0m

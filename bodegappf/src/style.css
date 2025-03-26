@@ -1,0 +1,400 @@
+.swal2-confirm.my-confirm-button {
+    background-color: #727272 !important;
+    border: none !important;
+    color: #ffffff !important;
+  }
+  
+.swal2-styled.swal2-confirm:focus {
+    box-shadow: none !important;
+}
+:deep(.selected-row) {
+    background-color: #f0f8ff !important; /* Azul muy claro, ajústalo a tu gusto */
+  }
+  .swal-popup-custom {
+    z-index: 9999 !important;
+  }
+  :root {
+  --bs-backdrop-zindex: 1050;  /* Establece un valor más alto si es necesario */
+}
+
+
+/* Clase para la tabla en tema oscuro */
+.table-dark-custom {
+  background-color: #1E1E1E; /* Fondo de la tabla, un gris muy oscuro */
+  color: #F0F0F0; /* Texto claro para buen contraste */
+  border: 1px solid #333333; /* Bordes sutiles para las celdas */
+}
+
+/* Encabezado de la tabla */
+.table-dark-custom thead {
+  background-color: #272727; /* Un fondo algo más oscuro para diferenciar el encabezado */
+  color: #F0F0F0;
+}
+
+/* Filas alternas para mayor legibilidad */
+.table-dark-custom tbody tr:nth-of-type(odd) {
+  background-color: #1E1E1E;
+}
+
+.table-dark-custom tbody tr:nth-of-type(even) {
+  background-color: #202020;
+}
+
+/* Efecto hover en las filas */
+.table-dark-custom tbody tr:hover {
+  background-color: #2C2C2C;
+}
+.card {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 15px 15px 0px 0px;
+  box-shadow: 0px 4px 10px -2px rgba(30, 30, 30, 0.5);
+  -webkit-border-radius: 15px 15px 0px 0px;
+  -moz-border-radius: 15px 15px 0px 0px;
+  -ms-border-radius: 15px 15px 0px 0px;
+  -o-border-radius: 15px 15px 0px 0px;
+}
+.card-header {
+  background-color: #ebeae8;
+  color: #444444;
+  border-bottom: 1px solid #969696;
+  box-shadow: 0px 2px 10px -2px rgba(30, 30, 30, 0.5);
+  z-index: 400;
+  height: 63px !important;
+  margin-bottom: -5px !important;
+  border-radius: 15px 15px 0px 0px !important;
+  -webkit-border-radius: 15px 15px 0px 0px !important;
+  -moz-border-radius: 15px 15px 0px 0px !important;
+  -ms-border-radius: 15px 15px 0px 0px !important;
+  -o-border-radius: 15px 15px 0px 0px !important;
+}
+.buttons-actions {
+  background-color: #faf9f5 !important;
+  border: none !important;
+  border-radius: 50px !important; /* Hace que sean completamente redondeados (pill) */
+  padding: 6px 14px !important; /* Ajuste para ser small */
+  font-size: 12px !important; /* Tamaño de fuente reducido */
+  height: 32px !important; /* Altura más pequeña */
+  line-height: 20px !important; /* Ajuste de alineación */
+  box-shadow: 0px 3px 6px rgba(30, 30, 30, 0.2), 
+              0px 1px 2px rgba(30, 30, 30, 0.1); /* Sombra para efecto 3D */
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Efecto de presión al hacer clic */
+.buttons-actions:active {
+  box-shadow: 0px 2px 5px rgba(30, 30, 30, 0.3);
+  transform: scale(0.96); /* Efecto de clic */
+}
+
+/* Hover con sutil cambio */
+.buttons-actions:hover {
+  background-color: #f3f2ef !important;
+  box-shadow: 0px 4px 8px rgba(30, 30, 30, 0.3);
+}
+
+/* Ajuste para botones en grupo */
+.buttons-actions + .buttons-actions {
+  margin-left: 6px;
+}
+
+.custom-search {
+  position: relative;
+  width: 250px;
+}
+
+.custom-search input {
+  width: 100%;
+  padding-left: 35px; /* Espacio para el icono */
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease-in-out;
+}
+
+.custom-search input:focus {
+  border-color: #007bff;
+  box-shadow: 0px 3px 6px rgba(0, 123, 255, 0.3);
+  outline: none;
+}
+
+.custom-search .search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 14px;
+}
+
+
+/* 🔥 Botón Base */
+.custom-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.15);
+  min-width: 100px;
+  height: 31px !important;
+}
+
+/* ✨ Efecto de Elevación */
+.custom-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 🔵 Botón Verde (Excel) */
+.custom-btn.excel {
+
+  background: linear-gradient(135deg, #28a745, #1c7c32); /* Gradiente inicial */
+  color: white;
+  transition: background 0.4s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* 🔥 Gradiente en Hover */
+.custom-btn.excel:hover {
+  background: linear-gradient(135deg, #8d8d8d, #000000); /* Cambio dinámico */
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.25); /* Sombras suaves */
+}
+
+
+/* 🔴 Botón Rojo (PDF) */
+.custom-btn.pdf {
+  background: linear-gradient(135deg, #dc3545, #c42837); /* Gradiente inicial */
+  color: white;
+  transition: background 0.4s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* 🔥 Gradiente en Hover */
+.custom-btn.pdf:hover {
+  background: linear-gradient(135deg, #8d8d8d, #000000); /* Cambio dinámico */
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.25); /* Sombras suaves */
+}
+
+/* 🎭 Efecto de Cambio de Icono */
+.custom-btn i {
+  margin-right: 6px;
+  font-size: 14px;
+  transition: transform 0.8s ease-in-out, opacity 1s ease-in-out;
+  display: inline-block;
+  -webkit-transition: transform 0.8s ease-in-out, opacity 3s ease-in-out;
+  -moz-transition: transform 0.8s ease-in-out, opacity 1s ease-in-out;
+  -ms-transition: transform 0.8s ease-in-out, opacity 1s ease-in-out;
+  -o-transition: transform 0.8s ease-in-out, opacity 1s ease-in-out;
+}
+
+/* 🎭 Icono se desliza horizontalmente y cambia */
+.custom-btn:hover i {
+  transform: translateX(-4px);
+  opacity: 0.8;
+  -webkit-transform: translateX(-4px);
+  -moz-transform: translateX(-4px);
+  -ms-transform: translateX(-4px);
+  -o-transform: translateX(-4px);
+}
+
+/* ✨ Texto con Efecto de Desplazamiento */
+.button-text {
+  font-size: 11px;
+  font-weight: 600;
+  transition: transform 2s ease-in-out;
+  -webkit-transition: transform 2s ease-in-out;
+  -moz-transition: transform 2s ease-in-out;
+  -ms-transition: transform 2s ease-in-out;
+  -o-transition: transform 2s ease-in-out;
+}
+
+/* 🚀 Desplazamiento del Texto */
+.custom-btn:hover .button-text {
+  transform: translateX(3px);
+}
+
+/* 🔍 Buscador con Diseño Mejorado */
+.search-container {
+  display: flex;
+  align-items: center;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 5px 12px;
+  box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease-in-out;
+  width: 220px;
+}
+
+/* 🎭 Suavizado en Hover */
+.search-container:hover {
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* 🔍 Ícono con Movimiento */
+.search-container i {
+  font-size: 14px;
+  color: #888;
+  transition: transform 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+/* ✍ Input de búsqueda */
+.search-container input {
+  border: none;
+  background: transparent;
+  outline: none;
+  padding-left: 8px;
+  font-size: 12px;
+  color: #333;
+  flex-grow: 1;
+}
+
+/* 💡 Cambio de color y efecto del ícono */
+.search-container:hover i {
+  color: black;
+  transform: scale(1.1);
+}
+
+
+:deep(th) {
+  background-color: #d1a14e !important;
+  color: #444444;
+  border-bottom: 2px solid #969696;
+  box-shadow: 0px 4px 6px -2px rgba(30, 30, 30, 0.5);
+  z-index: 100;
+}
+
+
+
+/* Estilos generales del select */
+.custom-select {
+  position: relative;
+  width: 250px;
+  height: 31px;
+  display: flex;
+  align-items: center;
+}
+
+/* Select */
+.custom-select select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  height: 31px;
+  padding: 5px 30px 5px 30px;
+  border-radius: 50px;
+  border: 1px solid #ddd;
+  background-color: white;
+  font-size: 12px;
+  color: #333;
+  outline: none;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+/* Cambia el cursor cuando el select está deshabilitado */
+.custom-select select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Cambia el color del select al pasar el mouse */
+.custom-select select:hover,
+.custom-select select:focus {
+  border-color: #bbb;
+  box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Ícono de filtro a la izquierda */
+.custom-select::before {
+  content: "\F3E0";
+  font-family: "Bootstrap-icons";
+  position: absolute;
+  left: 10px;
+  font-size: 12px;
+  color: #555;
+}
+
+/* Flecha desplegable a la derecha */
+.custom-select::after {
+  content: "▾";
+  position: absolute;
+  right: 10px;
+  font-size: 12px;
+  color: #555;
+}
+
+/* 🔹 Personaliza el menú desplegable */
+.custom-select select option {
+  font-size: 12px;
+  padding: 8px;
+  background-color: white;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+}
+
+
+/* 🔹 Cambia el color de la opción seleccionada */
+.custom-select select option:checked {
+  background-color: #f8ebda;
+  font-weight: bold;
+}
+/* Personalizar opciones del select */
+.custom-select select option:hover {
+  background-color: #e0e0e0 !important; /* Gris claro */
+  color: #333 !important;
+}
+
+.card-body {
+  height: calc(100vh - 280px) !important;
+  overflow-y: auto; /* Permite el desplazamiento */
+  position: relative; /* Necesario para que el sticky funcione */
+  background-color: white !important;
+}
+
+/* Elemento sticky dentro de .card-body */
+.card-body .sticky-content {
+  position: sticky;
+  top: 0; /* Se fija en la parte superior */
+  background: white; /* Fondo para que no se superponga al scrollear */
+  z-index: 10; /* Para asegurar que quede por encima de otros elementos */
+  padding: 10px; /* Espaciado opcional */
+  border-bottom: 1px solid #ddd; /* Opcional para diferenciar el sticky */
+}
+
+.custom-breadcrumb {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: none; /* Sin fondo */
+  margin: 0;
+  list-style: none;
+}
+
+.custom-breadcrumb .breadcrumb-item {
+  font-size: 14px;
+  color: #333; /* Color oscuro, ajustable */
+  font-weight: 500;
+}
+
+.custom-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
+  content: "›"; /* Separador personalizado */
+  color: #888;
+  padding: 0 8px;
+}
+
+.custom-breadcrumb .breadcrumb-item.active {
+  font-weight: bold;
+  color: #000;
+}
