@@ -20,7 +20,7 @@ const router = Router();
  * @description Obtiene la lista de todos los usuarios.
  * @returns {Object[]} Lista de usuarios en formato JSON.
  */
-router.get('/', authMiddleware, getAllUsers);
+router.get('/', getAllUsers);
 
 /**
  * @route GET /usuarios/:id
@@ -36,7 +36,7 @@ router.get('/:id', authMiddleware, getUserById);
  * @param {Object} req.body - Datos del nuevo usuario.
  * @returns {Object} Objeto JSON con el usuario creado o mensaje de error.
  */
-router.post('/', authMiddleware, createUser);
+router.post('/', createUser);
 
 /**
  * @route PUT /usuarios/:id
