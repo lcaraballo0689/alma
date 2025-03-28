@@ -193,7 +193,7 @@ export default {
       if (this.localMassAction === "prestamo-masivo") {
         return "/api/excel/cargar";
       } else if (this.localMassAction === "devolucion-masiva") {
-        return "/api/excel/cargar";
+        return "/api/devoluciones/cargueMasivo";
       }
       return "";
     },
@@ -205,12 +205,12 @@ export default {
       }
       return "";
     },
-    // Encabezados esperados: para "prestamo-masivo" se espera ["referencia2", "direccion_entrega", "urgencia"]
+    //TODO: Encabezados esperados: para "prestamo-masivo" se espera ["referencia2", "direccion_entrega", "urgencia"]
     expectedHeaders() {
       if (this.localMassAction === "prestamo-masivo") {
         return ["referencia2", "direccion_entrega", "urgencia"];
       } else if (this.localMassAction === "devolucion-masiva") {
-        return ["prestamoId", "nuevo_estado"];
+        return ["referencia2"];
       }
       return [];
     },
@@ -218,6 +218,13 @@ export default {
     emailCliente() {
       const authStore = useAuthStore();
       return authStore.user?.email || "";
+    },
+    idUsuario() {
+      const authStore = useAuthStore();
+      const result = authStore.user.id || ""
+      console.log("<<<<<asalsdkaslaskdldkasld>>>>>>>>: ",result );
+      
+      return result;
     },
     // Computed para el preview de registros (lazy load)
     paginatedFileRecords() {
@@ -277,6 +284,7 @@ export default {
         const link = document.createElement("a");
         link.href = downloadUrl;
         // Intentar extraer el nombre de archivo de los headers, o usar un valor por defecto
+        //fixme: se debe corregir el nombre del archivo en funcion del tipo de plantilla si devolucion o prestamo masivo 
         let fileName = "plantilla.xlsx";
         if (response.headers["content-disposition"]) {
           const fileNameMatch =
@@ -405,7 +413,7 @@ export default {
 
       const formData = new FormData();
       formData.append("file", this.selectedFile);
-      formData.append("usuarioEmail", this.emailCliente);
+      formData.append("usuarioId", this.idUsuario);
       formData.append("observacion", this.observacion);
 
       try {

@@ -275,7 +275,7 @@ async function createDevolucion(req, res) {
         to: destinatario,
         subject: `Acuse de Movimiento - Solicitud ${spResponse.SolicitudId} - ESTADO: ${spResponse.NuevoEstado}`,
         template: "acuseMovimiento",
-        data: emailData,
+        data: emailData, 
       });
 
       logger.info(

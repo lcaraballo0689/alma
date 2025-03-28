@@ -13,10 +13,10 @@ const {
   getOrCreateConsecutivos,
   incrementarUltimoPrestamo,
 } = require("../services/consecutivoService");
-const {   createPrestamoCabecera,
+const { createPrestamoCabecera,
   createPrestamoDetalle } = require("../services/prestamoService");
 // Importamos el controlador de correos (servicio)
-const { sendCorreo } = require("../controllers/correoController");
+const { sendCorreo } = require("./correoController");
 
 /**
  * Carga masiva de préstamos desde un archivo Excel.
@@ -63,22 +63,22 @@ async function cargarPrestamosExcel(req, res) {
 
     // Obtener el usuario y consecutivos una sola vez
     //fixme: se debe obtener el usuario ya que esta estatico 
-    const user = { id: 3, clienteId: 2, email: 'lecmbogota@gmail.com', name:'luis Caraballo'}
-    console.log("esto es user",user);
-    
+    const user = { id: 3, clienteId: 2, email: 'lecmbogota@gmail.com', name: 'luis Caraballo' }
+    console.log("esto es user", user);
+
     console.log("aqui 1");
-    
+
     const consecutivos = await getOrCreateConsecutivos(transaction, user.clienteId);
     console.log("aqui 2");
-    
+
     const createdPrestamos = [];
     const errores = []; // Acumula errores parciales
-    
+
     // Recorrer cada fila del Excel
     for (const [index, row] of data.entries()) {
       // Para el número de fila se suma 2 (1 para encabezado y 1 por índice 0)
       const filaNumero = index + 2;
-      
+
       // Validar datos obligatorios
       if (!row.referencia2 || !row.direccion_entrega) {
         errores.push({
@@ -88,7 +88,7 @@ async function cargarPrestamosExcel(req, res) {
         });
         continue;
       }
-      
+
       console.log("aqui 3");
       // Buscar custodia por referencia2
       const custodia = await getCustodiaByReferencia2(transaction, row.referencia2);
@@ -113,7 +113,7 @@ async function cargarPrestamosExcel(req, res) {
       }
 
       // Crear préstamo y actualizar consecutivo
-      const newPrestamoId = await  createPrestamoDetalle(transaction, {
+      const newPrestamoId = await createDevolucionDetalle(transaction, {
         clienteId: custodia.clienteId,
         usuarioId: user.id,
         custodiaId: custodia.id,
@@ -129,8 +129,8 @@ async function cargarPrestamosExcel(req, res) {
 
       console.log('Valor de referencia1:', newPrestamoId);
 
-      
-      
+
+
 
       // Marcar custodia como SOLICITADO
       await marcarCustodiaSolicitada(transaction, custodia.id);
@@ -362,6 +362,156 @@ El equipo de BODEGAPP`,
   }
 }
 
+async function cargarDevolucionesExcel(req, res) {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No se adjuntó ningún archivo.' });
+  }
+
+  //fixme: falta el incluir usuarioId, email, clienteId, nombre del usuario 
+  const { usuarioEmail, observacion } = req.body;
+  if (!usuarioEmail) {
+    return res.status(400).json({ error: 'Se debe proporcionar el usuarioEmail.' });
+  }
+
+  let transaction;
+  try {
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+
+    // Validar encabezados
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    console.log("ROWS => ", rows);
+
+    const headers = rows[0];
+    const expectedHeaders = ["referencia2"];
+    if (!headers || headers.length < expectedHeaders.length) {
+      return res.status(400).json({ error: 'El archivo Excel no tiene los encabezados correctos.' });
+    }
+    for (let i = 0; i < expectedHeaders.length; i++) {
+      if (headers[i].trim().toLowerCase() !== expectedHeaders[i].toLowerCase()) {
+        return res.status(400).json({ error: 'Los encabezados del archivo Excel no coinciden con los requeridos.' });
+      }
+    }
+
+    // Convertir la hoja a un array de objetos (omitiendo la primera fila)
+    const data = XLSX.utils.sheet_to_json(sheet);
+
+    const pool = await connectDB();
+    transaction = new sql.Transaction(pool);
+    await transaction.begin();
+
+    // Obtener el usuario y consecutivos una sola vez
+    //fixme: se debe obtener el usuario ya que esta estatico 
+    const user = { id: 3, clienteId: 2, email: 'lecmbogota@gmail.com', name: 'luis Caraballo' }
+    console.log("esto es user", user);
+
+    console.log("aqui 1");
+    const consecutivos = await incrementarUltimaDevolucion(transaction, user.clienteId);
+    console.log("aqui 2");
+
+
+    const createdPrestamos = [];
+    const errores = []; // Acumula errores parciales
+
+    // Recorrer cada fila del Excel
+    for (const [index, row] of data.entries()) {
+      // Para el número de fila se suma 2 (1 para encabezado y 1 por índice 0)
+      const filaNumero = index + 2;
+
+      // Validar datos obligatorios
+      if (!row.referencia2) {
+        errores.push({
+          fila: filaNumero,
+          referencia2: row.referencia2 || '',
+          error: `La fila ${filaNumero} está incompleta (faltan referencia2).`
+        });
+        continue;
+      }
+
+      console.log("aqui 3");
+      // Buscar custodia por referencia2
+      const custodia = await getCustodiaByReferencia2(transaction, row.referencia2);
+      console.log(">>>>>CUSTODIA<<<<:  ", custodia);
+
+      if (!custodia) {
+        errores.push({
+          fila: filaNumero,
+          referencia2: row.referencia2,
+          error: `El Item con Referencia2 '${row.referencia2} No Disponible.'.`
+        });
+        continue;
+      }
+      console.log("aqui 4");
+
+      // Verificar estado de la custodia
+      if (custodia.estado !== 'ENTREGADO') {
+        errores.push({
+          fila: filaNumero,
+          referencia2: row.referencia2,
+          error: `La custodia con referencia2 '${row.referencia2}' no está disponible (estado: '${custodia.estado}').`
+        });
+        continue;
+      }
+
+
+      // Incrementar consecutivo y actualizar objeto
+      await incrementarUltimaDevolucion(transaction, user.clienteId);
+      consecutivos.ultimaDevolucion += 1;
+
+      // Crear devolucion y actualizar consecutivo
+      const newDevolucionId = await createPrestamoDetalle(transaction, {
+        clienteId: custodia.clienteId,
+        usuarioId: user.id,
+        custodiaId: custodia.id,
+        consecutivo: consecutivos.ultimaDevolucion + 1,
+        fechaSolicitud: new Date(),
+        referencia2: String(custodia.referencia2 || ''),
+        direccion_entrega: String(row.direccion_entrega || ''),
+        observaciones: String(observacion || '')
+      });
+
+      console.log('Valor de referencia1:', newDevolucionId);
+
+      createdDevoluciones.push(
+        newDevolucionId
+      );
+    }
+
+    // Si ninguno de los registros fue creado, se hace rollback y se retorna error total
+    if (createdDevoluciones.length === 0) {
+      await transaction.rollback();
+      return res.status(400).json({
+        error: "No se creó ningúna Devolucion, revise todas las filas.",
+        errores: errores
+      });
+    }
+
+    // Confirmar la transacción
+    await transaction.commit();
+
+    //todo: aqui va lo del envio del correo
+
+    // Retornar respuesta final
+    const responseMessage = errores.length > 0
+      ? "Carga masiva parcial completada."
+      : "Carga masiva realizada exitosamente.";
+    return res.status(200).json({
+      message: responseMessage,
+      creados: createdDevoluciones,
+      errores: errores
+    });
+  } catch (error) {
+    console.error("Error en cargarDevolucionesExcel:", error);
+    try {
+      if (transaction) await transaction.rollback();
+    } catch (rollbackError) {
+      console.error("Error al hacer rollback:", rollbackError);
+    }
+    return res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+}
+
 
 /**
  * Descarga plantilla de Excel para carga masiva.
@@ -402,4 +552,5 @@ function descargarPlantillaExcel(req, res) {
 module.exports = {
   cargarPrestamosExcel,
   descargarPlantillaExcel,
+  cargarDevolucionesExcel
 };

@@ -56,6 +56,9 @@ async function createDevolucionCabecera(transaction, data) {
  * @param {Object} data - Datos del detalle de la devolución
  */
 async function createDevolucionDetalle(transaction, data) {
+
+  console.log("createDevolucionDetalle + excel: ",data);
+  
   console.log("HORA USANDO dayjs().tz('America/Bogota').toDate() ", dayjs.tz.setDefault("America/Bogota"));
   console.log(fechaBogota.format('YYYY-MM-DD HH:mm:ss'));
   const request = transaction.request();

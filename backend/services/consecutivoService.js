@@ -44,15 +44,37 @@ async function incrementarUltimoPrestamo(transaction, clienteId) {
  * @param {import('mssql').Transaction} transaction
  * @param {number} clienteId
  */
+// services/consecutivoService.js
 async function incrementarUltimaDevolucion(transaction, clienteId) {
+  console.log("inicio de incrementarUltimaDevolucion:", { transaction, clienteId });
+
   const request = transaction.request();
-  request.input('clienteId', sql.Int, clienteId);
+  request.input("clienteId", sql.Int, clienteId);
+
+  // Primero incrementas el valor
   await request.query(`
     UPDATE dbo.Consecutivos
     SET ultimaDevolucion = ultimaDevolucion + 1
     WHERE clienteId = @clienteId
   `);
+
+  // Luego lo consultas
+  const newResult = await request.query(`
+    SELECT ultimaDevolucion
+    FROM dbo.Consecutivos
+    WHERE clienteId = @clienteId
+  `);
+
+  // Retornas el registro
+  if (newResult.recordset.length > 0) {
+    return newResult.recordset[0]; // { ultimaDevolucion: <nuevo valor> }
+  } else {
+    // Puedes retornar null o lanzar un error si no existe
+    return null;
+  }
 }
+
+
 module.exports = {
   getOrCreateConsecutivos,
   incrementarUltimoPrestamo,

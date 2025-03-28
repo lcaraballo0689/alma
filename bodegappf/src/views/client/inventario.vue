@@ -67,7 +67,7 @@
 
             <!-- Botón Carga Masiva -->
             <button
-              v-if="currentTab !== 'inventario'"
+              v-if="currentTab !== 'inventario' &&  selectedItems.length === 0"
               class="btn btn-sm buttons-actions d-flex align-items-center"
               style="
                 width: 160px !important;

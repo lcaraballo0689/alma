@@ -41,7 +41,7 @@ console.log("referencia2referencia2referencia2", referencia2);
   request.input('referencia2', sql.NVarChar, String(referencia2 || ''));
   const result = await request.query(`
     SELECT * FROM dbo.Custodia
-    WHERE referencia1 = @referencia2 AND estado = 'DISPONIBLE'
+    WHERE referencia2 = @referencia2 
   `);
   if (!result.recordset || result.recordset.length === 0) {
     return null;
