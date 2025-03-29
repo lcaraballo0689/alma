@@ -252,8 +252,9 @@ const movimientosreg = defineAsyncComponent(() => import("../admin/Transferencia
 const Inventario = defineAsyncComponent(() => import("./inventario.vue"));
 const prestamos = defineAsyncComponent(() => import("./prestamos.vue"));
 const devoluciones = defineAsyncComponent(() => import("./devoluciones.vue"));
-const Transferencia = defineAsyncComponent(() => import("./transferencias.vue")
-);
+const Transferencia = defineAsyncComponent(() => import("./transferencias.vue"));
+const mdevolucion = defineAsyncComponent(() => import("./mdevolucion.vue"));
+const mprestamo = defineAsyncComponent(() => import("./mprestamo.vue"));
 const MassUpload = defineAsyncComponent(() => import("./MassUpload.vue"));
 const confirmarRecepcion = defineAsyncComponent(() =>
   import("./confirmarRecepcion.vue")
@@ -292,9 +293,19 @@ export default {
       movimientosTabs: [
         {
           name: "Transferencia",
-          label: "Transferencia",
+          label: "Solicitud de Transferencia",
           icon: "bi bi-truck-front-fill",
         },
+        // {
+        //   name: "mprestamo",
+        //   label: "trasados de Prestamo",
+        //   icon: "bi bi-truck-front-fill",
+        // },
+        // {
+        //   name: "mdevolucion",
+        //   label: "Traslados de Devolucion",
+        //   icon: "bi bi-truck-front-fill",
+        // },
          {
           name: "Desincorporacion",
           label: "Desincorporacion",
@@ -367,7 +378,10 @@ export default {
         Desincorporacion: Desincorporacion,
         confirmarRecepcion: confirmarRecepcion,
         MassUpload: MassUpload,
-        movimientosreg: movimientosreg
+        movimientosreg: movimientosreg,
+        mdevolucion: mdevolucion,
+        mprestamo: mprestamo
+
       };
       return componentMap[this.currentTab] || fallbackComponent;
     },

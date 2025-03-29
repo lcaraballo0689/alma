@@ -36,7 +36,6 @@
                 <th>ID</th>
                 <th>Estado</th>
                 <th v-if="activeTab !== 'entregado'">Recibido por</th>
-                <th>Observaciones</th>
                 <th>Direccion de Entrega</th>
                 <th>Fecha Solicitud</th>
                 <th v-if="activeTab !== 'entregado'">Fecha Confirmacion</th>
@@ -47,12 +46,11 @@
               <tr v-for="(t, index) in filteredTransferencias" :key="t.id || index" class="text-center">
                 <td>{{ t.id }}</td>
 
-                <td>{{ t.estado === 'completado'? 'Confirmado': '' }}</td>
-                <td v-if="activeTab !== 'entregado'">{{ t.usuarioVerifica === 'completado'? 'Confirmado': '' }}</td>
-                <td>{{ t.observaciones }}</td>
+                <td>{{ t.estado}}</td>
+                <td v-if="activeTab !== 'entregado'">{{ t }}</td>
                 <td>{{ t.direccion }}</td>
-                <td>{{ formatDate(t.fechaSolicitud) }}</td>
-                <td>{{ formatDate(t.fechaVerificacion) }}</td>
+                <td>{{ formatDate(t.fechaSolicitud) }} {{ formatTime(t.fechaSolicitud) }}</td>
+                <td>{{ formatDate(t.fechaVerificacion) }} {{ formatTime(t.fechaVerificacion) }}</td>
                 <td v-if="activeTab === 'entregado'">
                   <button class="btn btn-sm btn-outline-success" @click="confirmarEntrega(t.id)">Confirmar</button>
                 </td>
@@ -78,6 +76,7 @@ import apiClient from "@/services/api";
 import dayjs from "dayjs";
 import "dayjs/locale/es";
 import Swal from "sweetalert2";
+import { DateTime } from "luxon";
 
 export default {
   name: "TransferenciasPorConfirmar",
@@ -99,9 +98,9 @@ export default {
         const estado = (item.estado || "").toLowerCase();
         const search = this.searchTerm.toLowerCase();
         if (this.activeTab === "entregado") {
-          return estado === "entregado por transportador" && (item.observaciones || "").toLowerCase().includes(search);
+          return item.estado === "entregado por transportador" && (item.observaciones || "").toLowerCase().includes(search);
         } else if (this.activeTab === "completado") {
-          return estado === "completado" && (item.observaciones || "").toLowerCase().includes(search);
+          return  item.estado === "entrega Confirmada";
         }
         return true;
       });
@@ -125,6 +124,8 @@ export default {
         };
         console.log("body: ", body);
         const response = await apiClient.post("/api/transferencias/qr/scan", body);
+        console.log('qr', response);
+        
         await this.obtenerTransferencias();
         this.cerrarModal();
         Swal.fire({
@@ -145,6 +146,8 @@ export default {
         const clienteId = 2; // Ajusta según corresponda
         const response = await apiClient.post("/api/transferencias/consultar", { clienteId });
         this.transferencias = response.data.data;
+        console.log("tranferencias: ", this.transferencias);
+        
       } catch (error) {
         console.error("Error al obtener transferencias:", error);
       }
@@ -167,8 +170,17 @@ export default {
       this.detalle = {};
       this.solicitudIdActual = null;
     },
-    formatDate(date) {
-      return date ? dayjs(date).locale("es").format("DD/MM/YYYY HH:mm") : "N/A";
+    // Retorna la fecha formateada "dd/MM/yyyy" en la zona de Bogotá
+    formatDate(dateString) {
+      if (!dateString) return "N/A";
+      const dt = DateTime.fromISO(dateString, { zone: "utc" });
+      return dt.setLocale("es").toFormat("dd/MM/yyyy");
+    },
+    // Retorna la hora formateada "HH:mm" en la zona de Bogotá
+    formatTime(dateString) {
+      if (!dateString) return "";
+      const dt = DateTime.fromISO(dateString, { zone: "utc" });
+      return dt.setLocale("es").toFormat("hh:mm a");
     },
     seleccionarTransferencia(item) {
       // Método para abrir el modal de confirmación para el ítem seleccionado

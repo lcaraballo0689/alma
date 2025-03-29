@@ -126,8 +126,8 @@ async function enviarNotificacionPorCanal(pool, usuarioId, subject, message) {
 
 // Controlador actualizado para crear una cabecera y múltiples detalles de préstamo
 async function createDevolucion(req, res) {
-  const logoPath = path.join(__dirname, "../assets/bodegapp-logo.png");
-  const { custodiaIds, usuarioId, observaciones } = req.body;
+  const logoPath = path.join(__dirname, "../assets/siglo.png");
+  const { custodiaIds, usuarioId, observaciones, fecha_recoleccion, direccion_recoleccion } = req.body;
 
   const errores = [];
   if (!custodiaIds?.length)
@@ -175,8 +175,11 @@ async function createDevolucion(req, res) {
       fechaSolicitud: new Date(),
       entregadoPor: "",
       observaciones,
+      fecha_recoleccion: fecha_recoleccion
+
     }
     console.log(`output->paywer`,paywer)
+    // esto inserta en la tabla devolucion
     const devolucionId = await createDevolucionCabecera(transaction, paywer);
 
     for (const custodia of custodias) {
@@ -194,6 +197,7 @@ async function createDevolucion(req, res) {
         observaciones
       }
       console.log(`output->payload>>>>>>>>>`,payload)
+      //esto inserta en la tabla devoluciones
       await createDevolucionDetalle(transaction, payload );
 
       await marcarCustodiaEnDevolucion(transaction, custodia.id);
@@ -211,6 +215,9 @@ async function createDevolucion(req, res) {
       clienteId: user.clienteId,
       usuarioId: usuarioId,
       modulo: "Devolucion",
+      observaciones: observaciones,
+      fecha_recoleccion: fecha_recoleccion,
+      direccion_recoleccion: direccion_recoleccion,
       items: custodias.map((custodia) => ({
         referencia2: custodia.referencia2,
       })),

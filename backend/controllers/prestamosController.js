@@ -246,6 +246,8 @@ async function createPrestamos(req, res) {
       clienteId: user.clienteId,
       usuarioId: usuarioId,
       modulo: "Prestamo",
+      observaciones: observaciones,
+      direccion_entrega: direccion_entrega,
       items: custodias.map((custodia) => ({
         referencia2: custodia.referencia2,
       })),

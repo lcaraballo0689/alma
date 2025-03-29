@@ -43,7 +43,7 @@ async function obtenerNombreUsuario(pool, usuarioId) {
     `);
   return result.recordset.length > 0
     ? result.recordset[0].nombre
-    :  "Cliente";
+    : "Cliente";
 }
 /**
  * Función auxiliar para generar una tabla HTML a partir del arreglo de ítems.
@@ -194,7 +194,7 @@ async function registrarAuditoria(
 }
 
 async function procesarTransferenciaInterna(payload, pool, transaction) {
-  const { clienteId, usuarioId, items, observaciones = "", modulo } = payload;
+  const { clienteId, usuarioId, items, observaciones, modulo, direccion_entrega, fecha_recoleccion, direccion_recoleccion } = payload;
 
   if (!clienteId || !usuarioId || !Array.isArray(items) || items.length === 0) {
     throw new Error("Datos incompletos para la transferencia.");
@@ -212,6 +212,8 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
     .input("clienteId", sql.Int, clienteId)
     .query(`UPDATE Consecutivos SET ultimoTransporte = @nuevoTransporte WHERE clienteId = @clienteId`);
 
+  const direccion = direccion_entrega || direccion_recoleccion || null;
+
   // Insertar solicitud
   const insertSol = await new sql.Request(transaction)
     .input("clienteId", sql.Int, clienteId)
@@ -219,11 +221,14 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
     .input("estado", sql.VarChar, "solicitud creada")
     .input("observaciones", sql.VarChar, observaciones)
     .input("modulo", sql.VarChar, modulo)
+    .input("direccion", sql.VarChar, direccion) // Se asigna la dirección definida
     .query(`
-      INSERT INTO SolicitudTransporte (clienteId, modulo, consecutivo, estado, fechaSolicitud, observaciones, createdAt, updatedAt)
-      VALUES (@clienteId, @modulo, @consecutivo, @estado, GETDATE(), @observaciones, GETDATE(), GETDATE());
-      SELECT SCOPE_IDENTITY() AS solicitudId;
-    `);
+  INSERT INTO SolicitudTransporte 
+    (clienteId, modulo, consecutivo, estado, fechaSolicitud, observaciones, createdAt, updatedAt, direccion)
+  VALUES 
+    (@clienteId, @modulo, @consecutivo, @estado, GETDATE(), @observaciones, GETDATE(), GETDATE(), @direccion);
+  SELECT SCOPE_IDENTITY() AS solicitudId;
+`);
 
   const solicitudId = insertSol.recordset[0].solicitudId;
 
@@ -290,13 +295,13 @@ function generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items) {
     // ====== WATERMARK ======
     doc.save();
     doc.fontSize(60)
-       .fillColor("grey")
-       .opacity(0.2)
-       .rotate(-45, { origin: [doc.page.width / 2, doc.page.height / 2] })
-       .text("Documento Certificado", doc.page.width / 4, doc.page.height / 2, {
-         align: "center",
-         width: doc.page.width / 2,
-       });
+      .fillColor("grey")
+      .opacity(0.2)
+      .rotate(-45, { origin: [doc.page.width / 2, doc.page.height / 2] })
+      .text("Documento Certificado", doc.page.width / 4, doc.page.height / 2, {
+        align: "center",
+        width: doc.page.width / 2,
+      });
     doc.restore();
     doc.opacity(1);
 
@@ -316,7 +321,7 @@ function generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items) {
     // ====== LISTADO DE ÍTEMS ======
     items.forEach((item, idx) => {
       doc.fontSize(12)
-         .text(`${idx + 1}. Referencia: ${item.referencia2}, Descripción: ${item.descripcion || "N/A"}, Cantidad: ${item.cantidad || 1}`);
+        .text(`${idx + 1}. Referencia: ${item.referencia2}, Descripción: ${item.descripcion || "N/A"}, Cantidad: ${item.cantidad || 1}`);
       doc.moveDown(0.2);
     });
 
@@ -327,31 +332,31 @@ function generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items) {
     const signatureY = doc.y;
     // Línea para la firma del Responsable
     doc.moveTo(doc.options.margins.left, signatureY)
-       .lineTo(doc.options.margins.left + signatureWidth, signatureY)
-       .strokeColor("#333")
-       .stroke();
+      .lineTo(doc.options.margins.left + signatureWidth, signatureY)
+      .strokeColor("#333")
+      .stroke();
     // Línea para la firma del Cliente
     doc.moveTo(doc.options.margins.left + pageWidth / 2 + 20, signatureY)
-       .lineTo(doc.options.margins.left + pageWidth / 2 + 20 + signatureWidth, signatureY)
-       .strokeColor("#333")
-       .stroke();
+      .lineTo(doc.options.margins.left + pageWidth / 2 + 20 + signatureWidth, signatureY)
+      .strokeColor("#333")
+      .stroke();
     doc.fontSize(10)
-       .fillColor("#666");
+      .fillColor("#666");
     doc.text("Firma Responsable", doc.options.margins.left, signatureY + 5, { width: signatureWidth, align: "center" });
     doc.text("Firma Cliente", doc.options.margins.left + pageWidth / 2 + 20, signatureY + 5, { width: signatureWidth, align: "center" });
 
     // ====== FOOTER CON AVISO DE FIRMA DIGITAL ======
     const footerY = doc.page.height - 70;
     doc.fontSize(10)
-       .fillColor("#777")
-       .text(`Fecha de emisión: ${new Date().toLocaleString()}`, 50, footerY, { align: "center", width: doc.page.width - 100 });
+      .fillColor("#777")
+      .text(`Fecha de emisión: ${new Date().toLocaleString()}`, 50, footerY, { align: "center", width: doc.page.width - 100 });
     doc.moveDown(0.2);
     doc.text("Documento Certificado - No sujeto a alteraciones", { align: "center", width: doc.page.width - 100 });
     doc.moveDown(0.2);
     // Sección informativa de firma digital
     doc.fontSize(9)
-       .fillColor("#555")
-       .text("Firmado Digitalmente: Este documento cuenta con una firma digital que garantiza su integridad y autenticidad.", { align: "center", width: doc.page.width - 100 });
+      .fillColor("#555")
+      .text("Firmado Digitalmente: Este documento cuenta con una firma digital que garantiza su integridad y autenticidad.", { align: "center", width: doc.page.width - 100 });
     doc.text("Certificado Digital: Empleado certificado por una CA confiable, cumpliendo con estándares PAdES.", { align: "center", width: doc.page.width - 100 });
 
     doc.end();

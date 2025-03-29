@@ -94,7 +94,8 @@
                 <td>{{ t.estado }}</td>
                 <td>{{ t.direccion }}</td>
                 <td>{{ t.observaciones }}</td>
-                <td>{{ formatFecha(t.fechaSolicitud) }}</td>
+                <td>{{ formatDate(t.fechaSolicitud) }} - {{ formatTime(t.fechaSolicitud) }}</td>
+
                 <td>
                   <button
                     class="btn btn-sm btn-outline-primary"
@@ -155,13 +156,18 @@
                 <strong>Estado Actual:</strong>
                 {{ selectedTransferencia.estado }}
               </p>
-              <p>
-                <strong>Fecha Solicitud:</strong>
-                {{ formatFecha(selectedTransferencia.fechaSolicitud) }}
-              </p>
+
               <p>
                 <strong>Observacion:</strong>
                 {{ selectedTransferencia.observaciones }}
+              </p>
+              <p>
+                <strong>Frech Solicitud:</strong>
+                {{ formatDate(selectedTransferencia.fechaSolicitud) }} - {{ formatTime(selectedTransferencia.fechaSolicitud) }}
+              </p>
+              <p>
+                <strong>Ultima Actualizacion:</strong>
+                {{ formatDate(selectedTransferencia.updatedAt) }} - {{ formatTime(selectedTransferencia.updatedAt) }}
               </p>
               <hr />
               <h6>Detalles:</h6>
@@ -251,16 +257,9 @@
 import apiClient from "@/services/api";
 import { Modal } from "bootstrap";
 import { useAuthStore } from "@/stores/authStore";
-
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
+import { DateTime } from "luxon";
 
 
-dayjs.extend(utc);
-dayjs.extend(timezone);
-// Fijas la zona horaria por defecto (opcional, también puedes especificarla cada vez)
-dayjs.tz.setDefault("America/Bogota");
 
 
 export default {
@@ -288,8 +287,8 @@ export default {
       // Convertir a minúsculas para evitar problemas de mayúsculas/minúsculas
       const modulo = this.filteredTransferencias[0].modulo.toLowerCase();
       if (modulo === "transferencia" || modulo === "devolucion") {
-        return "Dirección de recogida";
-      } else if (modulo === "prestamo" || modulo === "desarchivo") {
+        return "Dirección de recogida" ;
+      } else if (modulo === "prestamo" || modulo === "desarchivo" || modulo === "desarchive") {
         return "Dirección de entrega";
       }
     }
@@ -319,11 +318,18 @@ export default {
     },
   },
   methods: {
-    formatFecha(fechaUTC) {
-    if (!fechaUTC) return "";
-    // Asumiendo que la fecha viene en formato UTC (ej: "2025-03-24T18:00:00Z")
-    return dayjs.utc(fechaUTC).tz("America/Bogota").format("DD-MM-YYYY / HH:mm");
-  },
+    // Retorna la fecha formateada "dd/MM/yyyy" en la zona de Bogotá
+    formatDate(dateString) {
+      if (!dateString) return "N/A";
+      const dt = DateTime.fromISO(dateString, { zone: "utc" });
+      return dt.setLocale("es").toFormat("dd/MM/yyyy");
+    },
+    // Retorna la hora formateada "HH:mm" en la zona de Bogotá
+    formatTime(dateString) {
+      if (!dateString) return "N/A";
+      const dt = DateTime.fromISO(dateString, { zone: "utc" });
+      return dt.setLocale("es").toFormat("hh:mm a");
+    },
     async fetchTransferencias() {
       try {
         const body = { clienteId: 2 };

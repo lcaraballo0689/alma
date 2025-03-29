@@ -17,11 +17,6 @@
           </div>
           <!-- Botones de Solicitar Transferencia, Excel y Búsqueda -->
           <div class="col-auto d-flex align-items-center gap-2">
-            <button class="custom-btn" style="background-color: black !important; color: white !important;"
-              @click="showSolicitarTransferencia">
-              <i class="bi bi-truck me-2"></i>
-              Solicitar Transferencia
-            </button>
             <button class="custom-btn excel me-2" @click="exportToExcel" @mouseover="hoveredButton = 'excel'"
               @mouseleave="hoveredButton = ''">
               <i :class="hoveredButton === 'excel' ? 'bi bi-arrow-down-circle-fill' : 'bi bi-file-excel-fill'"></i>
@@ -195,7 +190,8 @@ export default {
           (item.referencia2 || "").toLowerCase().includes(term) ||
           (item.referencia3 || "").toLowerCase().includes(term) ||
           (item.cliente_nombre || "").toLowerCase().includes(term) ||
-          (item.usuario_nombre || "").toLowerCase().includes(term)
+          (item.usuario_nombre || "").toLowerCase().includes(term) ||
+          String(item.id).toLowerCase().includes(term)
         );
       });
     },
@@ -260,7 +256,7 @@ export default {
     const response = await apiClient.post("/api/transferencias/consultar", requestBody);
     // Filtrar las transferencias que tengan modulo igual a "transferencia"
     this.transferencias = (response.data.data || []).filter(item => 
-      item.modulo && item.modulo.toLowerCase() === "transferencia"
+      item.modulo && item.modulo.toLowerCase() === "devolucion"
     );
     console.log(response);
     useLoaderStore().hideLoader();

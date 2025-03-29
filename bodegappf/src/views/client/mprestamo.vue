@@ -15,13 +15,19 @@
               </select>
             </div>
           </div>
+          <!-- Filtro por rango de fecha -->
+          <div class="col-auto d-flex align-items-center gap-2">
+            <label class="mb-0 me-1">Desde:</label>
+            <input type="date" class="form-control form-control-sm" v-model="fechaDesde" :max="maxDate"
+              @change="fechaHasta = fechaDesde > fechaHasta ? fechaDesde : fechaHasta" />
+            <label class="mb-0 ms-2 me-1">Hasta:</label>
+            <input type="date" class="form-control form-control-sm" v-model="fechaHasta" :min="fechaDesde"
+              :max="maxDate" />
+          </div>
+          <!-- Botones de Excel y búsqueda -->
+
           <!-- Botones de Solicitar Transferencia, Excel y Búsqueda -->
           <div class="col-auto d-flex align-items-center gap-2">
-            <button class="custom-btn" style="background-color: black !important; color: white !important;"
-              @click="showSolicitarTransferencia">
-              <i class="bi bi-truck me-2"></i>
-              Solicitar Transferencia
-            </button>
             <button class="custom-btn excel me-2" @click="exportToExcel" @mouseover="hoveredButton = 'excel'"
               @mouseleave="hoveredButton = ''">
               <i :class="hoveredButton === 'excel' ? 'bi bi-arrow-down-circle-fill' : 'bi bi-file-excel-fill'"></i>
@@ -168,7 +174,10 @@ export default {
     solicitarTransferencia,
   },
   data() {
+    const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
     return {
+      fechaDesde: today,  // Valor por defecto: hoy
+      fechaHasta: today,  // Valor por defecto: hoy
       selectedEstado: "TODOS",
       estadosDisponibles: [],
       transferencias: [],
@@ -187,18 +196,53 @@ export default {
     clientStore() {
       return useClientStore();
     },
+    // Devuelve la fecha actual en formato "YYYY-MM-DD"
+    maxDate() {
+      return new Date().toISOString().split("T")[0];
+    },
     filteredtransferencias() {
+      // Aquí puedes aplicar el filtro por rango de fecha tal como se mostró antes
       const term = this.searchTerm.toLowerCase();
-      return this.transferencias.filter((item) => {
+      let filtered = this.transferencias.filter((item) => {
         return (
+          String(item.id).toLowerCase().includes(term) ||
           (item.referencia1 || "").toLowerCase().includes(term) ||
-          (item.referencia2 || "").toLowerCase().includes(term) ||
-          (item.referencia3 || "").toLowerCase().includes(term) ||
-          (item.cliente_nombre || "").toLowerCase().includes(term) ||
-          (item.usuario_nombre || "").toLowerCase().includes(term)
+          (this.formatDate(item.fechaSolicitud) || "").toLowerCase().includes(term)
         );
       });
+      if (this.fechaDesde || this.fechaHasta) {
+        filtered = filtered.filter((item) => {
+          const itemDateLocal = DateTime.fromISO(item.fechaSolicitud, { zone: "utc" }).setZone("America/Bogota");
+          let isValid = true;
+          if (this.fechaDesde) {
+            const desdeLocal = DateTime.fromISO(this.fechaDesde).setZone("America/Bogota").startOf("day");
+            isValid = isValid && itemDateLocal >= desdeLocal;
+          }
+          if (this.fechaHasta) {
+            const hastaLocal = DateTime.fromISO(this.fechaHasta).setZone("America/Bogota").endOf("day");
+            isValid = isValid && itemDateLocal <= hastaLocal;
+          }
+          return isValid;
+        });
+      }
+      return filtered;
     },
+    // Funciones de formateo utilizando Luxon
+    formatDate() {
+      return (dateString) => {
+        if (!dateString) return "N/A";
+        const dt = DateTime.fromISO(dateString, { zone: "utc" }).setZone("America/Bogota");
+        return dt.setLocale("es").toFormat("dd/MM/yyyy");
+      };
+    },
+    formatTime() {
+      return (dateString) => {
+        if (!dateString) return "N/A";
+        const dt = DateTime.fromISO(dateString, { zone: "utc" }).setZone("America/Bogota");
+        return dt.setLocale("es").toFormat("hh:mm a");
+      };
+    },
+
   },
   mounted() {
     this.fetchEstados();
@@ -250,24 +294,24 @@ export default {
       }
     },
     async fetchtransferencias() {
-  try {
-    const clienteId = useAuthStore().clienteId;
-    if (!clienteId) {
-      console.error("❌ Error: Cliente ID no encontrado.");
-      return;
-    }
-    const requestBody = { clienteId };
-    const response = await apiClient.post("/api/transferencias/consultar", requestBody);
-    // Filtrar las transferencias que tengan modulo igual a "transferencia"
-    this.transferencias = (response.data.data || []).filter(item => 
-      item.modulo && item.modulo.toLowerCase() === "transferencia"
-    );
-    console.log(response);
-    useLoaderStore().hideLoader();
-  } catch (error) {
-    console.error("Error al obtener datos de transferencias:", error);
-  }
-},
+      try {
+        const clienteId = useAuthStore().clienteId;
+        if (!clienteId) {
+          console.error("❌ Error: Cliente ID no encontrado.");
+          return;
+        }
+        const requestBody = { clienteId };
+        const response = await apiClient.post("/api/transferencias/consultar", requestBody);
+        // Filtrar las transferencias que tengan modulo igual a "transferencia"
+        this.transferencias = (response.data.data || []).filter(item =>
+          item.modulo && item.modulo.toLowerCase() === "prestamo"
+        );
+        console.log(response);
+        useLoaderStore().hideLoader();
+      } catch (error) {
+        console.error("Error al obtener datos de transferencias:", error);
+      }
+    },
 
     handleReloadData() {
       this.fetchtransferencias();
