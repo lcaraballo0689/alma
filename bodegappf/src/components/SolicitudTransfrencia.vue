@@ -238,6 +238,8 @@ export default {
       }
 
       try {
+        console.log("Nueva Solicitud de Transferencia: ", payload);
+        
         const response = await requestMethod(endpoint, payload);
         setTimeout(() => {
           this.loaderStore.hideLoader();

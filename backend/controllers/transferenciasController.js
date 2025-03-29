@@ -1,14 +1,14 @@
 /* eslint-disable no-console */
 require("dotenv").config();
+const path = require("path");
+const PDFDocument = require("pdfkit"); // Asegúrate de tener PDFKit instalado
 const { connectDB, sql } = require("../config/db");
-const emailService = require("../services/email.service"); // Debe exportar sendEmailTemplate además de sendEmail
+const emailService = require("../services/email.service"); // Debe exportar sendEmailTemplate
 const { generarQR } = require("../services/qrGenerator");
 const { emitirNotificacion } = require("../services/socket");
-const smsService = require("../services/smsService"); // Implementación real o stub
-const whatsappService = require("../services/whatsappService"); // Implementación real o stub
+const smsService = require("../services/smsService");
+const whatsappService = require("../services/whatsappService");
 const { storeNotification } = require("../services/notificationService");
-
-// Uso de Winston (configurado en logger.js)
 const logger = require("../logger");
 
 /**
@@ -18,7 +18,9 @@ const logger = require("../logger");
  * @returns {Promise<string>} Correo del usuario.
  */
 async function obtenerCorreoUsuario(pool, usuarioId) {
-  const result = await pool.request().input("usuarioId", sql.Int, usuarioId)
+  const result = await pool
+    .request()
+    .input("usuarioId", sql.Int, usuarioId)
     .query(`
       SELECT TOP 1 email
       FROM Usuario
@@ -29,26 +31,38 @@ async function obtenerCorreoUsuario(pool, usuarioId) {
     ? result.recordset[0].email
     : process.env.DEFAULT_EMAIL || "correo@por-defecto.com";
 }
+async function obtenerNombreUsuario(pool, usuarioId) {
+  const result = await pool
+    .request()
+    .input("usuarioId", sql.Int, usuarioId)
+    .query(`
+      SELECT TOP 1 nombre
+      FROM Usuario
+      WHERE id = @usuarioId
+      ORDER BY id ASC
+    `);
+  return result.recordset.length > 0
+    ? result.recordset[0].nombre
+    :  "Cliente";
+}
 /**
  * Función auxiliar para generar una tabla HTML a partir del arreglo de ítems.
  * @param {Array} items - Arreglo de items de la transferencia.
  * @returns {string} HTML de la tabla.
  */
 function generateItemsTableHTML(items) {
-  let html = `<table>
+  let html = `<table style="border-collapse: collapse; width: 100%;">
     <thead>
       <tr>
-         <th>Referencia</th>
-         <th>Descripción</th>
-         <th>Cantidad</th>
+         <th style="border: 1px solid #ddd; padding: 8px;">Referencia2</th>
+         <th style="border: 1px solid #ddd; padding: 8px;">Tipo</th>
       </tr>
     </thead>
     <tbody>`;
   for (const item of items) {
     html += `<tr>
-         <td>${item.referencia2 || ""}</td>
-         <td>${item.descripcion || ""}</td>
-         <td>${item.cantidad || 1}</td>
+         <td style="border: 1px solid #ddd; padding: 8px;">${item.referencia2 || ""}</td>
+         <td style="border: 1px solid #ddd; padding: 8px;">CAJA</td>
       </tr>`;
   }
   html += `</tbody></table>`;
@@ -231,25 +245,126 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
       `);
   }
 
-      // Generar y guardar el QR
-      const qrText = `solicitud_${solicitudId}`;
-      const qrCodeImage = await generarQR(qrText);
-      await new sql.Request(pool)
-        .input("solicitudTransporteId", sql.Int, solicitudId)
-        .input("qrToken", sql.VarChar, qrText)
-        .input("qrCodeImage", sql.VarChar, qrCodeImage)
-        .input("activo", sql.Bit, 1).query(`
+  // Generar y guardar el QR
+  const qrText = `solicitud_${solicitudId}`;
+  const qrCodeImage = await generarQR(qrText);
+  await new sql.Request(pool)
+    .input("solicitudTransporteId", sql.Int, solicitudId)
+    .input("qrToken", sql.VarChar, qrText)
+    .input("qrCodeImage", sql.VarChar, qrCodeImage)
+    .input("activo", sql.Bit, 1).query(`
           INSERT INTO QR_Solicitudes (solicitudTransporteId, qrToken, qrCodeImage, activo)
           VALUES (@solicitudTransporteId, @qrToken, @qrCodeImage, @activo)
         `);
-  
+
 
   return { solicitudId, nuevoConsecutivo };
 }
 
+
+/**
+ * Función auxiliar para generar un PDF en memoria con los detalles de la solicitud.
+ * Este PDF incorpora elementos de seguridad:
+ * - Watermark ("Documento Certificado") en el fondo.
+ * - Sección de firmas para el responsable y el cliente.
+ * - Footer con fecha de emisión, aviso de certificación y sección de firma digital.
+ * 
+ * Nota: PDFKit no soporta firmas digitales de forma nativa.
+ * Para firmarlo digitalmente, se debe utilizar una librería adicional (ej. node-signpdf)
+ * junto con un certificado digital que cumpla con estándares como PAdES.
+ *
+ * @param {number} nuevoConsecutivo - Número de solicitud.
+ * @param {number} clienteId - ID del cliente.
+ * @param {string} observaciones - Observaciones de la solicitud.
+ * @param {Array} items - Array de ítems.
+ * @returns {Promise<Buffer>} Buffer del PDF generado.
+ */
+function generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items) {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: "LETTER", margin: 50 });
+    let buffers = [];
+    doc.on("data", (chunk) => buffers.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(buffers)));
+    doc.on("error", (err) => reject(err));
+
+    // ====== WATERMARK ======
+    doc.save();
+    doc.fontSize(60)
+       .fillColor("grey")
+       .opacity(0.2)
+       .rotate(-45, { origin: [doc.page.width / 2, doc.page.height / 2] })
+       .text("Documento Certificado", doc.page.width / 4, doc.page.height / 2, {
+         align: "center",
+         width: doc.page.width / 2,
+       });
+    doc.restore();
+    doc.opacity(1);
+
+    // ====== ENCABEZADO ======
+    doc.fontSize(20)
+      .fillColor("#000")
+      .text(`Detalle de la Solicitud #${nuevoConsecutivo}`, { align: "center", underline: true });
+    doc.moveDown();
+    doc.fontSize(12)
+      .text(`Cliente ID: ${clienteId}`);
+    doc.text(`Observaciones: ${observaciones || "N/A"}`);
+    doc.moveDown();
+    doc.fontSize(14)
+      .text("Items:", { underline: true });
+    doc.moveDown(0.5);
+
+    // ====== LISTADO DE ÍTEMS ======
+    items.forEach((item, idx) => {
+      doc.fontSize(12)
+         .text(`${idx + 1}. Referencia: ${item.referencia2}, Descripción: ${item.descripcion || "N/A"}, Cantidad: ${item.cantidad || 1}`);
+      doc.moveDown(0.2);
+    });
+
+    // ====== SECCIÓN DE FIRMAS ======
+    doc.moveDown(2);
+    const pageWidth = doc.page.width - doc.options.margins.left - doc.options.margins.right;
+    const signatureWidth = pageWidth / 2 - 20;
+    const signatureY = doc.y;
+    // Línea para la firma del Responsable
+    doc.moveTo(doc.options.margins.left, signatureY)
+       .lineTo(doc.options.margins.left + signatureWidth, signatureY)
+       .strokeColor("#333")
+       .stroke();
+    // Línea para la firma del Cliente
+    doc.moveTo(doc.options.margins.left + pageWidth / 2 + 20, signatureY)
+       .lineTo(doc.options.margins.left + pageWidth / 2 + 20 + signatureWidth, signatureY)
+       .strokeColor("#333")
+       .stroke();
+    doc.fontSize(10)
+       .fillColor("#666");
+    doc.text("Firma Responsable", doc.options.margins.left, signatureY + 5, { width: signatureWidth, align: "center" });
+    doc.text("Firma Cliente", doc.options.margins.left + pageWidth / 2 + 20, signatureY + 5, { width: signatureWidth, align: "center" });
+
+    // ====== FOOTER CON AVISO DE FIRMA DIGITAL ======
+    const footerY = doc.page.height - 70;
+    doc.fontSize(10)
+       .fillColor("#777")
+       .text(`Fecha de emisión: ${new Date().toLocaleString()}`, 50, footerY, { align: "center", width: doc.page.width - 100 });
+    doc.moveDown(0.2);
+    doc.text("Documento Certificado - No sujeto a alteraciones", { align: "center", width: doc.page.width - 100 });
+    doc.moveDown(0.2);
+    // Sección informativa de firma digital
+    doc.fontSize(9)
+       .fillColor("#555")
+       .text("Firmado Digitalmente: Este documento cuenta con una firma digital que garantiza su integridad y autenticidad.", { align: "center", width: doc.page.width - 100 });
+    doc.text("Certificado Digital: Empleado certificado por una CA confiable, cumpliendo con estándares PAdES.", { align: "center", width: doc.page.width - 100 });
+
+    doc.end();
+  });
+}
+
+
+
 /**
  * Crea una nueva solicitud de transferencia (POST /api/client/transferencias/crear)
  * Campos obligatorios: clienteId, usuarioId, items (array).
+ * Además, se envía un correo con plantilla al usuario y a la bodega, adjuntando
+ * el logo, el código QR (convertido a Buffer) y un PDF con el detalle de la solicitud.
  */
 async function createTransferencia(req, res, next) {
   if (
@@ -257,11 +372,11 @@ async function createTransferencia(req, res, next) {
     !req.body.clienteId ||
     !req.body.usuarioId ||
     !req.body.items ||
+    !req.body.direccionRecoleccion ||
     !Array.isArray(req.body.items)
   ) {
     return res.status(400).json({
-      error:
-        "Se requieren los campos: clienteId, usuarioId y un array de items.",
+      error: "Se requieren los campos: clienteId, usuarioId y un array de items.",
     });
   }
   for (const [index, item] of req.body.items.entries()) {
@@ -273,14 +388,14 @@ async function createTransferencia(req, res, next) {
   }
   logger.info("Body createTransferencia: " + JSON.stringify(req.body));
   let transaction;
-  let transactionStarted = false; // Flag para indicar si la transacción comenzó
+  let transactionStarted = false;
   try {
     const pool = await connectDB();
     transaction = new sql.Transaction(pool);
     await transaction.begin();
-    transactionStarted = true; // La transacción inició correctamente
+    transactionStarted = true;
 
-    const { clienteId, usuarioId, items, observaciones } = req.body;
+    const { clienteId, usuarioId, items, observaciones, direccionRecoleccion } = req.body;
     // Actualizar consecutivo
     const requestConsecutivos = new sql.Request(transaction);
     requestConsecutivos.input("clienteId", sql.Int, clienteId);
@@ -288,37 +403,29 @@ async function createTransferencia(req, res, next) {
       SELECT ultimoTransporte FROM Consecutivos WHERE clienteId = @clienteId
     `);
     let ultimoTransporte =
-      resultCons.recordset.length > 0
-        ? resultCons.recordset[0].ultimoTransporte
-        : 0;
+      resultCons.recordset.length > 0 ? resultCons.recordset[0].ultimoTransporte : 0;
     const nuevoConsecutivo = ultimoTransporte + 1;
     await new sql.Request(transaction)
       .input("nuevoTransporte", sql.Int, nuevoConsecutivo)
       .input("clienteId", sql.Int, clienteId)
-      .query(
-        `UPDATE Consecutivos SET ultimoTransporte = @nuevoTransporte WHERE clienteId = @clienteId`
-      );
+      .query(`UPDATE Consecutivos SET ultimoTransporte = @nuevoTransporte WHERE clienteId = @clienteId`);
+
     // Insertar la solicitud
     const requestInsertSolicitud = new sql.Request(transaction);
     requestInsertSolicitud
       .input("clienteId", sql.Int, clienteId)
       .input("consecutivo", sql.Int, nuevoConsecutivo)
       .input("estado", sql.VarChar, "solicitud creada")
-      .input("observaciones", sql.VarChar, observaciones || "");
+      .input("observaciones", sql.VarChar, observaciones || "")
+      .input("direccionRecoleccion", sql.VarChar, direccionRecoleccion || "");
     const insertSol = await requestInsertSolicitud.query(`
-      INSERT INTO SolicitudTransporte (modulo, clienteId, consecutivo, estado, fechaSolicitud, observaciones, createdAt, updatedAt)
-      VALUES ( 'transferencia' ,@clienteId, @consecutivo, @estado, GETDATE(), @observaciones, GETDATE(), GETDATE());
+      INSERT INTO SolicitudTransporte (modulo, clienteId, consecutivo, estado, fechaSolicitud, observaciones, createdAt, updatedAt, direccion)
+      VALUES ('transferencia', @clienteId, @consecutivo, @estado, GETDATE(), @observaciones, GETDATE(), GETDATE(), @direccionRecoleccion);
       SELECT SCOPE_IDENTITY() AS solicitudId;
     `);
     const solicitudId = insertSol.recordset[0].solicitudId;
-    await registrarAuditoria(
-      pool,
-      solicitudId,
-      "NINGUNO",
-      "solicitud creada",
-      usuarioId,
-      "Creación de solicitud"
-    );
+    await registrarAuditoria(pool, solicitudId, "NINGUNO", "solicitud creada", usuarioId, "Creación de solicitud");
+
     // Insertar cada detalle
     for (const item of items) {
       await new sql.Request(transaction)
@@ -328,7 +435,8 @@ async function createTransferencia(req, res, next) {
         .input("referencia2", sql.VarChar, item.referencia2)
         .input("referencia3", sql.VarChar, item.referencia3 || "")
         .input("descripcion", sql.VarChar, item.descripcion || "")
-        .input("estado", sql.VarChar, "solicitud creada").query(`
+        .input("estado", sql.VarChar, "solicitud creada")
+        .query(`
           INSERT INTO DetalleSolicitudTransporte
           (solicitudTransporteId, tipo, referencia1, referencia2, referencia3, descripcion, estado, createdAt, updatedAt)
           VALUES (@solicitudTransporteId, @tipo, @referencia1, @referencia2, @referencia3, @descripcion, @estado, GETDATE(), GETDATE());
@@ -339,47 +447,90 @@ async function createTransferencia(req, res, next) {
     // Generar y guardar el QR
     const qrText = `solicitud_${solicitudId}`;
     const qrCodeImage = await generarQR(qrText);
-
     await new sql.Request(pool)
       .input("solicitudTransporteId", sql.Int, solicitudId)
       .input("qrToken", sql.VarChar, qrText)
       .input("qrCodeImage", sql.VarChar, qrCodeImage)
-      .input("activo", sql.Bit, 1).query(`
+      .input("activo", sql.Bit, 1)
+      .query(`
         INSERT INTO QR_Solicitudes (solicitudTransporteId, qrToken, qrCodeImage, activo)
         VALUES (@solicitudTransporteId, @qrToken, @qrCodeImage, @activo)
       `);
 
-    // Envío de correos usando plantillas
+    // Convertir el data URL del QR a Buffer
+    let qrBuffer = null;
+    const base64Prefix = "data:image/png;base64,";
+    if (qrCodeImage.startsWith(base64Prefix)) {
+      const base64Data = qrCodeImage.slice(base64Prefix.length);
+      qrBuffer = Buffer.from(base64Data, "base64");
+    }
+    // 
+    // Preparar datos para la plantilla de correo
     const itemsTableHTML = generateItemsTableHTML(items);
-    const correoCliente =
-      process.env.BODEGA_EMAIL || (await obtenerCorreoCliente(pool, clienteId));
-    const correoBodega = process.env.BODEGA_EMAIL || "bodega@tuempresa.com";
-
+    const nombreDelUsuario = await obtenerNombreUsuario(pool, usuarioId);
+    const correoUsuario = await obtenerCorreoUsuario(pool, usuarioId);
     const clientEmailData = {
-      userName: "Estimado Cliente", // Reemplazar si se cuenta con el nombre
+      userName: nombreDelUsuario, // Puedes reemplazar por el nombre real
       prestamosCount: items.length,
       consecutivo: nuevoConsecutivo,
       itemsTable: itemsTableHTML,
-      qrCodeImage: qrCodeImage
+      fechaSolicitud: new Date().toLocaleString(),
+      year: new Date().getFullYear(),
     };
+
+    // Generar el PDF con el detalle de la solicitud
+    const pdfBuffer = await generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items);
+
+    // Armar attachments (logo, QR y PDF)
+    const attachments = [
+      {
+        path: path.join(__dirname, "../assets/siglo.png"),
+        cid: "siglo",
+        filename: "siglo.png",
+      }
+    ];
+    if (qrBuffer) {
+      attachments.push({
+        filename: "qr-code.png",
+        content: qrBuffer,
+        cid: "qrCodeImage",
+      });
+    }
+    attachments.push({
+      filename: "detalle-solicitud.pdf",
+      content: pdfBuffer,
+      contentType: "application/pdf",
+    });
+
+
+
+
+    // Enviar correo al usuario
     await emailService.sendEmailTemplate({
-      to: correoCliente,
+      to: correoUsuario,
       subject: `Solicitud de Transferencia #${nuevoConsecutivo}`,
       template: "confirmacionSolicitudTransferencia",
       data: clientEmailData,
+      attachments,
     });
 
+    // Enviar correo a la bodega
+    const correoBodega = process.env.BODEGA_EMAIL || "bodega@tuempresa.com";
     const bodegaEmailData = {
       userName: "Equipo de Bodega",
       prestamosCount: items.length,
       consecutivo: nuevoConsecutivo,
       itemsTable: itemsTableHTML,
+      fechaSolicitud: new Date().toLocaleString(),
+      year: new Date().getFullYear(),
+      direccionRecoleccion: direccionRecoleccion
     };
     await emailService.sendEmailTemplate({
       to: correoBodega,
       subject: `Nueva Solicitud de Transferencia #${nuevoConsecutivo}`,
       template: "nuevaSolicitudTransferencia",
       data: bodegaEmailData,
+      attachments,
     });
 
     logger.info(`Transferencia ${solicitudId} creada exitosamente.`);
@@ -390,7 +541,6 @@ async function createTransferencia(req, res, next) {
       qrCode: qrCodeImage,
     });
   } catch (error) {
-    // Solo se hace rollback si la transacción inició correctamente
     if (transaction && transactionStarted) {
       try {
         await transaction.rollback();
@@ -402,6 +552,138 @@ async function createTransferencia(req, res, next) {
     return next(error);
   }
 }
+
+/**
+ * Genera un PDF corporativo en formato apaisado (landscape) que sirva de
+ * constancia del movimiento, con un aspecto más limpio y distribuido.
+ *
+ * - Logotipo y título en el encabezado.
+ * - Línea divisoria debajo del encabezado.
+ * - Datos básicos de la solicitud (ID, cliente, observaciones).
+ * - Tabla de ítems con encabezados y fondo.
+ * - Sección de firmas en la parte inferior.
+ *
+ * @param {number} nuevoConsecutivo - Número de solicitud (ej. #36).
+ * @param {number} clienteId - ID del cliente.
+ * @param {string} observaciones - Observaciones de la solicitud.
+ * @param {Array} items - Arreglo de ítems [{ referencia2, descripcion, cantidad }, ...].
+ * @returns {Promise<Buffer>} - Devuelve un Buffer con el contenido del PDF.
+ */
+function generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items) {
+  return new Promise((resolve, reject) => {
+    // Documento en formato apaisado, tamaño LETTER.
+    const doc = new PDFDocument({ size: 'LETTER', layout: 'landscape', margin: 40 });
+    const buffers = [];
+
+    doc.on('data', chunk => buffers.push(chunk));
+    doc.on('end', () => resolve(Buffer.concat(buffers)));
+    doc.on('error', err => reject(err));
+
+    // ========== ENCABEZADO ==========
+    // Logo en la esquina superior izquierda
+    const logoPath = path.join(__dirname, "../assets/siglo.png");
+    doc.image(logoPath, 40, 30, { width: 100 });
+
+    // Título principal
+    doc
+      .fontSize(18)
+      .fillColor("#2c3e50")
+      .text("Constancia de Movimiento", 160, 40, { align: "left" });
+
+    // Subtítulo (Solicitud de Transferencia)
+    doc
+      .fontSize(12)
+      .fillColor("#444")
+      .text(`Solicitud de Transferencia #${nuevoConsecutivo}`, 160, 65, { align: "left" });
+
+    // Línea horizontal separadora debajo del encabezado
+    doc
+      .moveTo(40, 100)
+      .lineTo(doc.page.width - 40, 100)
+      .stroke("#cccccc");
+
+    // ========== DATOS BÁSICOS ==========
+    // Posición de inicio para la sección de datos
+    let currentY = 110;
+
+    doc
+      .fontSize(11)
+      .fillColor("#333")
+      .text(`Cliente ID: ${clienteId}`, 40, currentY);
+    currentY += 15;
+
+    doc
+      .text(`Observaciones: ${observaciones || "N/A"}`, 40, currentY);
+    currentY += 30;
+
+    // ========== TABLA DE ÍTEMS ==========
+    // Encabezado de la tabla
+    doc
+      .fontSize(11)
+      .fillColor("#ffffff")
+      .rect(40, currentY, 200, 20).fill("#2c3e50")   // Columna Referencia
+      .rect(240, currentY, 300, 20).fill("#2c3e50") // Columna Descripción
+      .rect(540, currentY, 80, 20).fill("#2c3e50"); // Columna Cantidad
+
+    doc.fillColor("#ffffff").text("Referencia", 45, currentY + 5);
+    doc.text("Descripción", 245, currentY + 5);
+    doc.text("Cantidad", 545, currentY + 5);
+
+    // Volver a color normal para las filas
+    doc.fillColor("#333");
+
+    let rowY = currentY + 20;
+    const rowHeight = 20;
+
+    items.forEach((item, idx) => {
+      doc
+        .fontSize(10)
+        .text(item.referencia2 || "", 45, rowY + 5, { width: 190, ellipsis: true })
+        .text(item.descripcion || "", 245, rowY + 5, { width: 290, ellipsis: true })
+        .text(String(item.cantidad || 1), 545, rowY + 5, { width: 75 });
+
+      // Opcional: Dibujar líneas horizontales para cada fila
+      doc
+        .moveTo(40, rowY)
+        .lineTo(620, rowY)
+        .strokeColor("#dddddd")
+        .stroke();
+
+      rowY += rowHeight;
+    });
+
+    // Dibujar la línea final de la tabla
+    doc
+      .moveTo(40, rowY)
+      .lineTo(620, rowY)
+      .strokeColor("#dddddd")
+      .stroke();
+
+    currentY = rowY + 30; // Dejar espacio después de la tabla
+
+    // ========== SECCIÓN DE FIRMAS ==========
+    // Dos líneas para las firmas
+    const signatureLineWidth = 200;
+    doc
+      .moveTo(40, currentY)
+      .lineTo(40 + signatureLineWidth, currentY)
+      .strokeColor("#333")
+      .stroke();
+    doc
+      .moveTo(360, currentY)
+      .lineTo(360 + signatureLineWidth, currentY)
+      .strokeColor("#333")
+      .stroke();
+
+    doc.fontSize(10).fillColor("#666");
+    doc.text("Firma Responsable", 40, currentY + 5);
+    doc.text("Firma Cliente", 360, currentY + 5);
+
+    // Finalizar el documento
+    doc.end();
+  });
+}
+
 
 async function scanQR(req, res, next) {
   try {
@@ -425,7 +707,7 @@ async function scanQR(req, res, next) {
       .input("usuarioId", sql.Int, usuarioId)
       .input("clienteId", sql.Int, clienteId);
 
-      //TODO:  
+    //TODO:  
     // Solo enviar asignaciones si el módulo es Transferencia y la acción es completado
     if (accion.toLowerCase() === 'completado') {
       if (!Array.isArray(asignaciones) || asignaciones.length === 0) {

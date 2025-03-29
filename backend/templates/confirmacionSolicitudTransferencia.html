@@ -1,91 +1,162 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8">
-    <title>Confirmación de Solicitud de Transferencia</title>
-    <style>
-      body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f4f4f4;
-        margin: 0;
-        padding: 0;
-      }
-      .container {
-        max-width: 600px;
-        margin: 20px auto;
-        background: #ffffff;
-        padding: 20px;
-        border: 1px solid #dddddd;
-      }
-      .header {
-        text-align: center;
-        border-bottom: 1px solid #dddddd;
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-      }
-      .header h2 {
-        margin: 0;
-        color: #333;
-      }
-      .content {
-        font-size: 16px;
-        color: #555;
-        line-height: 1.5;
-      }
-      .content p {
-        margin: 10px 0;
-      }
-      .table-container {
-        margin-top: 20px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      table, th, td {
-        border: 1px solid #cccccc;
-      }
-      th, td {
-        padding: 8px;
-        text-align: center;
-        font-size: 14px;
-      }
-      th {
-        background-color: #efefef;
-      }
-      .footer {
-        text-align: center;
-        margin-top: 30px;
-        font-size: 14px;
-        color: #888;
-      }
-      .footer img {
-        display: block;
-        margin: 10px auto;
-        width: 150px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h2>Confirmación de Solicitud de Transferencia</h2>
-      </div>
-      <div class="content">
-        <p>Estimado/a <strong>{{userName}}</strong>,</p>
-        <p>Hemos recibido su solicitud de transferencia con el consecutivo <strong>{{consecutivo}}</strong>.</p>
-        <p>A continuación, se detalla el resumen de los ítems solicitados:</p>
-        <div class="table-container">
-          {{{itemsTable}}} <!-- Se utiliza triple llave para interpretar HTML en la tabla -->
-        </div>
-        <p>Su solicitud ha sido registrada exitosamente y en breve nos comunicaremos para confirmar los siguientes pasos.</p>
-        <p>Gracias por confiar en BODEGAPP.</p>
-      </div>
-      <div class="footer">
-        <p>Atentamente,</p>
-        <p>El equipo de BODEGAPP</p>
-        <img src="cid:bodegappLogo" alt="Logo de BODEGAPP" />
-      </div>
+<head>
+  <meta charset="UTF-8">
+  <title>Confirmación de Solicitud de Transferencia #{{consecutivo}}</title>
+  <style>
+    /* RESET BÁSICO */
+    body, p, h1, h2, h3, h4, h5, h6, table, td, th {
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* CONTENEDOR PRINCIPAL */
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      overflow: hidden; /* Evita que sobresalgan elementos */
+    }
+
+    /* ENCABEZADO */
+    .header {
+      background-color: #dbdbdb;
+      padding: 20px;
+      text-align: center;
+    }
+    .header img {
+      max-width: 120px;
+      margin-bottom: 10px;
+    }
+    .header h2 {
+      color: #272727;
+      margin: 0;
+      font-size: 24px;
+    }
+
+    /* CONTENIDO */
+    .content {
+      padding: 20px 30px;
+    }
+    .content h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #2c3e50;
+    }
+    .content p {
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 10px;
+      color: #444;
+    }
+    .content p strong {
+      color: #333;
+    }
+
+    /* TABLA DE ITEMS */
+    .items-table {
+      margin: 20px 0;
+    }
+    .items-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .items-table th,
+    .items-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 14px;
+    }
+    .items-table th {
+      background-color: #f8f8f8;
+      text-align: left;
+    }
+
+    /* Contenedor con scroll para la tabla de ítems */
+    .scroll-container {
+      max-height: 300px; /* Ajusta esta altura según tus necesidades */
+      overflow-y: auto;
+      margin: 20px 0;
+      border: 1px solid #ddd;
+      padding: 5px;
+      border-radius: 4px;
+    }
+
+    /* SECCIÓN DEL CÓDIGO QR */
+    .qr-code {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .qr-code img {
+      max-width: 150px;
+    }
+
+    /* PIE DE PÁGINA */
+    .footer {
+      background-color: #ecf0f1;
+      text-align: center;
+      padding: 15px;
+      font-size: 12px;
+      color: #777;
+    }
+    .footer p {
+      margin: 5px 0;
+    }
+    .footer a {
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- ENCABEZADO -->
+    <div class="header">
+      <img src="cid:siglo" alt="Logo Siglo XXI Documental">
+      <h2>Confirmación de Solicitud de Transferencia</h2>
     </div>
-  </body>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="content">
+      <h1>Solicitud #{{consecutivo}}</h1>
+      <p>Estimado/a <strong>{{userName}}</strong>,</p>
+      <p>
+        Su solicitud de transferencia ha sido creada exitosamente el
+        <strong>{{fechaSolicitud}}</strong>. A continuación se muestra el detalle de su solicitud:
+      </p>
+
+      <!-- TABLA DE ITEMS CON SCROLL -->
+      <div class="scroll-container">
+        {{{itemsTable}}}
+      </div>
+
+      <!-- SECCIÓN DEL CÓDIGO QR -->
+      <div class="qr-code">
+        <p>Utilice el siguiente código QR para el seguimiento:</p>
+        <img src="cid:qrCodeImage" alt="Código QR">
+      </div>
+
+      <p>Si tiene alguna duda o necesita asistencia, por favor contáctenos.</p>
+    </div>
+
+    <!-- PIE DE PÁGINA -->
+    <div class="footer">
+      <p>© {{year}} SigloXXI Documental. Todos los derechos reservados.</p>
+      <p>
+        Contacto: <a href="mailto:soporte@sigloXXI.com">soporte@sigloXXI.com</a> | Tel: +57 123 4567890
+      </p>
+    </div>
+  </div>
+</body>
 </html>

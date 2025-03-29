@@ -15,7 +15,7 @@
               />
             </div>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
             <select class="form-select" v-model="selectedEstado">
               <option value="">Todos los estados</option>
               <option value="solicitud creada">Solicitud creada</option>
@@ -26,7 +26,7 @@
               <option value="completado">Completado</option>
             </select>
           </div>
-          <div class="col-md-3">
+          <div class="col-md-4">
             <ul class="nav nav-pills justify-content-center">
               <li
                 class="nav-item"
@@ -78,18 +78,22 @@
               <tr>
                 <th>ID</th>
                 <th>Cliente</th>
-                <th>Módulo</th>
+                <th>Tipo Solicitud</th>
                 <th>Estado</th>
+                <th>{{ direccionHeader }}</th>
+                <th>Observaciones</th>
                 <th>Fecha Solicitud</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="t in filteredTransferencias" :key="t.id">
-                <td>{{ t.id }}</td>
+                <td>{{ t.id}}</td>
                 <td>{{ t.clienteId }}</td>
                 <td>{{ t.modulo }}</td>
                 <td>{{ t.estado }}</td>
+                <td>{{ t.direccion }}</td>
+                <td>{{ t.observaciones }}</td>
                 <td>{{ formatFecha(t.fechaSolicitud) }}</td>
                 <td>
                   <button
@@ -144,12 +148,20 @@
                 {{ selectedTransferencia.clienteId }}
               </p>
               <p>
+                <strong>Modulo:</strong>
+                {{ selectedTransferencia.modulo }}
+              </p>
+              <p>
                 <strong>Estado Actual:</strong>
                 {{ selectedTransferencia.estado }}
               </p>
               <p>
                 <strong>Fecha Solicitud:</strong>
                 {{ formatFecha(selectedTransferencia.fechaSolicitud) }}
+              </p>
+              <p>
+                <strong>Observacion:</strong>
+                {{ selectedTransferencia.observaciones }}
               </p>
               <hr />
               <h6>Detalles:</h6>
@@ -158,18 +170,14 @@
                   <thead class="table-light">
                     <tr>
                       <th>ID</th>
-                      <th>Ref.1</th>
-                      <th>Ref.2</th>
-                      <th>Ref.3</th>
+                      <th>Referencia2</th>
                       <th>Estado</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="item in detalle" :key="item.id">
                       <td>{{ item.id }}</td>
-                      <td>{{ item.referencia1 }}</td>
                       <td>{{ item.referencia2 }}</td>
-                      <td>{{ item.referencia3 }}</td>
                       <td>{{ item.estado }}</td>
                     </tr>
                   </tbody>
@@ -275,6 +283,18 @@ export default {
     };
   },
   computed: {
+    direccionHeader() {
+    if (this.filteredTransferencias && this.filteredTransferencias.length > 0) {
+      // Convertir a minúsculas para evitar problemas de mayúsculas/minúsculas
+      const modulo = this.filteredTransferencias[0].modulo.toLowerCase();
+      if (modulo === "transferencia" || modulo === "devolucion") {
+        return "Dirección de recogida";
+      } else if (modulo === "prestamo" || modulo === "desarchivo") {
+        return "Dirección de entrega";
+      }
+    }
+    return "";
+  },
     filteredTransferencias() {
       return this.transferencias.filter((t) => {
         const estadoLower = t.estado.toLowerCase();

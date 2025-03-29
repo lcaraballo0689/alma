@@ -170,8 +170,8 @@ async function cargarDevolucionesMasivasExcel(req, res) {
         data: emailData,
         attachments: [{
           path: logoPath,
-          cid: "bodegappLogo",
-          filename: "bodegapp-logo.png"
+          cid: "siglo",
+          filename: "siglo.png"
         }]
       });
       

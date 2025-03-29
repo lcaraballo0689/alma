@@ -57,7 +57,24 @@
             <label class="form-label">Cargar Excel (opcional)</label>
             <input type="file" @change="handleFileUpload" accept=".xlsx, .xls" class="form-control" />
           </div>
-
+<div class="mb-3">
+  <label class="form-label">Direccion de Recoleccion:</label>
+  <div class="input-group ">
+    <span class="input-group-text" id="basic-addon1"
+      ><i class="bi bi-map"></i
+    ></span>
+    <select class="form-select" v-model="selectedAddress">
+      <option value="" disabled selected>Seleccionar</option>
+      <option
+        v-for="dir in direcciones"
+        :key="dir.id"
+        :value="dir.direccion"
+      >
+        {{ dir.direccion }}
+      </option>
+    </select>
+  </div>
+</div>
           <!-- Observaciones -->
           <div class="mb-3">
             <label class="form-label">Observaciones (Opcional)</label>
@@ -104,6 +121,8 @@ export default {
       observations: "",
       excelFile: null,
       clientStore: null, // Para guardar la referencia del store
+      direcciones: [],
+      selectedAddress: "",
     };
   },
   computed: {
@@ -115,8 +134,42 @@ export default {
   created() {
     // Inicializamos el store en created (o setup, si usas Composition API)
     this.clientStore = useClientStore();
+    
+  },
+  async mounted() {
+    const authStore = useAuthStore();
+    if (authStore.user && authStore.user.clienteId) {
+      try {
+        const response = await this.getDirecctionsClient(
+          authStore.user.clienteId
+        );
+        this.direcciones = response.direcciones || [];
+      } catch (error) {
+        console.error("Error al obtener direcciones del cliente:", error);
+        Swal.fire({
+          toast: true,
+          position: "bottom-end",
+          icon: "error",
+          title: "Error al obtener direcciones del cliente.",
+          timer: 10000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+        });
+      }
+    }
   },
   methods: {
+    async getDirecctionsClient(clienteId) {
+      try {
+        const response = await apiClient.get(
+          `api/direcciones/cliente/${clienteId}`
+        );
+        return response.data;
+      } catch (error) {
+        console.error("Error al obtener direcciones del cliente:", error);
+        throw error;
+      }
+    },
     addItem() {
       if (this.newItemReferencia.trim() !== "") {
         this.itemsForm.push({ referencia2: this.newItemReferencia.trim() });
@@ -166,8 +219,9 @@ export default {
       const payload = {
         clienteId,
         usuarioId,
-        items: this.itemsForm, // Cada item tiene { referencia2: ... }
-        // observaciones: this.observations, // si lo requieres
+        items: this.itemsForm, 
+        observaciones: this.observations, 
+        direccionRecoleccion: this.selectedAddress
       };
 
       try {
