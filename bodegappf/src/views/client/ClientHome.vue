@@ -252,8 +252,7 @@ const movimientosreg = defineAsyncComponent(() => import("../admin/Transferencia
 const Inventario = defineAsyncComponent(() => import("./inventario.vue"));
 const prestamos = defineAsyncComponent(() => import("./prestamos.vue"));
 const devoluciones = defineAsyncComponent(() => import("./devoluciones.vue"));
-const Transferencia = defineAsyncComponent(() =>
-  import("./Transferencias.vue")
+const Transferencia = defineAsyncComponent(() => import("./transferencias.vue")
 );
 const MassUpload = defineAsyncComponent(() => import("./MassUpload.vue"));
 const confirmarRecepcion = defineAsyncComponent(() =>
@@ -296,14 +295,14 @@ export default {
           label: "Transferencia",
           icon: "bi bi-truck-front-fill",
         },
-        // {
-        //   name: "Desincorporacion",
-        //   label: "Desincorporacion",
-        //   icon: "bi bi-archive-fill",
-        // },
+         {
+          name: "Desincorporacion",
+          label: "Desincorporacion",
+          icon: "bi bi-archive-fill",
+         },
         {
           name: "confirmarRecepcion",
-          label: "Confirmar Recepcion",
+          label: "Confirmar Entrega",
           icon: "bi bi-building-fill-check",
         },
       ],
@@ -332,7 +331,7 @@ export default {
        } else if (this.currentTab === "Desincorporacion") {
          return [{ menu: "Movimientos", submenu: this.currentTab }];
        } else if (this.currentTab === "confirmarRecepcion") {
-         return [{ menu: "Movimientos", submenu: "Confirmar Recepcion" }];
+         return [{ menu: "Movimientos", submenu: "Confirmar Entrega" }];
        } else {
          return [{ menu: this.currentTab, submenu: "" }];
        }
