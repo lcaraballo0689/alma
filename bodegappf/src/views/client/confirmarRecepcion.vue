@@ -47,7 +47,7 @@
                 <td>{{ t.id }}</td>
 
                 <td>{{ t.estado}}</td>
-                <td v-if="activeTab !== 'entregado'">{{ t }}</td>
+                <td v-if="activeTab !== 'entregado'">{{ t.usuarioVerifica }}</td>
                 <td>{{ t.direccion }}</td>
                 <td>{{ formatDate(t.fechaSolicitud) }} {{ formatTime(t.fechaSolicitud) }}</td>
                 <td>{{ formatDate(t.fechaVerificacion) }} {{ formatTime(t.fechaVerificacion) }}</td>

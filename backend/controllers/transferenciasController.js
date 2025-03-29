@@ -881,24 +881,48 @@ async function consultarTransferencias(req, res, next) {
     const pool = await connectDB();
     const request = new sql.Request(pool);
     request.input("clienteId", sql.Int, clienteId);
-    let query = `SELECT * FROM SolicitudTransporte WHERE clienteId = @clienteId`;
+
+    let query = `
+      SELECT TOP (1000)
+        st.id,
+        st.clienteId,
+        st.consecutivo,
+        st.estado,
+        st.fechaSolicitud,
+        st.fechaVerificacion,
+        st.fechaCarga,
+        uv.nombre AS usuarioVerifica,  -- Nombre del usuario que verificó
+        uc.nombre AS usuarioCarga,     -- Nombre del usuario que cargó
+        st.observaciones,
+        st.createdAt,
+        st.updatedAt,
+        st.fechaAsignacion,
+        st.fechaRecogida,
+        st.qrToken,
+        st.modulo,
+        st.direccion
+      FROM SolicitudTransporte st
+      LEFT JOIN Usuario uv ON st.usuarioVerifica = uv.id
+      LEFT JOIN Usuario uc ON st.usuarioCarga = uc.id
+      WHERE st.clienteId = @clienteId
+    `;
+
     if (estado) {
-      query += " AND estado = @estado";
+      query += " AND st.estado = @estado";
       request.input("estado", sql.VarChar, estado);
     }
     if (fechaInicio) {
-      query += " AND fechaSolicitud >= @fechaInicio";
+      query += " AND st.fechaSolicitud >= @fechaInicio";
       request.input("fechaInicio", sql.DateTime, fechaInicio);
     }
     if (fechaFin) {
-      query += " AND fechaSolicitud <= @fechaFin";
+      query += " AND st.fechaSolicitud <= @fechaFin";
       request.input("fechaFin", sql.DateTime, fechaFin);
     }
-    query += " ORDER BY id DESC";
+    query += " ORDER BY st.id DESC";
+
     const result = await request.query(query);
-    logger.info(
-      `Consulta de transferencias para cliente ${clienteId} exitosa.`
-    );
+    logger.info(`Consulta de transferencias para cliente ${clienteId} exitosa.`);
     return res.status(200).json({
       message: "Transferencias consultadas exitosamente",
       data: result.recordset,
@@ -908,6 +932,7 @@ async function consultarTransferencias(req, res, next) {
     return next(error);
   }
 }
+
 
 /**
  * Consulta el detalle de una transferencia (POST /api/client/transferencias/consultarDetalle)
