@@ -171,6 +171,7 @@ const confirmarRecepcion = defineAsyncComponent(() =>
   import("./confirmarRecepcion.vue")
 );
 const Desarchives = defineAsyncComponent(() => import("./desarchive.vue"));
+const Desarchive = defineAsyncComponent(() => import("./solicitudDesarchive.vue"));
 
 const fallbackComponent = {
   template: `
@@ -297,7 +298,8 @@ export default {
         movimientosreg: movimientosreg,
         devolucion: devolucion,
         prestamo: prestamo,
-        solicitarTransferencia: solicitarTransferencia
+        solicitarTransferencia: solicitarTransferencia,
+        Desarchive: Desarchive
 
       };
       return componentMap[this.currentTab] || fallbackComponent;
