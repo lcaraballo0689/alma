@@ -1,11 +1,8 @@
 <template>
-  <div :class="{ 'dark-mode': themeStore.isDarkTheme }">
+  <div >
     <!-- Navbar con transición y sticky -->
     <div>
-      <nav class="navbar navbar-expand-lg shadow fixed-top p-0 m-0 navegacion" :class="themeStore.isDarkTheme
-        ? 'navbar-dark bg-dark'
-        : 'navbar-light bg-white'
-        " style="min-height: 60px" aria-label="Barra de navegación principal">
+      <nav class="navbar navbar-expand-lg shadow fixed-top p-0 m-0 navegacion"  style="min-height: 60px" aria-label="Barra de navegación principal">
         <div class="container-fluid">
           <!-- Logo e Identificación del cliente -->
           <a class="navbar-brand d-flex align-items-center" href="#" aria-label="Inicio">

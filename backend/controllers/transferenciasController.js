@@ -200,40 +200,63 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
     throw new Error("Datos incompletos para la transferencia.");
   }
 
+  // Determinar la columna de consecutivo según el módulo
+  let columnaConsecutivo = "";
+  switch (modulo) {
+    case "Prestamo":
+      columnaConsecutivo = "ultimoPrestamo";
+      break;
+    case "transferencia":
+      columnaConsecutivo = "ultimoTransporte";
+      break;
+    case "Devolucion":
+      columnaConsecutivo = "ultimaDevolucion";
+      break;
+    case "Desarchive":
+      columnaConsecutivo = "ultimoEnvio";
+      break;
+    default:
+      throw new Error(`Módulo no reconocido: ${modulo}`);
+  }
+
+  // Consulta el consecutivo actual de la columna determinada
   const resultCons = await new sql.Request(transaction)
     .input("clienteId", sql.Int, clienteId)
-    .query(`SELECT ultimoTransporte FROM Consecutivos WHERE clienteId = @clienteId`);
+    .query(`SELECT ${columnaConsecutivo} AS ultimoNumero FROM Consecutivos WHERE clienteId = @clienteId`);
 
-  let ultimoTransporte = resultCons.recordset[0]?.ultimoTransporte || 0;
-  const nuevoConsecutivo = ultimoTransporte + 1;
+  let ultimoNumero = resultCons.recordset[0]?.ultimoNumero || 0;
+  const nuevoConsecutivo = ultimoNumero + 1;
 
+  // Actualizar el consecutivo en la columna correspondiente
   await new sql.Request(transaction)
-    .input("nuevoTransporte", sql.Int, nuevoConsecutivo)
+    .input("nuevoNumero", sql.Int, nuevoConsecutivo)
     .input("clienteId", sql.Int, clienteId)
-    .query(`UPDATE Consecutivos SET ultimoTransporte = @nuevoTransporte WHERE clienteId = @clienteId`);
+    .query(`UPDATE Consecutivos SET ${columnaConsecutivo} = @nuevoNumero WHERE clienteId = @clienteId`);
 
+  // Se define la dirección (si no se pasa direccion_entrega se utiliza direccion_recoleccion)
   const direccion = direccion_entrega || direccion_recoleccion || null;
 
-  // Insertar solicitud
+  // Insertar la solicitud en SolicitudTransporte
   const insertSol = await new sql.Request(transaction)
     .input("clienteId", sql.Int, clienteId)
     .input("consecutivo", sql.Int, nuevoConsecutivo)
     .input("estado", sql.VarChar, "solicitud creada")
     .input("observaciones", sql.VarChar, observaciones)
     .input("modulo", sql.VarChar, modulo)
-    .input("direccion", sql.VarChar, direccion) // Se asigna la dirección definida
+    .input("direccion", sql.VarChar, direccion)
     .query(`
-  INSERT INTO SolicitudTransporte 
-    (clienteId, modulo, consecutivo, estado, fechaSolicitud, observaciones, createdAt, updatedAt, direccion)
-  VALUES 
-    (@clienteId, @modulo, @consecutivo, @estado, GETDATE(), @observaciones, GETDATE(), GETDATE(), @direccion);
-  SELECT SCOPE_IDENTITY() AS solicitudId;
-`);
+      INSERT INTO SolicitudTransporte 
+        (clienteId, modulo, consecutivo, estado, fechaSolicitud, observaciones, createdAt, updatedAt, direccion)
+      VALUES 
+        (@clienteId, @modulo, @consecutivo, @estado, GETDATE(), @observaciones, GETDATE(), GETDATE(), @direccion);
+      SELECT SCOPE_IDENTITY() AS solicitudId;
+    `);
 
   const solicitudId = insertSol.recordset[0].solicitudId;
 
   await registrarAuditoria(pool, solicitudId, "NINGUNO", "solicitud creada", usuarioId, "Creación de solicitud");
 
+  // Insertar cada detalle de la solicitud
   for (const item of items) {
     await new sql.Request(transaction)
       .input("solicitudTransporteId", sql.Int, solicitudId)
@@ -257,11 +280,11 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
     .input("solicitudTransporteId", sql.Int, solicitudId)
     .input("qrToken", sql.VarChar, qrText)
     .input("qrCodeImage", sql.VarChar, qrCodeImage)
-    .input("activo", sql.Bit, 1).query(`
-          INSERT INTO QR_Solicitudes (solicitudTransporteId, qrToken, qrCodeImage, activo)
-          VALUES (@solicitudTransporteId, @qrToken, @qrCodeImage, @activo)
-        `);
-
+    .input("activo", sql.Bit, 1)
+    .query(`
+      INSERT INTO QR_Solicitudes (solicitudTransporteId, qrToken, qrCodeImage, activo)
+      VALUES (@solicitudTransporteId, @qrToken, @qrCodeImage, @activo)
+    `);
 
   return { solicitudId, nuevoConsecutivo };
 }

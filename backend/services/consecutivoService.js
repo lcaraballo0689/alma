@@ -40,6 +40,37 @@ async function incrementarUltimoPrestamo(transaction, clienteId) {
 }
 
 /**
+ * Incrementa en 1 el valor de ultimoEnvio para un cliente.
+ * @param {import('mssql').Transaction} transaction
+ * @param {number} clienteId
+ */
+async function incrementarUltimoDesarchive(transaction, clienteId) {
+  const request = transaction.request();
+  request.input('clienteId', sql.Int, clienteId);
+
+  // Incrementa el valor de ultimoEnvio
+  await request.query(`
+    UPDATE dbo.Consecutivos
+    SET ultimoEnvio = ultimoEnvio + 1
+    WHERE clienteId = @clienteId
+  `);
+
+  // Consulta el registro actualizado
+  const updatedResult = await request.query(`
+    SELECT ultimoEnvio
+    FROM dbo.Consecutivos
+    WHERE clienteId = @clienteId
+  `);
+
+  // Retorna el registro actualizado
+  if (updatedResult.recordset.length > 0) {
+    return updatedResult.recordset[0]; // { ultimoEnvio: <nuevo valor> }
+  } else {
+    return null;
+  }
+}
+
+/**
  * Incrementa en 1 el valor de ultimaDevolucion para un cliente.
  * @param {import('mssql').Transaction} transaction
  * @param {number} clienteId
@@ -78,5 +109,6 @@ async function incrementarUltimaDevolucion(transaction, clienteId) {
 module.exports = {
   getOrCreateConsecutivos,
   incrementarUltimoPrestamo,
-  incrementarUltimaDevolucion
+  incrementarUltimaDevolucion,
+  incrementarUltimoDesarchive
 };

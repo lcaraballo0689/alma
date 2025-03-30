@@ -6,18 +6,19 @@
         <div class="row align-items-center m-0 p-0 py-3 d-flex justify-content-between">
           <!-- Selector de Estado -->
           <div class="col-auto">
-            <div class="custom-select">
+            <!-- <div class="custom-select">
               <select v-model="selectedEstado" @change="fetchtransferencias">
                 <option value="TODOS">TODOS</option>
                 <option v-for="estado in estadosDisponibles" :key="estado" :value="estado">
                   {{ estado }}
                 </option>
               </select>
-            </div>
+            </div> -->
+           <strong>REPORTE DE TRANSFERENCIAS</strong> 
           </div>
+
           <!-- Botones de Solicitar Transferencia, Excel y Búsqueda -->
           <div class="col-auto d-flex align-items-center gap-2">
-            
             <button class="custom-btn excel me-2" @click="exportToExcel" @mouseover="hoveredButton = 'excel'"
               @mouseleave="hoveredButton = ''">
               <i :class="hoveredButton === 'excel' ? 'bi bi-arrow-down-circle-fill' : 'bi bi-file-excel-fill'"></i>
@@ -35,35 +36,46 @@
       <!-- Tabla principal -->
       <div class="card-body m-0 p-0">
         <div class="table-container">
-          <table class="table table-sm table-bordered table-hover sticky-content">
-            <thead class="sticky-header">
+          <table class="table-compact table table-hover">
+            <thead>
               <tr>
                 <th>ID</th>
+                <th>Traslado N°</th>
                 <th>Estado</th>
+                <th>Ultima Actualizacion</th>
                 <th>Fecha Solicitud</th>
-                <th>Usuario</th>
+                <th>Transportista</th>
+                <th>Documento de Identidad</th>
+                <th>Placa Vehiculo</th>
+                <th>Fecha Asignación</th>
+                <th>Fecha Entrega</th>
                 <th>Observaciones</th>
-                <th>Creado</th>
-                <th>Actualizado</th>
+                <th>Dirección</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, index) in filteredtransferencias" :key="item.id || index" @click="showDetalle(item.id)"
-                style="cursor: pointer">
+              <tr v-for="(item, index) in this.transferencias" :key="item.id || index" @click="showDetalle(item.id)" style="cursor: pointer;">
+                <td>{{ item.consecutivo }}</td>
                 <td>{{ item.id }}</td>
-                <td class="text-uppercase">
-                  <span :class="getEstadoClass(item.estado)">
-                    {{ item.estado }}
-                  </span>
+                <td>{{ item.estado }}</td>
+                <td>
+                  {{ item.updatedAt !== item.createdAt
+                    ? formatDate(item.updatedAt) + ' - ' + formatTime(item.updatedAt)
+                  : 'Sin Actualizacion' }}
                 </td>
-                <td>{{ formatDate(item.fechaSolicitud) }}</td>
-                <td>{{ item.usuarioCarga || item.usuarioVerifica }}</td>
-                <td>{{ item.observaciones }}</td>
                 <td>{{ formatDate(item.createdAt) }} - {{ formatTime(item.createdAt) }}</td>
-                <td>{{ formatDate(item.updatedAt) }} - {{ formatTime(item.updatedAt) }}</td>
+                <td>{{ item.usuarioCarga || 'Sin Asignar' }}</td>
+                <td>{{ 'Pendiente' }}</td> <!-- TODO: pendiente modificar endpoint para llenar este campo-->
+                <td>{{ 'Pendiente' }}</td> <!-- TODO: pendiente modificar endpoint para llenar este campo-->
+                <td>{{ item.fechaAsignacion ? formatDate(item.fechaAsignacion) : 'Pendiente' }}</td>
+                <td>{{ item.fechaCarga ? formatDate(item.fechaCarga) : 'Pendiente' }}</td>
+                <td>{{ item.observaciones }}</td>
+                <td>{{ item.direccion }}</td>
               </tr>
             </tbody>
           </table>
+
+
 
         </div>
       </div>
@@ -74,7 +86,7 @@
       <div class="modal-content">
         <div class="modal-header card d-flex justify-content-start">
           <h5 class="modal-title">
-            <i class="bi bi-truck me-2"></i>Detalle de Transporte
+            <i class="bi bi-truck me-2"></i>Detalle de Transferencia
           </h5>
         </div>
         <div class="modal-body p-2 m-2">
@@ -83,12 +95,11 @@
           </div>
           <div v-else>
             <div class="card-modal p-3 mb-3">
-              <h6 class="mb-2">Solicitud</h6>
               <div class="row">
                 <!-- Columna 1 -->
                 <div class="col-md-6">
                   <p class="mb-1">
-                    <strong>ID:</strong> {{ detalle.solicitud.id }}
+                    <strong>Traslado N°:</strong> {{ detalle.solicitud.id }}
                   </p>
                   <p class="mb-1">
                     <strong>Estado:</strong> {{ detalle.solicitud.estado }}
@@ -106,28 +117,20 @@
                 </div>
               </div>
             </div>
-            <hr />
-            <h6>Detalle de la Transferencia</h6>
             <div class="scroll-container">
               <table class="table table-bordered table-sm">
                 <thead>
                   <tr class="text-center">
-                    <th>ID</th>
                     <th>Tipo</th>
                     <th>Referencia 2</th>
-                    <th>Referencia 3</th>
                     <th>Estado</th>
-                    <th>Descripción</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="item in detalle.detalle" :key="item.id" class="text-center">
-                    <td>{{ item.id }}</td>
                     <td>{{ item.tipo }}</td>
                     <td>{{ item.referencia2 }}</td>
-                    <td>{{ item.referencia3 }}</td>
                     <td>{{ item.estado }}</td>
-                    <td>{{ item.descripcion }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -149,7 +152,7 @@
 import apiClient from "@/services/api";
 import { useAuthStore } from "@/stores/authStore";
 import { useLoaderStore } from "@/stores/loaderStore";
-import solicitarTransferencia from "./solicitarTransferencia.vue";
+
 import * as XLSX from "xlsx";
 import { useClientStore } from "@/stores/clientStore";
 import { DateTime } from "luxon";
@@ -157,12 +160,13 @@ import { DateTime } from "luxon";
 
 
 export default {
-  name: "transferenciasTable",
-  components: {
-    solicitarTransferencia,
-  },
+  name: "Prestamos",
   data() {
+    const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
     return {
+      totalRegistros: null,
+      fechaDesde: today,  // Valor por defecto: hoy
+      fechaHasta: today,  // Valor por defecto: hoy
       selectedEstado: "TODOS",
       estadosDisponibles: [],
       transferencias: [],
@@ -181,18 +185,61 @@ export default {
     clientStore() {
       return useClientStore();
     },
-    filteredtransferencias() {
-      const term = this.searchTerm.toLowerCase();
-      return this.transferencias.filter((item) => {
-        return (
-          (item.referencia1 || "").toLowerCase().includes(term) ||
-          (item.referencia2 || "").toLowerCase().includes(term) ||
-          (item.referencia3 || "").toLowerCase().includes(term) ||
-          (item.cliente_nombre || "").toLowerCase().includes(term) ||
-          (item.usuario_nombre || "").toLowerCase().includes(term)
-        );
-      });
+    // Devuelve la fecha actual en formato "YYYY-MM-DD"
+    maxDate() {
+      return new Date().toISOString().split("T")[0];
     },
+    filteredtransferencias() {
+  const term = this.searchTerm.toLowerCase();
+
+  // Filtrar por búsqueda en todas las columnas (todas las propiedades del objeto)
+  let filtered = this.transferencias.filter((item) => {
+    // Convertir los valores del objeto a array y verificar si alguno incluye el término
+    return Object.values(item).some(value => 
+      String(value || "").toLowerCase().includes(term)
+    );
+  });
+
+  // Filtrar por estado solo si se seleccionó un valor distinto a "TODOS"
+  if (this.selectedEstado && this.selectedEstado !== "TODOS") {
+    filtered = filtered.filter((item) => item.estado === this.selectedEstado);
+  }
+
+  // Filtrar por rango de fechas si se han definido
+  if (this.fechaDesde || this.fechaHasta) {
+    filtered = filtered.filter((item) => {
+      const itemDateLocal = DateTime.fromISO(item.fechaSolicitud, { zone: "utc" }).setZone("America/Bogota");
+      let isValid = true;
+      if (this.fechaDesde) {
+        const desdeLocal = DateTime.fromISO(this.fechaDesde).setZone("America/Bogota").startOf("day");
+        isValid = isValid && itemDateLocal >= desdeLocal;
+      }
+      if (this.fechaHasta) {
+        const hastaLocal = DateTime.fromISO(this.fechaHasta).setZone("America/Bogota").endOf("day");
+        isValid = isValid && itemDateLocal <= hastaLocal;
+      }
+      return isValid;
+    });
+  }
+
+  return filtered;
+},
+    // Funciones de formateo utilizando Luxon
+    formatDate() {
+      return (dateString) => {
+        if (!dateString) return "N/A";
+        const dt = DateTime.fromISO(dateString, { zone: "utc" }).setZone("America/Bogota");
+        return dt.setLocale("es").toFormat("dd/MM/yyyy");
+      };
+    },
+    formatTime() {
+      return (dateString) => {
+        if (!dateString) return "N/A";
+        const dt = DateTime.fromISO(dateString, { zone: "utc" }).setZone("America/Bogota");
+        return dt.setLocale("es").toFormat("hh:mm a");
+      };
+    },
+
   },
   mounted() {
     this.fetchEstados();
@@ -223,16 +270,10 @@ export default {
       // Reiniciamos el detalle si es necesario
       this.detalle = { solicitud: {}, detalle: [] };
     },
-    showSolicitarTransferencia() {
-      this.clientStore.setShowSolicitudTransporte(
-        !this.clientStore.getShowSolicitudTransporte
-      );
-      console.log("Mostrar Solicitud:", this.clientStore.getShowSolicitudTransporte);
-    },
     async fetchEstados() {
       try {
         const payload = {
-          tipo: "Desarchivo",
+          tipo: "Desarchive",
           clienteId: useAuthStore().clienteId,
         };
         console.log("Payload listar estados:", payload);
@@ -244,39 +285,30 @@ export default {
       }
     },
     async fetchtransferencias() {
-  try {
-    const clienteId = useAuthStore().clienteId;
-    if (!clienteId) {
-      console.error("❌ Error: Cliente ID no encontrado.");
-      return;
-    }
-    const requestBody = { clienteId };
-    const response = await apiClient.post("/api/transferencias/consultar", requestBody);
-    // Filtrar las transferencias que tengan modulo igual a "transferencia"
-    this.transferencias = (response.data.data || []).filter(item => 
-      item.modulo && item.modulo.toLowerCase() === "transferencia"
-    );
-    console.log(response);
-    useLoaderStore().hideLoader();
-  } catch (error) {
-    console.error("Error al obtener datos de transferencias:", error);
-  }
-},
+      try {
+        const clienteId = useAuthStore().clienteId;
+        if (!clienteId) {
+          console.error("❌ Error: Cliente ID no encontrado.");
+          return;
+        }
+        const requestBody = { clienteId };
+        const response = await apiClient.post("/api/transferencias/consultar", requestBody);
+        // Filtrar las transferencias que tengan modulo igual a "transferencia"
+        this.transferencias = (response.data.data || []).filter(item =>
+          item.modulo && item.modulo.toLowerCase() === "transferencia"
+        );
 
+        this.totalRegistros = response.data.data.length;
+
+        console.info(response.data.data);
+        console.info(this.totalRegistros);
+        useLoaderStore().hideLoader();
+      } catch (error) {
+        console.error("Error al obtener datos de transferencias:", error);
+      }
+    },
     handleReloadData() {
       this.fetchtransferencias();
-    },
-    getEstadoClass(estado) {
-      if (!estado) return "text-secondary";
-      const estadoLower = estado.toLowerCase();
-      if (estadoLower.includes("disponible")) return "fw-bold text-success";
-      if (estadoLower.includes("solicitado")) return "fw-bold text-warning";
-      if (estadoLower.includes("entrega")) return "fw-bold text-primary";
-      if (estadoLower.includes("progreso")) return "fw-bold text-info";
-      if (estadoLower.includes("devuelto")) return "fw-bold text-success";
-      if (estadoLower.includes("rechazado")) return "fw-bold text-danger";
-      if (estadoLower.includes("anulado")) return "fw-bold text-muted";
-      return "text-secondary fw-bold";
     },
     // Retorna la fecha formateada "dd/MM/yyyy" en la zona de Bogotá
     formatDate(dateString) {
@@ -290,9 +322,6 @@ export default {
       const dt = DateTime.fromISO(dateString, { zone: "utc" });
       return dt.setLocale("es").toFormat("hh:mm a");
     },
-
-
-
     exportToExcel() {
       const dataToExport = this.filteredtransferencias.map((item) => ({
         ID: item.id,
@@ -370,5 +399,52 @@ export default {
 .scroll-container {
   max-height: 200px;
   overflow-y: auto;
+}
+
+/* CSS para tablas compactas */
+.table-compact {
+  font-size: 0.8rem;
+  /* Tamaño de fuente reducido */
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Para fijar el encabezado */
+.table-compact thead th {
+  position: sticky;
+  top: 0;
+  background-color: #f2f2f2;
+  /* color de fondo para que se vea bien */
+  z-index: 2;
+  /* para que se superponga sobre las celdas */
+}
+
+/* Para fijar la primera columna */
+.table-compact tbody td:first-child,
+.table-compact thead th:first-child {
+  position: sticky;
+  left: 0;
+  margin-left: -10px;
+  background-color: #c5c5c5;
+  /* color de fondo (ajústalo si es necesario) */
+  z-index: 1;
+}
+
+/* Opcional: para evitar conflictos entre el encabezado y la primera columna */
+.table-compact thead th:first-child {
+  z-index: 3;
+}
+
+.table-compact th,
+.table-compact td {
+  padding: 0.4rem;
+  /* Menor espacio interno */
+  border: 1px solid #ddd;
+  white-space: nowrap;
+  /* Evita saltos de línea */
+}
+
+.table-compact thead {
+  background-color: #f2f2f2;
 }
 </style>

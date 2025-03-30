@@ -29,6 +29,18 @@ async function marcarCustodiaSolicitada(transaction, custodiaId) {
 }
 
 /**
+ * Actualiza la custodia a estado "DESARCHIVADA" por referencia2.
+ * @param {import('mssql').Transaction} transaction
+ * @param {string} referencia2
+ */
+async function marcarCustodiaDesarchivadaPorReferencia2(transaction, referencia2) {
+  const request = transaction.request();
+  request.input('referencia2', sql.NVarChar, referencia2);
+  await request.query(`UPDATE dbo.Custodia SET estado = 'Procesando Desarchive' WHERE referencia2 = @referencia2`);
+}
+
+
+/**
  * Obtiene una custodia por su referencia2 y que esté DISPONIBLE.
  * @param {import('mssql').Transaction} transaction
  * @param {string} referencia2
@@ -103,5 +115,6 @@ module.exports = {
   getCustodiaByReferencia2,
   getCustodiaByReferencia2Devoluccion,
   marcarCustodiaEnDevolucion,
-  getCustodiasPrestadas
+  getCustodiasPrestadas,
+  marcarCustodiaDesarchivadaPorReferencia2
 };
