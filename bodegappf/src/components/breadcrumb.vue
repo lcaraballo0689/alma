@@ -5,7 +5,7 @@
       :hidden="items[0] === 'Dashboard'"
     >
       <li></li>
-      <li class="" v-for="(item, index) in items" :key="index"  style="color: #c2c2c2;">
+      <li class="" v-for="(item, index) in items" :key="index"  >
         <span v-if="item?.menu !== 'Dashboard'" class="me-1">
           <i class="bi bi-house me-1"></i
         ></span>
@@ -77,7 +77,7 @@ export default {
 
 .custom-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
   content: "›";
-  color: #888;
+  color: #292929;
   padding: 0 8px;
 }
 

@@ -152,8 +152,6 @@
       </div>
     </div>
 
-    <!-- Componente para solicitar transferencia -->
-    <solicitarTransferencia @reloadData="handleReloadData" />
   </div>
 </template>
 
@@ -317,15 +315,15 @@ export default {
       this.fetchtransferencias();
     },
     getEstadoClass(estado) {
-      if (!estado) return "text-secondary";
-      const estadoLower = estado.toLowerCase();
-      if (estadoLower.includes("disponible")) return "fw-bold text-success";
-      if (estadoLower.includes("solicitado")) return "fw-bold text-warning";
-      if (estadoLower.includes("entrega")) return "fw-bold text-primary";
-      if (estadoLower.includes("progreso")) return "fw-bold text-info";
-      if (estadoLower.includes("devuelto")) return "fw-bold text-success";
-      if (estadoLower.includes("rechazado")) return "fw-bold text-danger";
-      if (estadoLower.includes("anulado")) return "fw-bold text-muted";
+      // if (!estado) return "text-secondary";
+      // const estadoLower = estado.toLowerCase();
+      // if (estadoLower.includes("disponible")) return "fw-bold text-success";
+      // if (estadoLower.includes("solicitado")) return "fw-bold text-warning";
+      // if (estadoLower.includes("entrega")) return "fw-bold text-primary";
+      // if (estadoLower.includes("progreso")) return "fw-bold text-info";
+      // if (estadoLower.includes("devuelto")) return "fw-bold text-success";
+      // if (estadoLower.includes("rechazado")) return "fw-bold text-danger";
+      // if (estadoLower.includes("anulado")) return "fw-bold text-muted";
       return "text-secondary fw-bold";
     },
     // Retorna la fecha formateada "dd/MM/yyyy" en la zona de Bogotá

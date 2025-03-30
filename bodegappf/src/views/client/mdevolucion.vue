@@ -141,8 +141,7 @@
       </div>
     </div>
 
-    <!-- Componente para solicitar transferencia -->
-    <solicitarTransferencia @reloadData="handleReloadData" />
+
   </div>
 </template>
 

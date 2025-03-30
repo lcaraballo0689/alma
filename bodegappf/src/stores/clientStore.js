@@ -3,7 +3,7 @@ import { defineStore } from "pinia";
 export const useClientStore = defineStore("clientStore", {
   state: () => ({
     solicitudIdTransporte: null,
-    showSolicitudTransporte: false,
+    showSolicitudTransporte: true,
   }),
   getters: {
     getSolicitudIdTransporte: (state) => state.solicitudIdTransporte,

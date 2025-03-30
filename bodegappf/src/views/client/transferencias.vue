@@ -17,11 +17,7 @@
           </div>
           <!-- Botones de Solicitar Transferencia, Excel y Búsqueda -->
           <div class="col-auto d-flex align-items-center gap-2">
-            <button class="custom-btn" style="background-color: black !important; color: white !important;"
-              @click="showSolicitarTransferencia">
-              <i class="bi bi-truck me-2"></i>
-              Solicitar Transferencia
-            </button>
+            
             <button class="custom-btn excel me-2" @click="exportToExcel" @mouseover="hoveredButton = 'excel'"
               @mouseleave="hoveredButton = ''">
               <i :class="hoveredButton === 'excel' ? 'bi bi-arrow-down-circle-fill' : 'bi bi-file-excel-fill'"></i>
@@ -146,8 +142,6 @@
       </div>
     </div>
 
-    <!-- Componente para solicitar transferencia -->
-    <solicitarTransferencia @reloadData="handleReloadData" />
   </div>
 </template>
 
