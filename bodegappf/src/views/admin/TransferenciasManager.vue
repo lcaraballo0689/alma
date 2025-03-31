@@ -7,12 +7,7 @@
           <div class="col-md-3">
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-search"></i></span>
-              <input
-                v-model="search"
-                type="text"
-                class="form-control"
-                placeholder="Buscar..."
-              />
+              <input v-model="search" type="text" class="form-control" placeholder="Buscar..." />
             </div>
           </div>
           <div class="col-md-2">
@@ -28,19 +23,11 @@
           </div>
           <div class="col-md-4">
             <ul class="nav nav-pills justify-content-center">
-              <li
-                class="nav-item"
-                v-for="mod in modules"
-                :key="mod"
-              >
-                <button
-                  class="btn btn-sm me-2"
-                  :class="{
-                    'btn-outline-secondary': activeModule !== mod,
-                    'btn-secondary': activeModule === mod
-                  }"
-                  @click="activeModule = mod"
-                >
+              <li class="nav-item" v-for="mod in modules" :key="mod">
+                <button class="btn btn-sm me-2" :class="{
+                  'btn-outline-secondary': activeModule !== mod,
+                  'btn-secondary': activeModule === mod
+                }" @click="activeModule = mod">
                   {{ mod }}
                 </button>
               </li>
@@ -49,20 +36,14 @@
           <div class="col-md-3">
             <ul class="nav nav-tabs justify-content-end">
               <li class="nav-item">
-                <button
-                  class="nav-link"
-                  :class="{ active: activeTab === 'pendientes' }"
-                  @click="activeTab = 'pendientes'"
-                >
+                <button class="nav-link" :class="{ active: activeTab === 'pendientes' }"
+                  @click="activeTab = 'pendientes'">
                   Pendientes
                 </button>
               </li>
               <li class="nav-item">
-                <button
-                  class="nav-link"
-                  :class="{ active: activeTab === 'completadas' }"
-                  @click="activeTab = 'completadas'"
-                >
+                <button class="nav-link" :class="{ active: activeTab === 'completadas' }"
+                  @click="activeTab = 'completadas'">
                   Completadas
                 </button>
               </li>
@@ -88,7 +69,7 @@
             </thead>
             <tbody>
               <tr v-for="t in filteredTransferencias" :key="t.id">
-                <td>{{ t.id}}</td>
+                <td>{{ t.id }}</td>
                 <td>{{ t.clienteId }}</td>
                 <td>{{ t.modulo }}</td>
                 <td>{{ t.estado }}</td>
@@ -97,10 +78,7 @@
                 <td>{{ formatDate(t.fechaSolicitud) }} - {{ formatTime(t.fechaSolicitud) }}</td>
 
                 <td>
-                  <button
-                    class="btn btn-sm btn-outline-primary"
-                    @click="seleccionarTransferencia(t)"
-                  >
+                  <button class="btn btn-sm btn-outline-primary" @click="seleccionarTransferencia(t)">
                     <i class="bi bi-eye"></i> Ver Detalle
                   </button>
                 </td>
@@ -118,14 +96,8 @@
     </div>
 
     <!-- Modal para Detalle -->
-    <div
-      class="modal fade"
-      id="detalleModal"
-      tabindex="-1"
-      aria-labelledby="detalleModalLabel"
-      aria-hidden="true"
-      ref="detalleModal"
-    >
+    <div class="modal fade" id="detalleModal" tabindex="-1" aria-labelledby="detalleModalLabel" aria-hidden="true"
+      ref="detalleModal">
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
           <!-- Encabezado del Modal -->
@@ -133,13 +105,8 @@
             <h5 class="modal-title" id="detalleModalLabel">
               Detalle de Solicitud #{{ selectedTransferencia?.id }}
             </h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Cerrar"
-              @click="closeDetalle"
-            ></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"
+              @click="closeDetalle"></button>
           </div>
           <!-- Cuerpo del Modal -->
           <div class="modal-body">
@@ -163,7 +130,8 @@
               </p>
               <p>
                 <strong>Frech Solicitud:</strong>
-                {{ formatDate(selectedTransferencia.fechaSolicitud) }} - {{ formatTime(selectedTransferencia.fechaSolicitud) }}
+                {{ formatDate(selectedTransferencia.fechaSolicitud) }} - {{
+                  formatTime(selectedTransferencia.fechaSolicitud) }}
               </p>
               <p>
                 <strong>Ultima Actualizacion:</strong>
@@ -190,34 +158,41 @@
                 </table>
               </div>
 
+              <div v-if="estadoPermitido === 'asignado a transportador'">
+                <div class="mb-3">
+                  <label for="transportista" class="form-label">Transportador:</label>
+                  <input type="text" id="transportista" class="form-control" v-model="transportista"
+                    placeholder="Ingrese el nombre del transportador" required />
+                </div>
+                <div class="mb-3">
+                  <label for="documentoIdentidad" class="form-label">Documento de Identidad:</label>
+                  <input type="text" id="documentoIdentidad" class="form-control" v-model="documentoIdentidad"
+                    placeholder="Ingrese el documento de identidad" required />
+                </div>
+                <div class="mb-3">
+                  <label for="placa" class="form-label">Placa:</label>
+                  <input type="text" id="placa" class="form-control" v-model="placa"
+                    placeholder="Ingrese la placa del vehículo" required />
+                </div>
+              </div>
+
               <!-- Asignación de Ubicaciones (solo si el estado permitido es 'completado') -->
               <div v-if="estadoPermitido === 'completado'" class="mt-3">
                 <h6>Asignación de Ubicaciones:</h6>
-                <div
-                  v-for="(item, idx) in detalle"
-                  :key="item.id"
-                  class="mb-2"
-                >
+                <div v-for="(item, idx) in detalle" :key="item.id" class="mb-2">
                   <label class="form-label">
                     Detalle ID {{ item.id }} - Ref.2: {{ item.referencia2 }}
                   </label>
-                  <select
-                    class="form-select form-select-sm"
-                    v-model.number="item.nuevaUbicacionId"
-                  >
+                  <select class="form-select form-select-sm" v-model.number="item.nuevaUbicacionId">
                     <option disabled value="">Seleccione ubicación...</option>
-                    <option
-                      v-for="u in availableUbicaciones.filter(
-                        (u) =>
-                          !detalle.some(
-                            (d) =>
-                              d.nuevaUbicacionId === u.id &&
-                              d.id !== item.id
-                          )
-                      )"
-                      :key="u.id"
-                      :value="u.id"
-                    >
+                    <option v-for="u in availableUbicaciones.filter(
+                      (u) =>
+                        !detalle.some(
+                          (d) =>
+                            d.nuevaUbicacionId === u.id &&
+                            d.id !== item.id
+                        )
+                    )" :key="u.id" :value="u.id">
                       {{ u.codigo }} - {{ u.estado }}
                     </option>
                   </select>
@@ -230,14 +205,10 @@
             </div>
           </div>
           <!-- Pie del Modal -->
-          <div v-if="!botonDisabled"  class="modal-footer">
+          <div v-if="!botonDisabled" class="modal-footer">
             <div class="d-flex align-items-center w-100 justify-content-end">
               <h6 class="me-2 mb-0">Actualizar estado a:</h6>
-              <button
-                class="btn btn-success"
-                :disabled="botonDisabled"
-                @click="cambiarEstado"
-              >
+              <button class="btn btn-success" :disabled="botonDisabled" @click="cambiarEstado">
                 <i class="bi bi-qr-code-scan me-1"></i>
                 {{
                   botonDisabled
@@ -279,21 +250,24 @@ export default {
       estadoPermitido: null,
       botonDisabled: true,
       authStore: useAuthStore(),
+      transportista: '',
+      documentoIdentidad: '',
+      placa: '',
     };
   },
   computed: {
     direccionHeader() {
-    if (this.filteredTransferencias && this.filteredTransferencias.length > 0) {
-      // Convertir a minúsculas para evitar problemas de mayúsculas/minúsculas
-      const modulo = this.filteredTransferencias[0].modulo.toLowerCase();
-      if (modulo === "transferencia" || modulo === "devolucion") {
-        return "Dirección de recogida" ;
-      } else if (modulo === "prestamo" || modulo === "desarchivo" || modulo === "desarchive") {
-        return "Dirección de entrega";
+      if (this.filteredTransferencias && this.filteredTransferencias.length > 0) {
+        // Convertir a minúsculas para evitar problemas de mayúsculas/minúsculas
+        const modulo = this.filteredTransferencias[0].modulo.toLowerCase();
+        if (modulo === "transferencia" || modulo === "devolucion") {
+          return "Dirección de recogida";
+        } else if (modulo === "prestamo" || modulo === "desarchivo" || modulo === "desarchive") {
+          return "Dirección de entrega";
+        }
       }
-    }
-    return "";
-  },
+      return "";
+    },
     filteredTransferencias() {
       return this.transferencias.filter((t) => {
         const estadoLower = t.estado.toLowerCase();
@@ -306,7 +280,7 @@ export default {
           : true;
         const matchBusqueda = this.search
           ? t.clienteId.toString().includes(this.search) ||
-            estadoLower.includes(this.search.toLowerCase())
+          estadoLower.includes(this.search.toLowerCase())
           : true;
         const isCompleted = estadoLower === "completado";
         if (this.activeTab === "completadas") {
@@ -415,6 +389,9 @@ export default {
       }
       this.selectedTransferencia = null;
       this.detalle = null;
+      this.transportista = '';
+      this.placa = '';
+      this.documentoIdentidad = '';
     },
     async cambiarEstado() {
       try {
@@ -422,26 +399,54 @@ export default {
           alert("No puedes avanzar de estado, otro rol debe intervenir.");
           return;
         }
+
         const accion = this.estadoPermitido?.toLowerCase() || "";
+
+        // Si la acción es asignar a transportador, validamos que los campos requeridos estén completos.
+        if (accion === "asignado a transportador") {
+          if (!this.transportista || !this.documentoIdentidad || !this.placa) {
+            await import("sweetalert2").then((Swal) => {
+              Swal.default.fire({
+                toast: true,
+                position: "bottom-right",
+                icon: "warning",
+                title: "Campos incompletos",
+                text: "Por favor, complete los campos: transportista, documento de identidad y placa.",
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+              });
+            });
+
+            return;
+          }
+        }
+
         const asignaciones =
           accion === "completado"
             ? this.detalle
-                .filter((d) => d.nuevaUbicacionId)
-                .map((d) => ({
-                  detalleId: d.id,
-                  ubicacionId: d.nuevaUbicacionId,
-                }))
+              .filter((d) => d.nuevaUbicacionId)
+              .map((d) => ({
+                detalleId: d.id,
+                ubicacionId: d.nuevaUbicacionId,
+              }))
             : [];
+            const idUsuario = this.authStore.user?.id;
         const body = {
           qrToken: `solicitud_${this.selectedTransferencia.id}`,
           accion,
           modulo: this.selectedTransferencia.modulo,
-          usuarioId: 1,
+          usuarioId: idUsuario,
           clienteId: this.selectedTransferencia.clienteId,
           asignaciones,
+          transportista: this.transportista,
+          documentoIdentidad: this.documentoIdentidad,
+          placa: this.placa,
         };
+
+        console.log("Cambio de estado antes:", body);
         const response = await apiClient.post("/api/transferencias/qr/scan", body);
-        console.log("Cambio de estado:", response.data);
+        console.log("Cambio de estado después:", response.data);
         this.selectedTransferencia.estado = response.data.NuevoEstado || accion;
         await this.fetchTransferencias();
         this.closeDetalle();
@@ -449,6 +454,7 @@ export default {
         console.error("Error al cambiar estado:", error);
       }
     },
+
   },
   mounted() {
     this.fetchTransferencias();
@@ -460,28 +466,40 @@ export default {
 .container-fluid {
   padding: 1rem;
 }
+
 .card {
   margin-bottom: 1.5rem;
 }
+
 .table th,
 .table td {
   vertical-align: middle;
 }
+
 .nav-tabs .nav-link.active,
 .nav-pills .nav-link.active {
   font-weight: 600;
 }
+
 .btn {
   transition: all 0.2s ease;
 }
+
 .btn:hover {
   transform: scale(1.02);
 }
+
 .spin {
   animation: spin 1s linear infinite;
 }
+
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

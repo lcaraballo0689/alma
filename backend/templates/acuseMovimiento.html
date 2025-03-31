@@ -1,97 +1,163 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Acuse de Movimiento</title>
+  <meta charset="UTF-8">
+  <title>Acuse de Movimiento de {{modulo}} - Solicitud #{{solicitudId}}</title>
   <style>
-    /* Estilos generales */
-    body {
+    /* RESET BÁSICO */
+    body, p, h1, h2, h3, h4, h5, h6, table, td, th {
       margin: 0;
       padding: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      color: #333333;
     }
-    .main-container {
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+    /* CONTENEDOR PRINCIPAL */
+    .container {
       max-width: 600px;
-      margin: 20px auto;
+      margin: 40px auto;
       background-color: #ffffff;
-      border: 1px solid #dddddd;
-      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       overflow: hidden;
     }
+    /* ENCABEZADO */
     .header {
       background-color: #1976d2;
-      color: #ffffff;
       padding: 20px;
       text-align: center;
+      color: #ffffff;
     }
     .header img {
-      display: block;
-      margin: 0 auto 10px auto;
-      max-width: 150px;
+      max-width: 120px;
+      margin-bottom: 10px;
     }
-    .header h1 {
+    .header h2 {
       margin: 0;
       font-size: 24px;
     }
+    /* CONTENIDO */
     .content {
-      padding: 20px;
+      padding: 20px 30px;
     }
-    .content p {
-      line-height: 1.5;
-      margin: 15px 0;
+    .content h1 {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: #2c3e50;
+      text-align: center;
     }
-    .content ul {
-      margin: 15px 0;
-      padding-left: 20px;
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
     }
-    .content li {
-      margin: 8px 0;
+    .data-table th,
+    .data-table td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      font-size: 14px;
+      text-align: left;
     }
+    .data-table th {
+      background-color: #f8f8f8;
+      width: 40%;
+    }
+    /* SECCIÓN DEL CÓDIGO QR */
+    .qr-code {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .qr-code img {
+      max-width: 150px;
+    }
+    /* PIE DE PÁGINA */
     .footer {
-      background-color: #f4f4f4;
+      background-color: #ecf0f1;
       text-align: center;
       padding: 15px;
-      font-size: 0.9em;
-      color: #777777;
+      font-size: 12px;
+      color: #777;
     }
-    /* Responsivo básico */
-    @media only screen and (max-width: 600px) {
-      .main-container {
-        width: 100%;
-        margin: 0 auto;
-        border: none;
-      }
+    .footer p {
+      margin: 5px 0;
+    }
+    .footer a {
+      color: #777;
     }
   </style>
 </head>
 <body>
-  <div class="main-container">
-    <!-- Encabezado con color de fondo y logo -->
+  <div class="container">
+    <!-- ENCABEZADO -->
     <div class="header">
-      <!-- Ajusta el atributo src a "cid:bodegappLogo" si envías la imagen como adjunto en Nodemailer -->
-      <img src="cid:bodegappLogo" alt="Bodegapp Logo" />
-      <h1>Acuse de Movimiento de {{modulo}}</h1>
+      <img src="cid:siglo" alt="Logo Siglo XXI Documental">
+      <h2>Acuse de Movimiento de {{modulo}}</h2>
     </div>
-
-    <!-- Contenido principal -->
+    
+    <!-- CONTENIDO PRINCIPAL -->
     <div class="content">
-      <p>Estimado cliente,</p>
-      <p>Se ha registrado la siguiente actualización de estado en su solicitud:</p>
-      <ul>
-        <li><strong>ID de Solicitud:</strong> {{solicitudId}}</li>
-        <li><strong>Estado Anterior:</strong> {{estadoAnterior}}</li>
-        <li><strong>Estado Actual:</strong> {{estadoActual}}</li>
-        <li><strong>Fecha de Actualización:</strong> {{fechaActualizacion}}</li>
-      </ul>
-      <p>Si tiene alguna pregunta, no dude en contactarnos.</p>
-      <p>Gracias por confiar en nosotros.</p>
+      <h1>Detalle de Actualización</h1>
+      <p>Estimado/a <strong>{{userName}}</strong>,</p>
+      <p>Se ha registrado la siguiente actualización en su solicitud:</p>
+      <table class="data-table">
+        <tr>
+          <th>ID de Solicitud</th>
+          <td>{{solicitudId}}</td>
+        </tr>
+        <tr>
+          <th>Estado Anterior</th>
+          <td>{{estadoAnterior}}</td>
+        </tr>
+        <tr>
+          <th>Estado Actual</th>
+          <td>{{estadoActual}}</td>
+        </tr>
+        <tr>
+          <th>Fecha de Actualización</th>
+          <td>{{fechaActualizacion}}</td>
+        </tr>
+        {{#if transportista}}
+        <tr>
+          <th>Transportista</th>
+          <td>{{transportista}}</td>
+        </tr>
+        {{/if}}
+        {{#if documentoIdentidad}}
+        <tr>
+          <th>Documento de Identidad</th>
+          <td>{{documentoIdentidad}}</td>
+        </tr>
+        {{/if}}
+        {{#if placa}}
+        <tr>
+          <th>Placa</th>
+          <td>{{placa}}</td>
+        </tr>
+        {{/if}}
+      </table>
+      
+      <!-- SECCIÓN DEL CÓDIGO QR -->
+      <div class="qr-code">
+        <p>Utilice el siguiente código QR para el seguimiento:</p>
+        <img src="cid:qrCodeImage" alt="Código QR">
+      </div>
+      
+      <p>Si tiene alguna duda o necesita asistencia, por favor contáctenos.</p>
     </div>
-
-    <!-- Pie de página -->
+    
+    <!-- PIE DE PÁGINA -->
     <div class="footer">
-      &copy; 2025 Bodegapp. Todos los derechos reservados.
+      <p>© {{year}} Siglo21 Documental. Todos los derechos reservados.</p>
+      <p>
+        Contacto: <a href="mailto:soporte@siglo21.com">soporte@siglo21.com</a> | Tel: +57 123 4567890
+      </p>
     </div>
   </div>
 </body>

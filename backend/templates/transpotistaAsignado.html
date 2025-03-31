@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Confirmación de Solicitud de Desarchive #{{consecutivo}}</title>
+  <title>Acuse de Movimiento de {{modulo}} - Solicitud #{{solicitudId}}</title>
   <style>
     /* RESET BÁSICO */
     body, p, h1, h2, h3, h4, h5, h6, table, td, th {
@@ -18,7 +18,6 @@
       text-decoration: none;
       color: inherit;
     }
-
     /* CONTENEDOR PRINCIPAL */
     .container {
       max-width: 600px;
@@ -27,33 +26,32 @@
       border: 1px solid #e0e0e0;
       border-radius: 8px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      overflow: hidden; /* Evita que sobresalgan elementos */
+      overflow: hidden;
     }
-
     /* ENCABEZADO */
     .header {
-      background-color: #dbdbdb;
+      background-color: #1976d2;
       padding: 20px;
       text-align: center;
+      color: #ffffff;
     }
     .header img {
       max-width: 120px;
       margin-bottom: 10px;
     }
     .header h2 {
-      color: #272727;
       margin: 0;
       font-size: 24px;
     }
-
     /* CONTENIDO */
     .content {
       padding: 20px 30px;
     }
     .content h1 {
-      font-size: 24px;
-      margin-bottom: 10px;
+      font-size: 20px;
+      margin-bottom: 15px;
       color: #2c3e50;
+      text-align: center;
     }
     .content p {
       font-size: 14px;
@@ -61,37 +59,19 @@
       margin-bottom: 10px;
       color: #444;
     }
-    .content p strong {
+    .content ul {
+      list-style: none;
+      padding: 0;
+      margin: 15px 0;
+    }
+    .content ul li {
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .content ul li strong {
       color: #333;
     }
-
-    /* Tabla de datos */
-    .data-table {
-      margin: 20px 0;
-      border-collapse: collapse;
-      width: 100%;
-    }
-    .data-table th,
-    .data-table td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      font-size: 14px;
-    }
-    .data-table th {
-      background-color: #f8f8f8;
-      text-align: left;
-    }
-
-    /* Contenedor con scroll para la tabla de ítems */
-    .scroll-container {
-      max-height: 300px; /* Ajusta esta altura según tus necesidades */
-      overflow-y: auto;
-      margin: 20px 0;
-      border: 1px solid #ddd;
-      padding: 5px;
-      border-radius: 4px;
-    }
-
     /* SECCIÓN DEL CÓDIGO QR */
     .qr-code {
       text-align: center;
@@ -100,7 +80,6 @@
     .qr-code img {
       max-width: 150px;
     }
-
     /* PIE DE PÁGINA */
     .footer {
       background-color: #ecf0f1;
@@ -121,53 +100,38 @@
   <div class="container">
     <!-- ENCABEZADO -->
     <div class="header">
+      <!-- Si envías la imagen como attachment usa el cid adecuado, por ejemplo "cid:siglo" o "cid:bodegappLogo" -->
       <img src="cid:siglo" alt="Logo Siglo XXI Documental">
-      <h2>Confirmación de Solicitud de Desarchive</h2>
+      <h2>Acuse de Movimiento de {{modulo}}</h2>
     </div>
-
+    
     <!-- CONTENIDO PRINCIPAL -->
     <div class="content">
+      <h1>Detalle de Actualización</h1>
       <p>Estimado/a <strong>{{userName}}</strong>,</p>
-      <p>
-        Su solicitud de Desarchive ha sido creada exitosamente.</p>
-      <p>A continuación se muestra el detalle de su solicitud:</p>
-
-      <!-- Tabla con datos básicos -->
-      <table class="data-table">
-        <tr>
-          <th style="width: 40%;">Nº Solicitud</th>
-          <td>{{consecutivo}}</td>
-        </tr>
-        <tr>
-          <th>Fecha de Solicitud</th>
-          <td>{{fechaSolicitud}}</td>
-        </tr>
-        <tr>
-          <th>Dirección de Entrega:</th>
-          <td>{{direccion_entrega}}</td>
-        </tr>
-        <tr>
-          <th>Observaciones:</th>
-          <td>{{observaciones}}</td>
-        </tr>
-      </table>
-      <!-- TABLA DE ITEMS CON SCROLL -->
-      <div class="scroll-container">
-        {{{itemsTable}}}
-      </div>
-
-      <!-- SECCIÓN DEL CÓDIGO QR -->
+      <p>Se ha registrado la siguiente actualización en su solicitud:</p>
+      <ul>
+        <li><strong>ID de Solicitud:</strong> {{solicitudId}}</li>
+        <li><strong>Estado Anterior:</strong> {{estadoAnterior}}</li>
+        <li><strong>Estado Actual:</strong> {{estadoActual}}</li>
+        <li><strong>Fecha de Actualización:</strong> {{fechaActualizacion}}</li>
+        <li><strong>Transportista:</strong> {{transportista}}</li>
+        <li><strong>Documento de Identidad:</strong> {{documentoIdentidad}}</li>
+        <li><strong>placa:</strong> {{placa}}</li>
+      </ul>
+      
+      <!-- Sección opcional para el código QR -->
       <div class="qr-code">
         <p>Utilice el siguiente código QR para el seguimiento:</p>
         <img src="cid:qrCodeImage" alt="Código QR">
       </div>
-
+      
       <p>Si tiene alguna duda o necesita asistencia, por favor contáctenos.</p>
     </div>
-
+    
     <!-- PIE DE PÁGINA -->
     <div class="footer">
-      <p>© {{year}} siglo21 Documental. Todos los derechos reservados.</p>
+      <p>© {{year}} Siglo21 Documental. Todos los derechos reservados.</p>
       <p>
         Contacto: <a href="mailto:soporte@siglo21.com">soporte@siglo21.com</a> | Tel: +57 123 4567890
       </p>

@@ -39,7 +39,7 @@
           <table class="table-compact table table-hover">
             <thead>
               <tr>
-                <th>Solicitud N°</th>
+                <th>ID</th>
                 <th>Traslado N°</th>
                 <th>Estado</th>
                 <th>Ultima Actualizacion</th>

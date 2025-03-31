@@ -2,16 +2,14 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Confirmación de Solicitud de Desarchive #{{consecutivo}}</title>
+  <title>Nueva Solicitud de {{tipoSolicitud}}</title>
   <style>
-    /* RESET BÁSICO */
-    body, p, h1, h2, h3, h4, h5, h6, table, td, th {
+    /* Estilos globales */
+    body {
       margin: 0;
       padding: 0;
-    }
-    body {
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
       background-color: #f4f4f4;
+      font-family: Arial, sans-serif;
       color: #333;
     }
     a {
@@ -19,18 +17,18 @@
       color: inherit;
     }
 
-    /* CONTENEDOR PRINCIPAL */
+    /* Contenedor principal */
     .container {
       max-width: 600px;
-      margin: 40px auto;
-      background-color: #ffffff;
+      margin: 30px auto;
+      background-color: #fff;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      overflow: hidden; /* Evita que sobresalgan elementos */
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    /* ENCABEZADO */
+    /* Encabezado con fondo */
     .header {
       background-color: #dbdbdb;
       padding: 20px;
@@ -46,23 +44,19 @@
       font-size: 24px;
     }
 
-    /* CONTENIDO */
+    /* Contenido principal */
     .content {
       padding: 20px 30px;
     }
-    .content h1 {
-      font-size: 24px;
+    .content h2 {
+      font-size: 18px;
       margin-bottom: 10px;
       color: #2c3e50;
     }
     .content p {
       font-size: 14px;
-      line-height: 1.6;
+      line-height: 1.5;
       margin-bottom: 10px;
-      color: #444;
-    }
-    .content p strong {
-      color: #333;
     }
 
     /* Tabla de datos */
@@ -84,7 +78,7 @@
 
     /* Contenedor con scroll para la tabla de ítems */
     .scroll-container {
-      max-height: 300px; /* Ajusta esta altura según tus necesidades */
+      max-height: 300px; /* Ajusta la altura máxima según tus necesidades */
       overflow-y: auto;
       margin: 20px 0;
       border: 1px solid #ddd;
@@ -92,18 +86,20 @@
       border-radius: 4px;
     }
 
-    /* SECCIÓN DEL CÓDIGO QR */
-    .qr-code {
+    /* Sección QR */
+    .qr-section {
       text-align: center;
       margin: 20px 0;
     }
-    .qr-code img {
-      max-width: 150px;
+    .qr-section img {
+      max-width: 200px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
     }
 
-    /* PIE DE PÁGINA */
+    /* Pie de página */
     .footer {
-      background-color: #ecf0f1;
+      background-color: #f4f4f4;
       text-align: center;
       padding: 15px;
       font-size: 12px;
@@ -112,25 +108,21 @@
     .footer p {
       margin: 5px 0;
     }
-    .footer a {
-      color: #777;
-    }
   </style>
 </head>
 <body>
+
   <div class="container">
-    <!-- ENCABEZADO -->
+    <!-- Encabezado -->
     <div class="header">
       <img src="cid:siglo" alt="Logo Siglo XXI Documental">
-      <h2>Confirmación de Solicitud de Desarchive</h2>
+      <h1>Nueva Solicitud de Prestamo</h1>
     </div>
 
-    <!-- CONTENIDO PRINCIPAL -->
+    <!-- Contenido principal -->
     <div class="content">
-      <p>Estimado/a <strong>{{userName}}</strong>,</p>
-      <p>
-        Su solicitud de Desarchive ha sido creada exitosamente.</p>
-      <p>A continuación se muestra el detalle de su solicitud:</p>
+      <h2>Detalles de la Solicitud</h2>
+      <p><strong>{{userName}}</strong>, se ha creado una nueva solicitud de <strong>{{tipoSolicitud}}</strong> con los siguientes datos:</p>
 
       <!-- Tabla con datos básicos -->
       <table class="data-table">
@@ -144,34 +136,35 @@
         </tr>
         <tr>
           <th>Dirección de Entrega:</th>
-          <td>{{direccion_entrega}}</td>
+          <td>{{direccionRecoleccion}}</td>
         </tr>
         <tr>
           <th>Observaciones:</th>
           <td>{{observaciones}}</td>
         </tr>
       </table>
-      <!-- TABLA DE ITEMS CON SCROLL -->
+
+      <!-- Contenedor con scroll para la tabla de ítems -->
       <div class="scroll-container">
         {{{itemsTable}}}
       </div>
 
-      <!-- SECCIÓN DEL CÓDIGO QR -->
-      <div class="qr-code">
-        <p>Utilice el siguiente código QR para el seguimiento:</p>
+      <!-- Sección del QR -->
+      <div class="qr-section">
         <img src="cid:qrCodeImage" alt="Código QR">
+        <p>Este código QR se generó para el seguimiento de la solicitud.</p>
       </div>
 
-      <p>Si tiene alguna duda o necesita asistencia, por favor contáctenos.</p>
+      <p>Por favor, gestionar internamente el proceso correspondiente en la bodega.</p>
+      <p>¡Gracias por su colaboración!</p>
     </div>
 
-    <!-- PIE DE PÁGINA -->
+    <!-- Pie de página -->
     <div class="footer">
-      <p>© {{year}} siglo21 Documental. Todos los derechos reservados.</p>
-      <p>
-        Contacto: <a href="mailto:soporte@siglo21.com">soporte@siglo21.com</a> | Tel: +57 123 4567890
-      </p>
+      <p>&copy; {{year}} siglo21 Documental. Todos los derechos reservados.</p>
+      <p>Contacto: soporte@siglo21.com | Tel: +57 123 4567890</p>
     </div>
   </div>
+
 </body>
 </html>

@@ -22,10 +22,9 @@ async function obtenerCorreoUsuario(pool, usuarioId) {
     .request()
     .input("usuarioId", sql.Int, usuarioId)
     .query(`
-      SELECT TOP 1 email
+      SELECT email
       FROM Usuario
       WHERE id = @usuarioId
-      ORDER BY id ASC
     `);
   return result.recordset.length > 0
     ? result.recordset[0].email
@@ -195,11 +194,12 @@ async function registrarAuditoria(
 
 async function procesarTransferenciaInterna(payload, pool, transaction) {
   const { clienteId, usuarioId, items, observaciones, modulo, direccion_entrega, fecha_recoleccion, direccion_recoleccion } = payload;
+  console.log("aqui 1");
 
   if (!clienteId || !usuarioId || !Array.isArray(items) || items.length === 0) {
     throw new Error("Datos incompletos para la transferencia.");
   }
-
+  console.log("aqui 2");
   // Determinar la columna de consecutivo según el módulo
   let columnaConsecutivo = "";
   switch (modulo) {
@@ -218,12 +218,17 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
     default:
       throw new Error(`Módulo no reconocido: ${modulo}`);
   }
+  console.log("aqui 3", columnaConsecutivo);
+  const querys = `SELECT ${columnaConsecutivo} AS ultimoNumero FROM Consecutivos WHERE clienteId = ${clienteId}`
+  console.log(querys);
 
   // Consulta el consecutivo actual de la columna determinada
   const resultCons = await new sql.Request(transaction)
     .input("clienteId", sql.Int, clienteId)
-    .query(`SELECT ${columnaConsecutivo} AS ultimoNumero FROM Consecutivos WHERE clienteId = @clienteId`);
+    .query(querys);
 
+
+  console.log("aqui 4", resultCons);
   let ultimoNumero = resultCons.recordset[0]?.ultimoNumero || 0;
   const nuevoConsecutivo = ultimoNumero + 1;
 
@@ -285,6 +290,184 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
       INSERT INTO QR_Solicitudes (solicitudTransporteId, qrToken, qrCodeImage, activo)
       VALUES (@solicitudTransporteId, @qrToken, @qrCodeImage, @activo)
     `);
+
+  // Convertir el data URL del QR a Buffer
+  let qrBuffer = null;
+  const base64Prefix = "data:image/png;base64,";
+  if (qrCodeImage.startsWith(base64Prefix)) {
+    const base64Data = qrCodeImage.slice(base64Prefix.length);
+    qrBuffer = Buffer.from(base64Data, "base64");
+  }
+
+  // Preparar datos para la plantilla de correo
+  const itemsTableHTML = generateItemsTableHTML(items);
+  const nombreDelUsuario = await obtenerNombreUsuario(pool, usuarioId);
+  const correoUsuario = await obtenerCorreoUsuario(pool, usuarioId);
+  const plantillaEmailUser = "";
+  const plantillaEmailBodega = "";
+  const bodegaEmailData = {};
+  const clientEmailData = {};
+  const correoBodega = process.env.BODEGA_EMAIL || "bodega@tuempresa.com";
+  // Generar el PDF con el detalle de la solicitud
+  const pdfBuffer = await generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items);
+  // Armar attachments (logo, QR y PDF)
+  const attachments = [
+    {
+      path: path.join(__dirname, "../assets/siglo.png"),
+      cid: "siglo",
+      filename: "siglo.png",
+    }
+  ];
+
+  if (qrBuffer) {
+    attachments.push({
+      filename: "qr-code.png",
+      content: qrBuffer,
+      cid: "qrCodeImage",
+    });
+  }
+  attachments.push({
+    filename: "detalle-solicitud.pdf",
+    content: pdfBuffer,
+    contentType: "application/pdf",
+  });
+
+  if (qrBuffer) {
+    attachments.push({
+      filename: "qr-code.png",
+      content: qrBuffer,
+      cid: "qrCodeImage",
+    });
+  }
+  attachments.push({
+    filename: "detalle-solicitud.pdf",
+    content: pdfBuffer,
+    contentType: "application/pdf",
+  });
+
+  switch (modulo) {
+    case "Prestamo":
+      plantillaEmailUser = "confirmacionSolicitudPrestamo";
+      plantillaEmailBodega = "nuevaSolicitudPrestamo";
+      bodegaEmailData = {
+        userName: "Equipo de Bodega",
+        prestamosCount: items.length,
+        consecutivo: nuevoConsecutivo,
+        itemsTable: itemsTableHTML,
+        fechaSolicitud: new Date().toLocaleString(),
+        year: new Date().getFullYear(),
+        direccionRecoleccion: direccion_entrega,
+        observaciones: observaciones
+      };
+      clientEmailData = {
+        userName: nombreDelUsuario, // Puedes reemplazar por el nombre real
+        prestamosCount: items.length,
+        consecutivo: nuevoConsecutivo,
+        itemsTable: itemsTableHTML,
+        observaciones: observaciones,
+        fechaSolicitud: new Date().toLocaleString(),
+        year: new Date().getFullYear(),
+      };
+      break;
+    case "transferencia":
+      plantillaEmailUser = "confirmacionSolicitudTransferencia";
+      plantillaEmailBodega = "nuevaSolicitudTransferencia";
+      bodegaEmailData = {
+        userName: "Equipo de Bodega",
+        prestamosCount: items.length,
+        consecutivo: nuevoConsecutivo,
+        itemsTable: itemsTableHTML,
+        fechaSolicitud: new Date().toLocaleString(),
+        year: new Date().getFullYear(),
+        direccionRecoleccion: direccion_entrega,
+        observaciones: observaciones
+      };
+      clientEmailData = {
+        userName: nombreDelUsuario, // Puedes reemplazar por el nombre real
+        prestamosCount: items.length,
+        consecutivo: nuevoConsecutivo,
+        itemsTable: itemsTableHTML,
+        observaciones: observaciones,
+        fechaSolicitud: new Date().toLocaleString(),
+        year: new Date().getFullYear(),
+      };
+      break;
+    case "Devolucion":
+      plantillaEmailUser = "confirmacionSolicitudDevolucion";
+      plantillaEmailBodega = "nuevaSolicitudDevolucion";
+      bodegaEmailData = {
+        userName: "Equipo de Bodega",
+        prestamosCount: items.length,
+        consecutivo: nuevoConsecutivo,
+        itemsTable: itemsTableHTML,
+        fechaSolicitud: new Date().toLocaleString(),
+        year: new Date().getFullYear(),
+        direccionRecoleccion: direccion_recoleccion,
+        observaciones: observaciones
+      };
+      clientEmailData = {
+        userName: nombreDelUsuario, // Puedes reemplazar por el nombre real
+        prestamosCount: items.length,
+        consecutivo: nuevoConsecutivo,
+        itemsTable: itemsTableHTML,
+        observaciones: observaciones,
+        fechaSolicitud: new Date().toLocaleString(),
+        direccionRecoleccion: direccion_recoleccion,
+        year: new Date().getFullYear(),
+      };
+      break;
+    case "Desarchive":
+      plantillaEmailUser = "confirmacionSolicitudDesarchive";
+      plantillaEmailBodega = "nuevaSolicitudDesarchive";
+      //TODO: falta incluir la referencia 1 
+      bodegaEmailData = {
+        userName: "Equipo de Bodega",
+        prestamosCount: items.length,
+        consecutivo: nuevoConsecutivo,
+        itemsTable: itemsTableHTML,
+        fechaSolicitud: new Date().toLocaleString(),
+        year: new Date().getFullYear(),
+        direccion_entrega: direccion_entrega,
+        observaciones: observaciones
+      };
+      clientEmailData = {
+        userName: nombreDelUsuario, // Puedes reemplazar por el nombre real
+        prestamosCount: items.length,
+        consecutivo: nuevoConsecutivo,
+        itemsTable: itemsTableHTML,
+        observaciones: observaciones,
+        direccion_entrega: direccion_entrega,
+        fechaSolicitud: new Date().toLocaleString(),
+        year: new Date().getFullYear(),
+      };
+
+      break;
+    default:
+      throw new Error(`Módulo no reconocido: ${modulo}`);
+  }
+
+
+
+  // Enviar correo al usuario
+  await emailService.sendEmailTemplate({
+    to: correoUsuario,
+    subject: `Confirmacion de Solicitud de ${modulo} #${nuevoConsecutivo}`,
+    template: plantillaEmailUser,
+    data: clientEmailData,
+    attachments,
+  });
+
+  await emailService.sendEmailTemplate({
+    to: correoBodega,
+    subject: `Nueva Solicitud de ${modulo} #${nuevoConsecutivo}`,
+    template: plantillaEmailBodega,
+    data: bodegaEmailData,
+    attachments,
+  });
+
+
+
+
 
   return { solicitudId, nuevoConsecutivo };
 }
@@ -715,7 +898,7 @@ function generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items) {
 
 async function scanQR(req, res, next) {
   try {
-    const { qrToken, accion, usuarioId, clienteId, asignaciones } = req.body;
+    const { qrToken, accion, usuarioId, clienteId, asignaciones, transportista, documentoIdentidad, placa } = req.body;
 
     if (!qrToken || !accion || !usuarioId || !clienteId) {
       logger.error("Faltan campos obligatorios (qrToken, accion, usuarioId, clienteId).");
@@ -724,7 +907,7 @@ async function scanQR(req, res, next) {
       });
     }
 
-    logger.info(`scanQR iniciado. Token: ${qrToken}, Acción: ${accion}, Usuario: ${usuarioId}, Cliente: ${clienteId}`);
+    logger.info(`scanQR iniciado con req.body: ${JSON.stringify(req.body)}`);
 
     const pool = await connectDB();
     logger.info("Conexión a la BD establecida.");
@@ -733,9 +916,14 @@ async function scanQR(req, res, next) {
       .input("qrToken", sql.NVarChar, qrToken)
       .input("accion", sql.NVarChar, accion)
       .input("usuarioId", sql.Int, usuarioId)
-      .input("clienteId", sql.Int, clienteId);
+      .input("clienteId", sql.Int, clienteId)
+      .input("transportista", sql.NVarChar, transportista)
+      .input("documentoIdentidad", sql.NVarChar, documentoIdentidad)
+      .input("placa", sql.NVarChar, placa)
 
-    //TODO:  
+  
+  
+
     // Solo enviar asignaciones si el módulo es Transferencia y la acción es completado
     if (accion.toLowerCase() === 'completado') {
       if (!Array.isArray(asignaciones) || asignaciones.length === 0) {
@@ -769,22 +957,37 @@ async function scanQR(req, res, next) {
     const spResponse = result.recordset[0];
     logger.info(`SP_ScanQR ejecutado exitosamente. Resultado: ${JSON.stringify(spResponse)}`);
 
+    const correoUsuario = await obtenerCorreoUsuario(pool, usuarioId);
+console.log("CORREOOOO >>>>>>> ", correoUsuario, "usuarioID: ", usuarioId);
+
     try {
-      const destinatario = "lecmbogota@gmail.com";
+      const destinatario = `"${correoUsuario}"`;
       const emailData = {
         solicitudId: spResponse.SolicitudId,
         estadoAnterior: spResponse.EstadoAnterior,
         estadoActual: spResponse.NuevoEstado,
         fechaActualizacion: spResponse.FechaActualizacion,
         observaciones: spResponse.Observaciones,
-        modulo: spResponse.Modulo
+        modulo: spResponse.Modulo,
+        placa: placa,
+        documentoIdentidad: documentoIdentidad,
+        transportista: transportista
       };
 
+      const attachments = [
+        {
+          path: path.join(__dirname, "../assets/siglo.png"),
+          cid: "siglo",
+          filename: "siglo.png",
+        }
+      ];
+      
       const emailResponse = await emailService.sendEmailTemplate({
         to: destinatario,
         subject: `Acuse de Movimiento - Solicitud ${spResponse.SolicitudId} - ESTADO: ${spResponse.NuevoEstado}`,
         template: "acuseMovimiento",
         data: emailData,
+        attachments,
       });
 
       logger.info(`Correo enviado exitosamente. Respuesta: ${JSON.stringify(emailResponse)}`);
@@ -795,8 +998,8 @@ async function scanQR(req, res, next) {
     const subjectNotif = `Actualización de Solicitud ${spResponse.SolicitudId}`;
     const mensaje = `La solicitud #${spResponse.SolicitudId} ha sido actualizada y se encuentra en el estado ${spResponse.NuevoEstado}.`;
 
-    await enviarNotificacionPorCanal(pool, usuarioId, subjectNotif, mensaje);
-    logger.info("Notificación enviada por canal preferido.");
+    // await enviarNotificacionPorCanal(pool, usuarioId, subjectNotif, mensaje);
+    // logger.info("Notificación enviada por canal preferido.");
 
     const mensajeId = await storeNotification({
       usuarioId,
@@ -906,29 +1109,31 @@ async function consultarTransferencias(req, res, next) {
     request.input("clienteId", sql.Int, clienteId);
 
     let query = `
-      SELECT TOP (1000)
-        st.id,
-        st.clienteId,
-        st.consecutivo,
-        st.estado,
-        st.fechaSolicitud,
-        st.fechaVerificacion,
-        st.fechaCarga,
-        uv.nombre AS usuarioVerifica,  -- Nombre del usuario que verificó
-        uc.nombre AS usuarioCarga,     -- Nombre del usuario que cargó
-        st.observaciones,
-        st.createdAt,
-        st.updatedAt,
-        st.fechaAsignacion,
-        st.fechaRecogida,
-        st.qrToken,
-        st.modulo,
-        st.direccion
+      SELECT
+          st.id,
+          st.clienteId,
+          st.consecutivo,
+          st.estado,
+          st.fechaSolicitud,
+          st.fechaVerificacion,
+          st.fechaCarga,
+          uv.nombre AS usuarioVerifica,  -- Nombre del usuario que verificó
+          uc.nombre AS usuarioCarga,     -- Nombre del usuario que cargó
+          st.observaciones,
+          st.createdAt,
+          st.updatedAt,
+          st.fechaAsignacion,
+          st.fechaRecogida,
+          st.qrToken,
+          st.modulo,
+          st.direccion,
+          st.placa,
+          st.transportista,
+          st.documentoIdentidad
       FROM SolicitudTransporte st
       LEFT JOIN Usuario uv ON st.usuarioVerifica = uv.id
       LEFT JOIN Usuario uc ON st.usuarioCarga = uc.id
-      WHERE st.clienteId = @clienteId
-    `;
+      WHERE st.clienteId = @clienteId`;
 
     if (estado) {
       query += " AND st.estado = @estado";
