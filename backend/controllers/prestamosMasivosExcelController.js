@@ -18,6 +18,27 @@ const { createPrestamoCabecera,
 // Importamos el controlador de correos (servicio)
 const { sendCorreo } = require("./correoController");
 
+
+
+/**
+ * Función auxiliar para obtener el correo del usuario.
+ * @param {Object} pool - Conexión a la base de datos.
+ * @param {number} usuarioId - ID del usuario.
+ * @returns {Promise<string>} Correo del usuario.
+ */
+async function obtenerCorreoUsuario(pool, usuarioId) {
+  const result = await pool.request().input("usuarioId", sql.Int, usuarioId)
+    .query(`
+      SELECT TOP 1 email
+      FROM Usuario
+      WHERE id = @usuarioId
+      ORDER BY id ASC
+    `);
+  return result.recordset.length > 0
+    ? result.recordset[0].email
+    : process.env.DEFAULT_EMAIL || "correo@por-defecto.com";
+}
+
 /**
  * Carga masiva de préstamos desde un archivo Excel.
  * Se esperan en el body:
@@ -63,7 +84,8 @@ async function cargarPrestamosExcel(req, res) {
 
     // Obtener el usuario y consecutivos una sola vez
     //fixme: se debe obtener el usuario ya que esta estatico 
-    const user = { id: 3, clienteId: 2, email: 'lecmbogota@gmail.com', name: 'luis Caraballo' }
+    let correoUsuario = await obtenerCorreoUsuario(pool, usuarioId);
+    const user = { id: 3, clienteId: 2, email: correoUsuario, name: 'luis Caraballo' }
     console.log("esto es user", user);
 
     console.log("aqui 1");

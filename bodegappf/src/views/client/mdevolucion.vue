@@ -210,14 +210,14 @@ export default {
     // Filtrado por rango de fechas si se han definido
     if (this.fechaDesde || this.fechaHasta) {
       filtered = filtered.filter((item) => {
-        const itemDateLocal = DateTime.fromISO(item.fechaSolicitud, { zone: "utc" }).setZone("America/Bogota");
+        const itemDateLocal = DateTime.fromISO(item.fechaSolicitud, { zone: "utc" });
         let isValid = true;
         if (this.fechaDesde) {
-          const desdeLocal = DateTime.fromISO(this.fechaDesde).setZone("America/Bogota").startOf("day");
+          const desdeLocal = DateTime.fromISO(this.fechaDesde).startOf("day");
           isValid = isValid && itemDateLocal >= desdeLocal;
         }
         if (this.fechaHasta) {
-          const hastaLocal = DateTime.fromISO(this.fechaHasta).setZone("America/Bogota").endOf("day");
+          const hastaLocal = DateTime.fromISO(this.fechaHasta).endOf("day");
           isValid = isValid && itemDateLocal <= hastaLocal;
         }
         return isValid;
@@ -229,14 +229,14 @@ export default {
     formatDate() {
       return (dateString) => {
         if (!dateString) return "N/A";
-        const dt = DateTime.fromISO(dateString, { zone: "utc" }).setZone("America/Bogota");
+        const dt = DateTime.fromISO(dateString, { zone: "utc" });
         return dt.setLocale("es").toFormat("dd/MM/yyyy");
       };
     },
     formatTime() {
       return (dateString) => {
         if (!dateString) return "N/A";
-        const dt = DateTime.fromISO(dateString, { zone: "utc" }).setZone("America/Bogota");
+        const dt = DateTime.fromISO(dateString, { zone: "utc" });
         return dt.setLocale("es").toFormat("hh:mm a");
       };
     },

@@ -69,7 +69,7 @@
               <tr v-for="item in filteredPrestamos" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>{{ item.consecutivo }}</td>
-                <td>{{ formatDate(item.fechaDevolucion) }}</td>
+                <td>{{ formatDate(item.fechaDevolucion) }} {{ formatTime(item.fechaDevolucion) }}</td>
                 <td>{{ item.entregadoPor }}</td>
                 <td>{{ item.observaciones || "N/A" }}</td>
                 <td>{{ formatDate(item.createdAt) }}</td>
@@ -87,8 +87,7 @@
 import apiClient from "@/services/api";
 import { useAuthStore } from "@/stores/authStore";
 import { useLoaderStore } from "@/stores/loaderStore";
-import dayjs from "dayjs";
-import "dayjs/locale/es";
+import { DateTime } from "luxon";
 import * as XLSX from "xlsx";
 
 export default {
@@ -115,6 +114,24 @@ export default {
           String(item.consecutivo || "").includes(term)
         );
       });
+    },
+    formatDate() {
+      return (dateStr) => {
+        if (!dateStr) return "N/A";
+        return DateTime.fromISO(dateStr, { zone: "utc" })
+          
+          .setLocale("es")
+          .toFormat("dd/MM/yyyy");
+      };
+    },
+    formatTime() {
+      return (dateStr) => {
+        if (!dateStr) return "N/A";
+        return DateTime.fromISO(dateStr, { zone: "utc" })
+          
+          .setLocale("es")
+          .toFormat("hh:mm a");
+      };
     },
   },
   async mounted() {
@@ -165,9 +182,7 @@ export default {
       }
     },
 
-    formatDate(date) {
-      return date ? dayjs(date).locale("es").format("DD/MM/YYYY HH:mm") : "N/A";
-    },
+
     exportToExcel() {
       const ws = XLSX.utils.json_to_sheet(
         this.filteredPrestamos.map((item) => ({

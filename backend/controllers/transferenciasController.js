@@ -300,18 +300,18 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
   }
 
   // Preparar datos para la plantilla de correo
-  const itemsTableHTML = generateItemsTableHTML(items);
-  const nombreDelUsuario = await obtenerNombreUsuario(pool, usuarioId);
-  const correoUsuario = await obtenerCorreoUsuario(pool, usuarioId);
-  const plantillaEmailUser = "";
-  const plantillaEmailBodega = "";
-  const bodegaEmailData = {};
-  const clientEmailData = {};
-  const correoBodega = process.env.BODEGA_EMAIL || "bodega@tuempresa.com";
+  let itemsTableHTML = generateItemsTableHTML(items);
+  let nombreDelUsuario = await obtenerNombreUsuario(pool, usuarioId);
+  let correoUsuario = await obtenerCorreoUsuario(pool, usuarioId);
+  let plantillaEmailUser = "";
+  let plantillaEmailBodega = "";
+  let bodegaEmailData = {};
+  let clientEmailData = {};
+  let correoBodega = process.env.BODEGA_EMAIL || "bodega@tuempresa.com";
   // Generar el PDF con el detalle de la solicitud
-  const pdfBuffer = await generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items);
+  let pdfBuffer = await generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items);
   // Armar attachments (logo, QR y PDF)
-  const attachments = [
+  let attachments = [
     {
       path: path.join(__dirname, "../assets/siglo.png"),
       cid: "siglo",
@@ -347,9 +347,9 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
 
   switch (modulo) {
     case "Prestamo":
-      plantillaEmailUser = "confirmacionSolicitudPrestamo";
-      plantillaEmailBodega = "nuevaSolicitudPrestamo";
-      bodegaEmailData = {
+       plantillaEmailUser = "confirmacionSolicitudPrestamo";
+       plantillaEmailBodega = "nuevaSolicitudPrestamo";
+       bodegaEmailData = {
         userName: "Equipo de Bodega",
         prestamosCount: items.length,
         consecutivo: nuevoConsecutivo,

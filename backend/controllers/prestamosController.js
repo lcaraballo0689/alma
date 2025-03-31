@@ -294,10 +294,10 @@ async function createPrestamos(req, res) {
         </tbody>
       </table>
     `;
-
+    let correoUsuario = await obtenerCorreoUsuario(pool, usuarioId);
     console.log("esta vrg: ", createdPrestamos[0]?.prestamoId)
     try {
-      const destinatario = "lecmbogota@gmail.com";
+      const destinatario = correoUsuario;
       const spResponse = {
         SolicitudId: createdPrestamos[0]?.prestamoId, // Puedes cambiar esto si quieres usar otro identificador
         EstadoAnterior: "Disponible",
