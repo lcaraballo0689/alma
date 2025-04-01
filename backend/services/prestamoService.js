@@ -3,6 +3,56 @@ const { sql } = require('../config/db');
 const dayjs = require('dayjs');
 const customParseFormat = require('dayjs/plugin/customParseFormat');
 dayjs.extend(customParseFormat);
+dayjs.locale('es'); // Configuramos el locale en español
+
+// Suponiendo que ya tienes un logger global configurado
+const logger = require('../logger');
+
+/**
+ * Intenta parsear la fecha usando varios formatos.
+ * @param {string|Date|number} value
+ * @returns {Date}
+ * @throws {Error} Si no se puede parsear la fecha
+ */
+function parseDate(value) {
+  if (!value) {
+    logger.debug("parseDate - Valor no proporcionado, se usará la fecha actual");
+    return new Date(); // O lanzar un error si es necesario
+  }
+  if (value instanceof Date) {
+    logger.debug("parseDate - Valor ya es una fecha", { value });
+    return value;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    logger.debug("parseDate - Intentando parsear cadena", { trimmed });
+
+    // Si es formato ISO, intentamos primero
+    if (trimmed.includes('T')) {
+      const isoDate = new Date(trimmed);
+      if (!isNaN(isoDate.getTime())) {
+        logger.debug("parseDate - Formato ISO reconocido", { isoDate });
+        return isoDate;
+      }
+    }
+    // Definir los formatos a intentar
+    const formats = [
+      'MMM D YYYY h:mmA',  // Ejemplo: "Abr 1 2025 4:00PM"
+      'DD:MM:YYYY HH:mm',  // Ejemplo: "01:04:2025 04:00"
+    ];
+    for (const fmt of formats) {
+      const parsed = dayjs(trimmed, fmt, 'es', true);
+      logger.debug("parseDate - Probando formato", { formato: fmt, isValid: parsed.isValid() });
+      if (parsed.isValid()) {
+        logger.info("parseDate - Fecha parseada exitosamente", { formato: fmt, fecha: parsed.toDate() });
+        return parsed.toDate();
+      }
+    }
+  }
+  const errorMsg = `Invalid date: ${value}`;
+  logger.error("parseDate - Error al parsear la fecha", { value, errorMsg });
+  throw new Error(errorMsg);
+}
 
 /**
  * Crea la cabecera de un préstamo.
@@ -11,13 +61,13 @@ dayjs.extend(customParseFormat);
  * @returns {Promise<number>} - ID del préstamo (cabecera)
  */
 async function createPrestamoCabecera(transaction, data) {
-  let fechaEstimadaEntrega = new Date(data.fechaEstimadaEntrega);
-  if (typeof data.fechaEstimadaEntrega === 'string') {
-    fechaEstimadaEntrega = dayjs(data.fechaEstimadaEntrega, 'MMM D YYYY  h:mmA').toDate();
-  }
-
-  if (isNaN(fechaEstimadaEntrega)) {
-    throw new Error(`Fecha estimada inválida: ${data.fechaEstimadaEntrega}`);
+  let fechaEstimadaEntrega;
+  try {
+    fechaEstimadaEntrega = parseDate(data.fechaEstimadaEntrega);
+    logger.info("createPrestamoCabecera - Fecha estimada parseada", { fechaEstimadaEntrega });
+  } catch (err) {
+    logger.error("createPrestamoCabecera - Fecha estimada inválida", { fecha: data.fechaEstimadaEntrega, error: err.message });
+    throw err;
   }
 
   const request = transaction.request();
@@ -31,6 +81,7 @@ async function createPrestamoCabecera(transaction, data) {
     .input('createdAt', sql.DateTime, new Date())
     .input('updatedAt', sql.DateTime, new Date());
 
+  logger.info("createPrestamoCabecera - Ejecutando query de inserción", { data });
   const result = await request.query(`
     INSERT INTO dbo.Prestamo
       (usuarioId, consecutivo, fechaPrestamo, fechaEstimadaEntrega, entregadoPor, observaciones, createdAt, updatedAt)
@@ -39,36 +90,9 @@ async function createPrestamoCabecera(transaction, data) {
     SELECT SCOPE_IDENTITY() as insertedId;
   `);
 
-  return result.recordset[0].insertedId;
-}
-
-
-
-function parseDate(value) {
-  if (!value) {
-    // Si no se proporciona, puedes decidir usar la fecha actual o lanzar error.
-    return new Date(); // o throw new Error("Fecha no proporcionada");
-  }
-  if (value instanceof Date) {
-    return value;
-  }
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    // Si parece ser un string en formato ISO:
-    if (trimmed.includes('T')) {
-      const isoDate = new Date(trimmed);
-      if (!isNaN(isoDate.getTime())) {
-        return isoDate;
-      }
-    }
-    // Normaliza espacios y usa el formato esperado (ajusta el formato si es necesario)
-    const normalized = trimmed.replace(/\s+/g, ' ');
-    const parsed = dayjs(normalized, 'MMM D YYYY h:mmA');
-    if (parsed.isValid()) {
-      return parsed.toDate();
-    }
-  }
-  throw new Error(`Invalid date: ${value}`);
+  const insertedId = result.recordset[0].insertedId;
+  logger.info("createPrestamoCabecera - Préstamo creado exitosamente", { insertedId });
+  return insertedId;
 }
 
 /**
@@ -77,8 +101,9 @@ function parseDate(value) {
  * @param {Object} data - Datos del detalle del préstamo
  */
 async function createPrestamoDetalle(transaction, data) {
-  console.log(" function createPrestamoDetalle", data);
+  logger.debug("createPrestamoDetalle - Datos recibidos", { data });
   const fechaEstimadaEntrega = parseDate(data.fechaEstimadaEntrega);
+  logger.info("createPrestamoDetalle - Fecha estimada parseada", { fechaEstimadaEntrega });
 
   const request = transaction.request();
   request
@@ -95,8 +120,9 @@ async function createPrestamoDetalle(transaction, data) {
     .input('modalidad', sql.NVarChar, data.modalidad)
     .input('observaciones', sql.NVarChar, data.observaciones || '')
     .input('estado', sql.NVarChar, 'SOLICITUD DE PRESTAMO CREADA')
-    .input('fechaEstimadaEntrega', sql.DateTime, fechaEstimadaEntrega || new Date() );
+    .input('fechaEstimadaEntrega', sql.DateTime, fechaEstimadaEntrega);
 
+  logger.info("createPrestamoDetalle - Ejecutando query de inserción");
   await request.query(`
     INSERT INTO dbo.Prestamos
       (prestamoId, clienteId, usuarioId, custodiaId, consecutivo, fechaSolicitud, 

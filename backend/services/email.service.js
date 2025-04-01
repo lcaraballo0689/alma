@@ -62,7 +62,6 @@ function sendEmail({ to, subject, text, html, attachments }) {
  * @returns {Promise} Promesa del envío del correo.
  */
 function sendEmailTemplate({ to, subject, template, data, attachments }) {
-  console.log("TEMPLATEEEEEEEEEEE>>>>>>>>>>>>>> ", template);
   
   try {
     const templatePath = path.join(__dirname, '..', 'templates', `${template}.html`);

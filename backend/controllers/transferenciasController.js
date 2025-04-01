@@ -9,6 +9,12 @@ const { emitirNotificacion } = require("../services/socket");
 const smsService = require("../services/smsService");
 const whatsappService = require("../services/whatsappService");
 const { storeNotification } = require("../services/notificationService");
+const { getSolicitudTransporteDetails } = require('../utils/solicitudTransporteHelper');
+const { formatDate } = require('../utils/dateUtils');
+
+
+
+
 const logger = require("../logger");
 
 /**
@@ -114,12 +120,25 @@ async function enviarNotificacionPorCanal(pool, usuarioId, subject, message) {
           "El email del usuario no es válido para enviar notificaciones."
         );
       }
-      return await emailService.sendEmailTemplate({
+      logger.warn('se envia correo por trnasferencia controller - eniar notificacion por canal')
+      logger.info(`enviando correo a Cliene -  ${emailUsuario}`)
+      await emailService.sendEmailTemplate({
         to: emailUsuario,
         subject,
-        template: "notificacionGeneral", // Template genérico para notificaciones
+        template: "acuseMovimiento", // Template genérico para notificaciones
         data: { message },
-      });
+      })
+
+      logger.warn('se envia correo por trnasferencia controller - eniar notificacion por canal')
+      logger.info(`enviando correo a Bodega -  ${process.env.BODEGA_EMAIL}`)
+      await emailService.sendEmailTemplate({
+        to: process.env.BODEGA_EMAIL,
+        subject,
+        template: "acuseMovimiento", // Template genérico para notificaciones
+        data: { message },
+      })
+
+      return
     case "SMS":
       return await smsService.sendSMS(usuarioId, message);
     case "WHATSAPP":
@@ -135,11 +154,22 @@ async function enviarNotificacionPorCanal(pool, usuarioId, subject, message) {
           "El email del usuario no es válido para enviar notificaciones."
         );
       }
+
+
+      const attachments = [
+        {
+          path: path.join(__dirname, "../assets/siglo.png"),
+          cid: "siglo",
+          filename: "siglo.png",
+        }
+      ];
+      logger.warn('se envia correo por trnasferencia controller - enviar notificacion por canal - entro en el case default')
       return await emailService.sendEmailTemplate({
         to: emailDefault,
         subject,
         template: "notificacionGeneral",
         data: { message },
+        attachments,
       });
   }
 }
@@ -347,9 +377,9 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
 
   switch (modulo) {
     case "Prestamo":
-       plantillaEmailUser = "confirmacionSolicitudPrestamo";
-       plantillaEmailBodega = "nuevaSolicitudPrestamo";
-       bodegaEmailData = {
+      plantillaEmailUser = "confirmacionSolicitudPrestamo";
+      plantillaEmailBodega = "nuevaSolicitudPrestamo";
+      bodegaEmailData = {
         userName: "Equipo de Bodega",
         prestamosCount: items.length,
         consecutivo: nuevoConsecutivo,
@@ -447,6 +477,7 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
   }
 
 
+  logger.warn('se envia correo por trnasferencia controller - trnasferencia interna a cliente ')
 
   // Enviar correo al usuario
   await emailService.sendEmailTemplate({
@@ -456,6 +487,7 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
     data: clientEmailData,
     attachments,
   });
+  logger.warn('se envia correo por trnasferencia controller - trnasferencia interna a bodega')
 
   await emailService.sendEmailTemplate({
     to: correoBodega,
@@ -578,6 +610,7 @@ function generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items) {
  * el logo, el código QR (convertido a Buffer) y un PDF con el detalle de la solicitud.
  */
 async function createTransferencia(req, res, next) {
+  // Validación inicial de los datos de entrada
   if (
     !req.body ||
     !req.body.clienteId ||
@@ -586,58 +619,76 @@ async function createTransferencia(req, res, next) {
     !req.body.direccionRecoleccion ||
     !Array.isArray(req.body.items)
   ) {
+    logger.error("createTransferencia - Datos incompletos", {
+      required: ["clienteId", "usuarioId", "items (array)", "direccionRecoleccion"],
+      received: req.body,
+    });
     return res.status(400).json({
       error: "Se requieren los campos: clienteId, usuarioId y un array de items.",
     });
   }
+
+  // Validación de cada item del array
   for (const [index, item] of req.body.items.entries()) {
     if (!item.referencia2) {
+      logger.error("createTransferencia - Falta 'referencia2' en item", { index, item });
       return res.status(400).json({
         error: `El item en la posición ${index} debe incluir la propiedad referencia2.`,
       });
     }
   }
-  logger.info("Body createTransferencia: " + JSON.stringify(req.body));
+
+  logger.info("createTransferencia - Datos recibidos", { body: req.body });
   let transaction;
   let transactionStarted = false;
+
   try {
+    // Conexión a la BD y comienzo de la transacción
     const pool = await connectDB();
+    logger.info("createTransferencia - Conexión a la BD establecida");
+
     transaction = new sql.Transaction(pool);
     await transaction.begin();
     transactionStarted = true;
+    logger.debug("createTransferencia - Transacción iniciada");
 
     const { clienteId, usuarioId, items, observaciones, direccionRecoleccion } = req.body;
-    // Actualizar consecutivo
+
+    // Actualizar consecutivo para el cliente
     const requestConsecutivos = new sql.Request(transaction);
     requestConsecutivos.input("clienteId", sql.Int, clienteId);
     const resultCons = await requestConsecutivos.query(`
       SELECT ultimoTransporte FROM Consecutivos WHERE clienteId = @clienteId
     `);
-    let ultimoTransporte =
-      resultCons.recordset.length > 0 ? resultCons.recordset[0].ultimoTransporte : 0;
+    let ultimoTransporte = resultCons.recordset.length > 0 ? resultCons.recordset[0].ultimoTransporte : 0;
     const nuevoConsecutivo = ultimoTransporte + 1;
     await new sql.Request(transaction)
       .input("nuevoTransporte", sql.Int, nuevoConsecutivo)
       .input("clienteId", sql.Int, clienteId)
       .query(`UPDATE Consecutivos SET ultimoTransporte = @nuevoTransporte WHERE clienteId = @clienteId`);
+    logger.info("createTransferencia - Consecutivo actualizado", { clienteId, nuevoConsecutivo });
 
-    // Insertar la solicitud
+    // Insertar la solicitud en la tabla SolicitudTransporte
     const requestInsertSolicitud = new sql.Request(transaction);
     requestInsertSolicitud
       .input("clienteId", sql.Int, clienteId)
+      .input("usuarioSolicitante", sql.Int, usuarioId)
       .input("consecutivo", sql.Int, nuevoConsecutivo)
       .input("estado", sql.VarChar, "solicitud creada")
       .input("observaciones", sql.VarChar, observaciones || "")
       .input("direccionRecoleccion", sql.VarChar, direccionRecoleccion || "");
     const insertSol = await requestInsertSolicitud.query(`
-      INSERT INTO SolicitudTransporte (modulo, clienteId, consecutivo, estado, fechaSolicitud, observaciones, createdAt, updatedAt, direccion)
-      VALUES ('transferencia', @clienteId, @consecutivo, @estado, GETDATE(), @observaciones, GETDATE(), GETDATE(), @direccionRecoleccion);
+      INSERT INTO SolicitudTransporte (modulo, clienteId, consecutivo, estado, fechaSolicitud, observaciones, createdAt, updatedAt, direccion, usuarioSolicitante)
+      VALUES ('transferencia', @clienteId, @consecutivo, @estado, GETDATE(), @observaciones, GETDATE(), GETDATE(), @direccionRecoleccion, @usuarioSolicitante);
       SELECT SCOPE_IDENTITY() AS solicitudId;
     `);
     const solicitudId = insertSol.recordset[0].solicitudId;
-    await registrarAuditoria(pool, solicitudId, "NINGUNO", "solicitud creada", usuarioId, "Creación de solicitud");
+    logger.info("createTransferencia - Solicitud insertada", { solicitudId, nuevoConsecutivo });
 
-    // Insertar cada detalle
+    await registrarAuditoria(pool, solicitudId, "NINGUNO", "solicitud creada", usuarioId, "Creación de solicitud");
+    logger.debug("createTransferencia - Auditoría registrada", { solicitudId });
+
+    // Insertar cada detalle de la solicitud
     for (const item of items) {
       await new sql.Request(transaction)
         .input("solicitudTransporteId", sql.Int, solicitudId)
@@ -653,9 +704,12 @@ async function createTransferencia(req, res, next) {
           VALUES (@solicitudTransporteId, @tipo, @referencia1, @referencia2, @referencia3, @descripcion, @estado, GETDATE(), GETDATE());
         `);
     }
-    await transaction.commit();
+    logger.info("createTransferencia - Detalles insertados", { totalItems: items.length });
 
-    // Generar y guardar el QR
+    await transaction.commit();
+    logger.info("createTransferencia - Transacción comprometida");
+
+    // Generar y guardar el QR asociado a la solicitud
     const qrText = `solicitud_${solicitudId}`;
     const qrCodeImage = await generarQR(qrText);
     await new sql.Request(pool)
@@ -667,6 +721,7 @@ async function createTransferencia(req, res, next) {
         INSERT INTO QR_Solicitudes (solicitudTransporteId, qrToken, qrCodeImage, activo)
         VALUES (@solicitudTransporteId, @qrToken, @qrCodeImage, @activo)
       `);
+    logger.info("createTransferencia - QR generado y guardado", { qrToken: qrText });
 
     // Convertir el data URL del QR a Buffer
     let qrBuffer = null;
@@ -675,13 +730,13 @@ async function createTransferencia(req, res, next) {
       const base64Data = qrCodeImage.slice(base64Prefix.length);
       qrBuffer = Buffer.from(base64Data, "base64");
     }
-    // 
+
     // Preparar datos para la plantilla de correo
     const itemsTableHTML = generateItemsTableHTML(items);
     const nombreDelUsuario = await obtenerNombreUsuario(pool, usuarioId);
     const correoUsuario = await obtenerCorreoUsuario(pool, usuarioId);
     const clientEmailData = {
-      userName: nombreDelUsuario, // Puedes reemplazar por el nombre real
+      userName: nombreDelUsuario,
       prestamosCount: items.length,
       consecutivo: nuevoConsecutivo,
       itemsTable: itemsTableHTML,
@@ -691,6 +746,7 @@ async function createTransferencia(req, res, next) {
 
     // Generar el PDF con el detalle de la solicitud
     const pdfBuffer = await generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items);
+    logger.debug("createTransferencia - PDF generado", { consecutivo: nuevoConsecutivo });
 
     // Armar attachments (logo, QR y PDF)
     const attachments = [
@@ -713,10 +769,8 @@ async function createTransferencia(req, res, next) {
       contentType: "application/pdf",
     });
 
-
-
-
     // Enviar correo al usuario
+    logger.warn("createTransferencia - Envío de correo a cliente iniciado");
     await emailService.sendEmailTemplate({
       to: correoUsuario,
       subject: `Solicitud de Transferencia #${nuevoConsecutivo}`,
@@ -724,6 +778,7 @@ async function createTransferencia(req, res, next) {
       data: clientEmailData,
       attachments,
     });
+    logger.info("createTransferencia - Correo enviado al cliente", { correoUsuario, consecutivo: nuevoConsecutivo });
 
     // Enviar correo a la bodega
     const correoBodega = process.env.BODEGA_EMAIL || "bodega@tuempresa.com";
@@ -734,8 +789,9 @@ async function createTransferencia(req, res, next) {
       itemsTable: itemsTableHTML,
       fechaSolicitud: new Date().toLocaleString(),
       year: new Date().getFullYear(),
-      direccionRecoleccion: direccionRecoleccion
+      direccionRecoleccion,
     };
+    logger.warn("createTransferencia - Envío de correo a bodega iniciado");
     await emailService.sendEmailTemplate({
       to: correoBodega,
       subject: `Nueva Solicitud de Transferencia #${nuevoConsecutivo}`,
@@ -743,8 +799,9 @@ async function createTransferencia(req, res, next) {
       data: bodegaEmailData,
       attachments,
     });
+    logger.info("createTransferencia - Correo enviado a bodega", { correoBodega, consecutivo: nuevoConsecutivo });
 
-    logger.info(`Transferencia ${solicitudId} creada exitosamente.`);
+    logger.info("createTransferencia - Transferencia creada exitosamente", { solicitudId, consecutivo: nuevoConsecutivo });
     return res.status(201).json({
       message: "Solicitud de transferencia creada con éxito",
       solicitudId,
@@ -755,14 +812,16 @@ async function createTransferencia(req, res, next) {
     if (transaction && transactionStarted) {
       try {
         await transaction.rollback();
+        logger.info("createTransferencia - Transacción revertida debido a error");
       } catch (rollbackError) {
-        logger.error("Error al hacer rollback: " + rollbackError);
+        logger.error("createTransferencia - Error al hacer rollback", { rollbackError: rollbackError.message });
       }
     }
-    logger.error("Error en createTransferencia: " + error);
+    logger.error("createTransferencia - Error general", { error: error.message, stack: error.stack });
     return next(error);
   }
 }
+
 
 /**
  * Genera un PDF corporativo en formato apaisado (landscape) que sirva de
@@ -900,18 +959,22 @@ async function scanQR(req, res, next) {
   try {
     const { qrToken, accion, usuarioId, clienteId, asignaciones, transportista, documentoIdentidad, placa } = req.body;
 
+    // Validación inicial de campos obligatorios
     if (!qrToken || !accion || !usuarioId || !clienteId) {
-      logger.error("Faltan campos obligatorios (qrToken, accion, usuarioId, clienteId).");
+      logger.error("scanQR - Campos obligatorios faltantes", { qrToken, accion, usuarioId, clienteId });
       return res.status(400).json({
         error: "Se requieren los campos: qrToken, accion, usuarioId y clienteId.",
       });
     }
 
-    logger.info(`scanQR iniciado con req.body: ${JSON.stringify(req.body)}`);
+    // Log de inicio de la función con detalles de entrada (nivel debug para evitar exponer datos sensibles en producción)
+    logger.debug("scanQR iniciado con datos", { body: req.body });
 
+    // Conexión a la base de datos
     const pool = await connectDB();
-    logger.info("Conexión a la BD establecida.");
+    logger.info("scanQR - Conexión a la BD establecida");
 
+    // Configuración de parámetros para el SP
     const request = pool.request()
       .input("qrToken", sql.NVarChar, qrToken)
       .input("accion", sql.NVarChar, accion)
@@ -919,15 +982,12 @@ async function scanQR(req, res, next) {
       .input("clienteId", sql.Int, clienteId)
       .input("transportista", sql.NVarChar, transportista)
       .input("documentoIdentidad", sql.NVarChar, documentoIdentidad)
-      .input("placa", sql.NVarChar, placa)
+      .input("placa", sql.NVarChar, placa);
 
-  
-  
-
-    // Solo enviar asignaciones si el módulo es Transferencia y la acción es completado
+    // Manejo de asignaciones según la acción
     if (accion.toLowerCase() === 'completado') {
       if (!Array.isArray(asignaciones) || asignaciones.length === 0) {
-        logger.error("No se proporcionaron asignaciones para la acción 'completado' en el módulo 'Transferencia'.");
+        logger.error("scanQR - Asignaciones faltantes para acción 'completado'", { accion, asignaciones });
         return res.status(400).json({ error: "Debe enviar asignaciones de ubicaciones para cada caja a custodiar." });
       }
 
@@ -940,67 +1000,103 @@ async function scanQR(req, res, next) {
       });
 
       request.input("asignaciones", tableAsignaciones);
+      logger.info("scanQR - Asignaciones procesadas", { totalAsignaciones: asignaciones.length });
     } else {
       const emptyTable = new sql.Table();
       emptyTable.columns.add('detalleId', sql.Int);
       emptyTable.columns.add('ubicacionId', sql.Int);
       request.input("asignaciones", emptyTable);
+      logger.info("scanQR - Asignaciones no requeridas para la acción", { accion });
     }
 
+    // Ejecución del procedimiento almacenado
     const result = await request.execute("SP_ScanQR");
 
     if (!result.recordset || result.recordset.length === 0) {
-      logger.error("El SP_ScanQR no devolvió resultados.");
+      logger.error("scanQR - El SP_ScanQR no devolvió resultados");
       return res.status(500).json({ error: "Error interno al procesar la transición." });
     }
 
     const spResponse = result.recordset[0];
-    logger.info(`SP_ScanQR ejecutado exitosamente. Resultado: ${JSON.stringify(spResponse)}`);
+    logger.info("scanQR - SP_ScanQR ejecutado exitosamente", { spResponse });
 
+    // Obtener el correo del usuario para notificaciones
     const correoUsuario = await obtenerCorreoUsuario(pool, usuarioId);
-console.log("CORREOOOO >>>>>>> ", correoUsuario, "usuarioID: ", usuarioId);
+    logger.debug("scanQR - Correo del usuario obtenido", { usuarioId, correoUsuario });
 
+    // Envío de correos de notificación
     try {
       const destinatario = `"${correoUsuario}"`;
+      const TransporteDetails = await getSolicitudTransporteDetails(spResponse.SolicitudId, ["modulo", "usuarioSolicitante"]);
+      const emailCLiente = await obtenerCorreoUsuario(pool, TransporteDetails.adicionales.usuarioSolicitante)
+
+      const fechaActual = new Date();
       const emailData = {
-        solicitudId: spResponse.SolicitudId,
+        solicitudId: TransporteDetails.consecutivo,
+        solicitudTransporteId: spResponse.SolicitudId,
         estadoAnterior: spResponse.EstadoAnterior,
         estadoActual: spResponse.NuevoEstado,
-        fechaActualizacion: spResponse.FechaActualizacion,
+        fechaActualizacion: formatDate(fechaActual),
         observaciones: spResponse.Observaciones,
         modulo: spResponse.Modulo,
-        placa: placa,
-        documentoIdentidad: documentoIdentidad,
-        transportista: transportista
+        placa,
+        documentoIdentidad,
+        transportista
       };
 
-      const attachments = [
-        {
-          path: path.join(__dirname, "../assets/siglo.png"),
-          cid: "siglo",
-          filename: "siglo.png",
-        }
-      ];
+      const attachments = [{
+        path: path.join(__dirname, "../assets/siglo.png"),
+        cid: "siglo",
+        filename: "siglo.png"
+      }];
+
       
-      const emailResponse = await emailService.sendEmailTemplate({
-        to: destinatario,
-        subject: `Acuse de Movimiento - Solicitud ${spResponse.SolicitudId} - ESTADO: ${spResponse.NuevoEstado}`,
+
+      logger.warn(`scanQR - iniciando envio del correo al cliente que realizo la solicitud - ${emailCLiente}`);
+      // Enviar correo al cliente
+      await emailService.sendEmailTemplate({
+        to: emailCLiente,
+        subject: `Acuse de Movimiento de ${TransporteDetails.adicionales.modulo} - Solicitud ${TransporteDetails.consecutivo} - ESTADO: ${spResponse.NuevoEstado}`,
         template: "acuseMovimiento",
         data: emailData,
         attachments,
       });
+      logger.info("scanQR - Correo enviado al cliente", { emailCLiente, solicitudId: spResponse.SolicitudId });
 
-      logger.info(`Correo enviado exitosamente. Respuesta: ${JSON.stringify(emailResponse)}`);
+
+      if (destinatario !== process.env.BODEGA_EMAIL) {
+        logger.warn(`scanQR - iniciando envio del correo al quien Actualizo la solicitud - ${destinatario}`);
+        // Enviar correo al usuario que gestiona el movimiento
+        await emailService.sendEmailTemplate({
+          to: destinatario,
+          subject: `Acuse de Movimiento de ${TransporteDetails.adicionales.modulo} - Solicitud ${spResponse.SolicitudId} - ESTADO: ${spResponse.NuevoEstado}`,
+          template: "acuseMovimiento",
+          data: emailData,
+          attachments,
+        });
+        logger.info("scanQR - Correo enviado al usuario que gestiona el movimiento", { destinatario, solicitudId: spResponse.SolicitudId });
+      }else{
+        logger.warn(`scanQR - Se omite el envio del correo al solicitante ya que es el mismo que bodega`);
+      }
+
+
+      logger.warn(`scanQR - iniciando envio del correo a bodega - ${process.env.BODEGA_EMAIL}`);
+      // Enviar correo a bodega
+      await emailService.sendEmailTemplate({
+        to: process.env.BODEGA_EMAIL,
+        subject: `Acuse de Movimiento de ${TransporteDetails.adicionales.modulo} - Solicitud ${spResponse.SolicitudId} - ESTADO: ${spResponse.NuevoEstado}`,
+        template: "acuseMovimiento",
+        data: emailData,
+        attachments,
+      });
+      logger.info("scanQR - Correo enviado a bodega", { bodegaEmail: process.env.BODEGA_EMAIL, solicitudId: spResponse.SolicitudId });
     } catch (emailErr) {
-      logger.error(`Error al enviar correo: ${emailErr.message}`);
+      logger.error("scanQR - Error al enviar correo", { error: emailErr.message, stack: emailErr.stack });
     }
 
-    const subjectNotif = `Actualización de Solicitud ${spResponse.SolicitudId}`;
-    const mensaje = `La solicitud #${spResponse.SolicitudId} ha sido actualizada y se encuentra en el estado ${spResponse.NuevoEstado}.`;
-
-    // await enviarNotificacionPorCanal(pool, usuarioId, subjectNotif, mensaje);
-    // logger.info("Notificación enviada por canal preferido.");
-
+    const TransporteDetails = await getSolicitudTransporteDetails(spResponse.SolicitudId, ["modulo"]);
+    // Envío de notificación vía WebSocket
+    const mensaje = `La solicitud de ${TransporteDetails.adicionales.modulo} N°${TransporteDetails.consecutivo}, vinculada a la solicitud de transporte N°${spResponse.SolicitudId}, ha sido actualizada y se encuentra en el estado ${spResponse.NuevoEstado}`;
     const mensajeId = await storeNotification({
       usuarioId,
       title: "Nuevo Mensaje",
@@ -1010,19 +1106,20 @@ console.log("CORREOOOO >>>>>>> ", correoUsuario, "usuarioID: ", usuarioId);
 
     emitirNotificacion(`usuario_${clienteId}`, {
       mensajeId,
-      solicitudId: spResponse.SolicitudId,
+      solicitudId: TransporteDetails.consecutivo,
       estado: spResponse.NuevoEstado,
       fechaActualizacion: new Date(),
       mensaje,
     });
+    logger.info("scanQR - Notificación WebSocket emitida", { canal: `usuario_${clienteId}`, mensajeId });
 
-    logger.info(`Notificación WS emitida para el canal usuario_${clienteId}.`);
     return res.status(200).json(spResponse);
   } catch (error) {
-    logger.error("Error en scanQR: " + error.message);
+    logger.error("scanQR - Error general", { error: error.message, stack: error.stack });
     return next(error);
   }
 }
+
 
 
 
@@ -1075,12 +1172,25 @@ async function eliminarTransferencia(req, res, next) {
     await transaction.commit();
     // Enviar notificación de eliminación (por ejemplo, al cliente)
     const correoCliente = await obtenerCorreoCliente(pool, clienteId);
+
+
+
+
+
+
+    logger.warn('se envia correo por trnasferencia controller - crear transferencia cliente')
     await emailService.sendEmailTemplate({
       to: correoCliente,
       subject: `Eliminación de Solicitud ${solicitudId}`,
       template: "transferenciaEliminada", // Plantilla a crear para notificar eliminación
       data: { solicitudId },
     });
+
+
+
+
+
+
     logger.info(`Solicitud ${solicitudId} eliminada exitosamente.`);
     return res.status(200).json({
       message: "Solicitud eliminada exitosamente.",

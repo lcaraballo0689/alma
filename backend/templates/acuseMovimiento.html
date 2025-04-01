@@ -30,10 +30,10 @@
     }
     /* ENCABEZADO */
     .header {
-      background-color: #1976d2;
+      background-color: #d3d3d3;
       padding: 20px;
       text-align: center;
-      color: #ffffff;
+      color: #2c3e50;
     }
     .header img {
       max-width: 120px;
@@ -108,8 +108,12 @@
       <p>Se ha registrado la siguiente actualización en su solicitud:</p>
       <table class="data-table">
         <tr>
-          <th>ID de Solicitud</th>
+          <th>ID {{modulo}}</th>
           <td>{{solicitudId}}</td>
+        </tr>
+        <tr>
+          <th>ID Traslado</th>
+          <td>{{solicitudTransporteId}}</td>
         </tr>
         <tr>
           <th>Estado Anterior</th>
@@ -143,12 +147,7 @@
         {{/if}}
       </table>
       
-      <!-- SECCIÓN DEL CÓDIGO QR -->
-      <div class="qr-code">
-        <p>Utilice el siguiente código QR para el seguimiento:</p>
-        <img src="cid:qrCodeImage" alt="Código QR">
-      </div>
-      
+
       <p>Si tiene alguna duda o necesita asistencia, por favor contáctenos.</p>
     </div>
     

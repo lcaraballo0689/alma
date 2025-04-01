@@ -69,7 +69,7 @@
                 </div>
               </div>
 
-              <!-- Dirección de Recolección (requerida) -->
+              <!-- Dirección de Entrega (requerida) -->
               <div class="mb-3">
                 <label class="form-label">Dirección de Entrega:</label>
                 <div class="input-group">
@@ -180,7 +180,7 @@ export default {
       return useTabStore();
     },
     showModal() {
-      // Si se requiere mantener una bandera del store, se puede hacer; de lo contrario, se muestra el componente siempre.
+      // Se muestra el componente siempre o según lógica del store
       return true;
     },
   },
@@ -189,9 +189,9 @@ export default {
   },
   async mounted() {
     this.newItemReferencia = "";
-      this.itemsForm = [];
-      this.observations = "";
-      this.excelFile = null;
+    this.itemsForm = [];
+    this.observations = "";
+    this.excelFile = null;
     const authStore = useAuthStore();
     if (authStore.user && authStore.user.clienteId) {
       try {
@@ -406,6 +406,7 @@ export default {
       XLSX.writeFile(wb, "template_referencias.xlsx");
     },
     async confirm() {
+      // Extraemos todas las referencias (por manual o por excel) en un array
       const refs = this.itemsForm.map(item => item.referencia2);
       const duplicates = refs.filter((ref, index) => refs.indexOf(ref) !== index);
       if (duplicates.length > 0) {
@@ -445,20 +446,19 @@ export default {
         return;
       }
       const authStore = useAuthStore();
-      const clienteId = authStore.user.clienteId || 2;
       const usuarioId = authStore.user.id || 3;
+      // Se arma el payload usando la propiedad "referencia2" con el array de referencias
       const payload = {
-        clienteId,
-        usuarioId,
-        items: this.itemsForm,
-        observaciones: this.observations,
-        direccionRecoleccion: this.selectedAddress
+        referencias2: refs,
+        usuarioId: usuarioId,
+        direccion_entrega: this.selectedAddress,
+        observaciones: this.observations
       };
       try {
         this.loaderStore.showLoader();
-        const response = await apiClient.post("/api/transferencias/crear", payload);
+        const response = await apiClient.post("/api/desarchive/crear", payload);
         this.loaderStore.hideLoader();
-        this.setTab('Transferencia')
+        this.setTab('Desarchives');
         console.log(response);
         Swal.fire({
           icon: "success",
@@ -470,7 +470,6 @@ export default {
           timer: 5000,
           showConfirmButton: false,
         });
-        
         this.$emit("confirm", response.data);
         this.$emit("reloadData");
         this.resetForm();
@@ -495,7 +494,6 @@ export default {
       this.excelFile = null;
     },
     closeComponent() {
-      // Aquí se puede emitir un evento para notificar al padre que se desea cerrar/hide este componente
       this.resetForm();
       this.clientStore.clearShowSolicitudTransporte();
       this.$emit("close");
@@ -526,7 +524,6 @@ export default {
   gap: 1rem;
 }
 .modal-form {
-  /* Ajusta el ancho según convenga */
   flex: 1 1 300px;
 }
 .modal-items {

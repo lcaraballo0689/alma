@@ -48,7 +48,7 @@ function initSocket(server) {
  * @param {object} data - Los datos que se enviarán con el evento (ej: { mensaje: "Hola", estado: "nuevo" }).
  */
 function emitirNotificacion(sala, data) {
-  logger.info(`Emitiendo notificación vía WS al canal ${sala} con datos: ${JSON.stringify(data)}`);
+  //logger.info(`Emitiendo notificación vía WS al canal ${sala} con datos: ${JSON.stringify(data)}`);
 
   if (ioInstance) {
     ioInstance.to(sala).emit("notify", data);

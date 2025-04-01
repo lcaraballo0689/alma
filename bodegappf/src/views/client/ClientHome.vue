@@ -2,7 +2,7 @@
   <div >
     <!-- Navbar con transición y sticky -->
     <div>
-      <nav class="navbar navbar-expand-lg shadow fixed-top p-0 m-0 navegacion"  style="min-height: 60px" aria-label="Barra de navegación principal">
+      <nav class="navbar navbar-expand-lg bg-white  shadow fixed-top p-0 m-0 navegacion"  style="min-height: 60px" aria-label="Barra de navegación principal">
         <div class="container-fluid">
           <!-- Logo e Identificación del cliente -->
           <a class="navbar-brand d-flex align-items-center" href="#" aria-label="Inicio">
@@ -429,6 +429,6 @@ a {
 }
 
 .navegacion {
-  z-index: 10000;
+  z-index: 10000 !important;
 }
 </style>

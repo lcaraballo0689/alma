@@ -126,81 +126,87 @@ async function enviarNotificacionPorCanal(pool, usuarioId, subject, message) {
 // Controlador actualizado para crear una cabecera y múltiples detalles de préstamo
 async function createPrestamos(req, res) {
   const logoPath = path.join(__dirname, "../assets/bodegapp-logo.png");
-  const { custodiaIds, usuarioId, direccion_entrega, urgencia, observaciones } =
-    req.body;
+  const { custodiaIds, usuarioId, direccion_entrega, urgencia, observaciones } = req.body;
 
   const errores = [];
-  if (!custodiaIds?.length)
-    errores.push("Debe seleccionar al menos una custodia.");
+  if (!custodiaIds?.length) errores.push("Debe seleccionar al menos una custodia.");
   if (!usuarioId) errores.push("No se ha proporcionado el ID del usuario.");
-  if (!direccion_entrega)
-    errores.push("No se ha proporcionado la dirección de entrega.");
-  if (!urgencia)
-    errores.push("No se ha proporcionado la prioridad del préstamo.");
+  if (!direccion_entrega) errores.push("No se ha proporcionado la dirección de entrega.");
+  if (!urgencia) errores.push("No se ha proporcionado la prioridad del préstamo.");
 
   if (errores.length) {
-    return res
-      .status(400)
-      .json({ mensaje: "Hay errores en los datos proporcionados.", errores });
+    logger.error("createPrestamos - Errores en validación de datos", { errores, body: req.body });
+    return res.status(400).json({ mensaje: "Hay errores en los datos proporcionados.", errores });
   }
-  logger.info("Body createPrestamos: " + JSON.stringify(req.body));
+  logger.info("createPrestamos - Datos recibidos", { body: req.body });
 
   const pool = await connectDB();
+  logger.info("createPrestamos - Conexión a la BD establecida");
   const transaction = new sql.Transaction(pool);
 
   try {
     await transaction.begin();
+    logger.debug("createPrestamos - Transacción iniciada");
 
+    // Verificar existencia del usuario
     const user = await getUserById(transaction, usuarioId);
     if (!user) {
+      logger.error("createPrestamos - Usuario no encontrado", { usuarioId });
       await transaction.rollback();
       return res.status(404).json({ error: "Usuario no encontrado." });
     }
+    logger.info("createPrestamos - Usuario encontrado", { usuarioId, clienteId: user.clienteId });
 
+    // Verificar custodias disponibles
     const custodias = await getCustodiasDisponibles(transaction, custodiaIds);
     if (custodias.length !== custodiaIds.length) {
+      logger.error("createPrestamos - Algunas custodias no están disponibles", {
+        custodiaIds,
+        disponibles: custodias.map(c => c.id),
+      });
       await transaction.rollback();
-      return res
-        .status(404)
-        .json({ error: "Una o más custodias no están disponibles." });
+      return res.status(404).json({ error: "Una o más custodias no están disponibles." });
     }
+    logger.info("createPrestamos - Custodias disponibles confirmadas", { total: custodias.length });
 
-    const consecutivos = await getOrCreateConsecutivos(
-      transaction,
-      user.clienteId
-    );
+    // Obtener consecutivos
+    const consecutivos = await getOrCreateConsecutivos(transaction, user.clienteId);
+    logger.info("createPrestamos - Consecutivos obtenidos", { consecutivo: consecutivos.ultimoPrestamo });
 
+    // Obtener datos del cliente
     const clientResult = await pool
       .request()
       .input("clienteId", sql.Int, user.clienteId)
-      .query(
-        `SELECT ansNormal, ansUrgente, ansEspecial FROM Cliente WHERE id = @clienteId`
-      );
+      .query(`SELECT ansNormal, ansUrgente, ansEspecial FROM Cliente WHERE id = @clienteId`);
 
     if (clientResult.recordset.length === 0) {
+      logger.error("createPrestamos - Cliente no encontrado", { clienteId: user.clienteId });
       await transaction.rollback();
       return res.status(404).json({ error: "Cliente no encontrado." });
     }
+    logger.info("createPrestamos - Datos del cliente obtenidos", { clienteId: user.clienteId });
 
     const clientANS = clientResult.recordset[0];
-    const ansValue =
-      urgencia.toLowerCase() === "urgente"
-        ? clientANS.ansUrgente
-        : urgencia.toLowerCase() === "especial"
-        ? clientANS.ansEspecial
-        : clientANS.ansNormal;
+    const ansValue = urgencia.toLowerCase() === "urgente"
+      ? clientANS.ansUrgente
+      : urgencia.toLowerCase() === "especial"
+      ? clientANS.ansEspecial
+      : clientANS.ansNormal;
+    logger.debug("createPrestamos - Valor de ans determinado", { urgencia, ansValue });
 
+    // Obtener fecha estimada de entrega
     const resultFechaEstimada = await pool
       .request()
       .input("clienteId", sql.Int, user.clienteId)
       .input("ansValue", sql.Int, ansValue)
       .execute("dbo.ObtenerFechaEstimadaEntrega");
 
-    const fechaEstimadaEntrega =
-      resultFechaEstimada.recordset[0].fechaEstimadaEntrega;
+    const fechaEstimadaEntrega = resultFechaEstimada.recordset[0].fechaEstimadaEntrega;
+    logger.info("createPrestamos - Fecha estimada de entrega obtenida", { fechaEstimadaEntrega });
 
     const createdPrestamos = [];
 
+    // Crear la cabecera del préstamo
     const prestamoId = await createPrestamoCabecera(transaction, {
       usuarioId,
       consecutivo: consecutivos.ultimoPrestamo,
@@ -209,7 +215,9 @@ async function createPrestamos(req, res) {
       entregadoPor: "",
       observaciones,
     });
+    logger.info("createPrestamos - Cabecera del préstamo creada", { prestamoId });
 
+    // Insertar cada detalle y marcar la custodia como solicitada
     for (const custodia of custodias) {
       await createPrestamoDetalle(transaction, {
         prestamoId,
@@ -226,9 +234,10 @@ async function createPrestamos(req, res) {
         observaciones,
         fechaEstimadaEntrega,
       });
+      logger.debug("createPrestamos - Detalle insertado", { custodiaId: custodia.id });
 
-      
       await marcarCustodiaSolicitada(transaction, custodia.id);
+      logger.info("createPrestamos - Custodia marcada como solicitada", { custodiaId: custodia.id });
 
       createdPrestamos.push({
         prestamoId,
@@ -240,28 +249,33 @@ async function createPrestamos(req, res) {
         fechaEstimadaEntrega,
       });
     }
+    logger.info("createPrestamos - Detalles del préstamo creados", { total: createdPrestamos.length });
 
-    //TODO: Armar el payload para createTransferencia SE HACE LA SOLICITUD DE TRASLADO
+    // Preparar payload para la transferencia interna
     const transferenciaPayload = {
       clienteId: user.clienteId,
-      usuarioId: usuarioId,
+      usuarioId,
       modulo: "Prestamo",
-      observaciones: observaciones,
-      direccion_entrega: direccion_entrega,
+      observaciones,
+      direccion_entrega,
       items: custodias.map((custodia) => ({
         referencia2: custodia.referencia2,
       })),
     };
+    logger.debug("createPrestamos - Payload para transferencia interna preparado", { transferenciaPayload });
 
-    // Llamar a createTransferencia
+    // Procesar transferencia interna
     await procesarTransferenciaInterna(transferenciaPayload, transaction);
+    logger.info("createPrestamos - Transferencia interna procesada");
 
+    // Incrementar consecutivo del préstamo
     await incrementarUltimoPrestamo(transaction, user.clienteId);
+    logger.info("createPrestamos - Consecutivo incrementado", { clienteId: user.clienteId });
+
     await transaction.commit();
+    logger.info("createPrestamos - Transacción comprometida");
 
-    
-
-    //TODO: Construir la tabla HTML para el correo
+    // Construir tabla HTML para el correo
     const itemsTable = `
       <table>
         <thead>
@@ -276,9 +290,7 @@ async function createPrestamos(req, res) {
           </tr>
         </thead>
         <tbody>
-          ${createdPrestamos
-            .map(
-              (item, index) => `
+          ${createdPrestamos.map((item, index) => `
             <tr>
               <td>${index + 1}</td>
               <td>${item.referencia1 || "-"}</td>
@@ -288,25 +300,26 @@ async function createPrestamos(req, res) {
               <td>${item.prioridad}</td>
               <td>${item.fechaEstimadaEntrega}</td>
             </tr>
-          `
-            )
-            .join("")}
+          `).join("")}
         </tbody>
       </table>
     `;
-    let correoUsuario = await obtenerCorreoUsuario(pool, usuarioId);
-    console.log("esta vrg: ", createdPrestamos[0]?.prestamoId)
+
+    // Obtener correo del usuario
+    const correoUsuario = await obtenerCorreoUsuario(pool, usuarioId);
+    logger.info("createPrestamos - Correo del usuario obtenido", { correoUsuario });
+
+    // Envío de correo de notificación
     try {
       const destinatario = correoUsuario;
       const spResponse = {
-        SolicitudId: createdPrestamos[0]?.prestamoId, // Puedes cambiar esto si quieres usar otro identificador
+        SolicitudId: createdPrestamos[0]?.prestamoId,
         EstadoAnterior: "Disponible",
         NuevoEstado: "Solicitado",
         FechaActualizacion: new Date(),
         Observaciones: observaciones || "Sin observaciones",
         Modulo: "Préstamo",
       };
-
       const emailData = {
         solicitudId: spResponse.SolicitudId,
         estadoAnterior: spResponse.EstadoAnterior,
@@ -322,33 +335,28 @@ async function createPrestamos(req, res) {
         template: "acuseMovimiento",
         data: emailData,
       });
-
-      logger.info(
-        `Correo enviado exitosamente. Respuesta: ${JSON.stringify(
-          emailResponse
-        )}`
-      );
+      logger.info("createPrestamos - Correo enviado exitosamente", { respuestaCorreo: emailResponse });
     } catch (emailErr) {
-      logger.error(`Error al enviar correo: ${emailErr.message}`);
+      logger.error("createPrestamos - Error al enviar correo", { error: emailErr.message, stack: emailErr.stack });
     }
 
-    logger.info(
-      `Notificación WS emitida para el canal usuario_${user.clienteId}.`
-    );
+    logger.info("createPrestamos - Notificación WS emitida", { canal: `usuario_${user.clienteId}` });
     return res.status(201).json({
       message: "Préstamos creados exitosamente.",
       data: createdPrestamos,
     });
   } catch (error) {
-    console.error("Error en createPrestamos:", error);
+    logger.error("createPrestamos - Error en la creación de préstamos", { error: error.message, stack: error.stack });
     try {
       await transaction.rollback();
+      logger.info("createPrestamos - Transacción revertida");
     } catch (rollbackError) {
-      console.error("Error al hacer rollback:", rollbackError);
+      logger.error("createPrestamos - Error al hacer rollback", { rollbackError: rollbackError.message });
     }
     return res.status(500).json({ error: "Error interno del servidor." });
   }
 }
+
 
 /**
  * Asigna un transportador para la entrega del préstamo.
