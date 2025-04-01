@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <title>Nueva Solicitud de {{tipoSolicitud}}</title>
@@ -12,6 +13,7 @@
       font-family: Arial, sans-serif;
       color: #333;
     }
+
     a {
       text-decoration: none;
       color: inherit;
@@ -25,7 +27,7 @@
       border: 1px solid #e0e0e0;
       border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     /* Encabezado con fondo */
@@ -34,10 +36,12 @@
       padding: 20px;
       text-align: center;
     }
+
     .header img {
       max-width: 120px;
       margin-bottom: 10px;
     }
+
     .header h2 {
       color: #272727;
       margin: 0;
@@ -48,11 +52,13 @@
     .content {
       padding: 20px 30px;
     }
+
     .content h2 {
       font-size: 18px;
       margin-bottom: 10px;
       color: #2c3e50;
     }
+
     .content p {
       font-size: 14px;
       line-height: 1.5;
@@ -65,12 +71,14 @@
       border-collapse: collapse;
       width: 100%;
     }
+
     .data-table th,
     .data-table td {
       border: 1px solid #ddd;
       padding: 8px;
       font-size: 14px;
     }
+
     .data-table th {
       background-color: #f8f8f8;
       text-align: left;
@@ -78,7 +86,8 @@
 
     /* Contenedor con scroll para la tabla de ítems */
     .scroll-container {
-      max-height: 300px; /* Ajusta la altura máxima según tus necesidades */
+      max-height: 300px;
+      /* Ajusta la altura máxima según tus necesidades */
       overflow-y: auto;
       margin: 20px 0;
       border: 1px solid #ddd;
@@ -91,6 +100,7 @@
       text-align: center;
       margin: 20px 0;
     }
+
     .qr-section img {
       max-width: 200px;
       border: 1px solid #ddd;
@@ -105,11 +115,13 @@
       font-size: 12px;
       color: #777;
     }
+
     .footer p {
       margin: 5px 0;
     }
   </style>
 </head>
+
 <body>
 
   <div class="container">
@@ -122,7 +134,8 @@
     <!-- Contenido principal -->
     <div class="content">
       <h2>Detalles de la Solicitud</h2>
-      <p><strong>{{userName}}</strong>, se ha creado una nueva solicitud de <strong>{{tipoSolicitud}}</strong> con los siguientes datos:</p>
+      <p><strong>{{userName}}</strong>, se ha creado una nueva solicitud de <strong>{{tipoSolicitud}}</strong> con los
+        siguientes datos:</p>
 
       <!-- Tabla con datos básicos -->
       <table class="data-table">
@@ -163,4 +176,5 @@
   </div>
 
 </body>
+
 </html>

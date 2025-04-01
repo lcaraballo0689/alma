@@ -65,8 +65,8 @@
                 </td>
                 <td>{{ formatDate(item.createdAt) }} - {{ formatTime(item.createdAt) }}</td>
                 <td>{{ item.transportista || 'Sin Asignar' }}</td>
-                <td>{{ item.documentoIdentidad }}</td> <!-- TODO: pendiente modificar endpoint para llenar este campo-->
-                <td>{{ item.placa }}</td> <!-- TODO: pendiente modificar endpoint para llenar este campo-->
+                <td>{{ item.documentoIdentidad }}</td> 
+                <td>{{ item.placa }}</td> 
                 <td>{{ item.fechaAsignacion ? formatDate(item.fechaAsignacion) : 'Pendiente' }}</td>
                 <td>{{ item.fechaCarga ? formatDate(item.fechaCarga) : 'Pendiente' }}</td>
                 <td>{{ item.observaciones }}</td>

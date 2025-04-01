@@ -1,92 +1,118 @@
 <!-- templates/confirmacionSolicitudPrestamo.html -->
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Confirmación de Solicitud de Préstamo</title>
-    <style>
-      body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background-color: #f4f4f4;
-        margin: 0;
-        padding: 0;
-      }
-      .container {
-        max-width: 600px;
-        margin: 20px auto;
-        background: #ffffff;
-        padding: 20px;
-        border: 1px solid #dddddd;
-      }
-      .header {
-        text-align: center;
-        border-bottom: 1px solid #dddddd;
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-      }
-      .header h2 {
-        margin: 0;
-        color: #333;
-      }
-      .content {
-        font-size: 16px;
-        color: #555;
-        line-height: 1.5;
-      }
-      .content p {
-        margin: 10px 0;
-      }
-      .table-container {
-        margin-top: 20px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      table, th, td {
-        border: 1px solid #cccccc;
-      }
-      th, td {
-        padding: 8px;
-        text-align: center;
-        font-size: 14px;
-      }
-      th {
-        background-color: #efefef;
-      }
-      .footer {
-        text-align: center;
-        margin-top: 30px;
-        font-size: 14px;
-        color: #888;
-      }
-      .footer img {
-        display: block;
-        margin: 10px auto;
-        width: 150px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h2>Confirmación de Solicitud de Préstamo</h2>
-      </div>
-      <div class="content">
-        <p>Estimado/a <strong>{{userName}}</strong>,</p>
-        <p>Hemos recibido su solicitud de préstamo. Se han creado <strong>{{prestamosCount}}</strong> préstamo(s) con el consecutivo <strong>{{consecutivo}}</strong>.</p>
-        <p>A continuación, se detalla el resumen de los ítems solicitados:</p>
-        <div class="table-container">
-          {{{itemsTable}}} <!-- Nota: usa triple llave para interpretar HTML si la tabla ya viene formateada -->
-        </div>
-        <p>Pronto nuestro equipo se pondrá en contacto con usted para coordinar los detalles de la entrega.</p>
-        <p>Le agradecemos por confiar en BODEGAPP.</p>
-      </div>
-      <div class="footer">
-        <p>Atentamente,</p>
-        <p>El equipo de BODEGAPP</p>
-        <img src="cid:bodegappLogo" alt="Logo de BODEGAPP" />
-      </div>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Confirmación de Solicitud de Préstamo</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 20px;
+      border: 1px solid #dddddd;
+    }
+
+    /* Encabezado con fondo */
+    .header {
+      background-color: #dbdbdb;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header img {
+      max-width: 120px;
+      margin-bottom: 10px;
+    }
+
+    .header h2 {
+      color: #272727;
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .content {
+      font-size: 16px;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .content p {
+      margin: 10px 0;
+    }
+
+    .table-container {
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table,
+    th,
+    td {
+      border: 1px solid #cccccc;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    th {
+      background-color: #efefef;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    .footer img {
+      display: block;
+      margin: 10px auto;
+      width: 150px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="cid:siglo" alt="Logo Siglo XXI Documental">
+      <h1>Nueva Solicitud de transferencia</h1>
     </div>
-  </body>
+    <div class="content">
+      <p>Estimado/a <strong>{{userName}}</strong>,</p>
+      <p>Hemos recibido su solicitud de préstamo. Se han creado <strong>{{prestamosCount}}</strong> préstamo(s) con el
+        consecutivo <strong>{{consecutivo}}</strong>.</p>
+      <p>A continuación, se detalla el resumen de los ítems solicitados:</p>
+      <div class="table-container">
+        {{{itemsTable}}} <!-- Nota: usa triple llave para interpretar HTML si la tabla ya viene formateada -->
+      </div>
+      <p>Pronto nuestro equipo se pondrá en contacto con usted para coordinar los detalles de la entrega.</p>
+      <p>Le agradecemos por confiar en BODEGAPP.</p>
+    </div>
+    <div class="footer">
+      <p>Atentamente,</p>
+      <p>El equipo de BODEGAPP</p>
+      <img src="cid:siglo" alt="Logo Siglo XXI Documental">
+    </div>
+  </div>
+</body>
+
 </html>

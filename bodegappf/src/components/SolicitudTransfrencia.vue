@@ -186,7 +186,7 @@ export default {
       }
     },
     async confirm() {
-      //this.loaderStore.showLoader();
+      this.loaderStore.showLoader();
       if (!this.selectedAddress && this.actionType !== "Devolver") {
         setTimeout(() => {
           this.loaderStore.hideLoader();

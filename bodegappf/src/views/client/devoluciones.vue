@@ -186,7 +186,7 @@ export default {
           estado: this.selectedEstado,
         };
 
-        ////this.loaderStore.showLoader();
+        this.loaderStore.showLoader();
         const response = await apiClient.post(
           "/api/devolucionesReports",
           requestBody
