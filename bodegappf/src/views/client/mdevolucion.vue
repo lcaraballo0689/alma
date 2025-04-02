@@ -5,7 +5,7 @@
       <div class="card-header px-0 py-0">
         <div class="row align-items-center m-0 p-0 py-3 d-flex justify-content-between">
           <div class="col-auto">
-            <strong>REPORTE DE PRESTAMOS</strong>
+            <strong>REPORTE DE DEVOLUCIONES</strong>
           </div>
           <div class="col-auto d-flex align-items-center gap-2">
             <button class="custom-btn excel me-2" @click="exportToExcel" @mouseover="hoveredButton = 'excel'"
@@ -276,7 +276,7 @@ const timelineMap = {
 };
 
 export default {
-  name: "Prestamos",
+  name: "devoluciones",
   data() {
     const today = new Date().toISOString().split("T")[0];
     return {
@@ -313,7 +313,7 @@ export default {
       return this.animatedProgress + "%";
     },
     timelineSteps() {
-      const moduloActual = this.detalle.solicitud.modulo || "Prestamo";
+      const moduloActual = this.detalle.solicitud.modulo || "Devoluciones";
       return timelineMap[moduloActual] || [];
     },
     currentStepIndex() {
@@ -357,7 +357,7 @@ export default {
     }
   },
   mounted() {
-    this.fetchEstados();
+    //this.fetchEstados();
     this.fetchtransferencias();
   },
   methods: {
@@ -617,7 +617,7 @@ export default {
     async fetchEstados() {
       try {
         const payload = {
-          tipo: "prestamo",
+          tipo: "devolucion",
           clienteId: useAuthStore().clienteId
         };
         console.log("Payload listar estados:", payload);
