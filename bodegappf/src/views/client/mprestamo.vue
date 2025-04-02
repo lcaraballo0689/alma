@@ -14,7 +14,7 @@
                 </option>
               </select>
             </div> -->
-           <strong>REPORTE DE PRESTAMOS</strong> 
+            <strong>REPORTE DE PRESTAMOS</strong> 
           </div>
 
           <!-- Botones de Solicitar Transferencia, Excel y Búsqueda -->
@@ -56,14 +56,15 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, index) in this.transferencias" :key="item.id || index" @click="showDetalle(item.id)" style="cursor: pointer;">
+              <!-- Se itera sobre la propiedad computada registrosFiltrados -->
+              <tr v-for="(item, index) in registrosFiltrados" :key="item.id || index" @click="showDetalle(item.id)" style="cursor: pointer;">
                 <td>{{ item.consecutivo }}</td>
                 <td>{{ item.id }}</td>
                 <td>{{ item.estado }}</td>
                 <td>
                   {{ item.updatedAt !== item.createdAt
                     ? formatDate(item.updatedAt) + ' - ' + formatTime(item.updatedAt)
-                  : 'Sin Actualizacion' }}
+                    : 'Sin Actualizacion' }}
                 </td>
                 <td>{{ formatDate(item.createdAt) }} - {{ formatTime(item.createdAt) }}</td>
                 <td>{{ item.transportista || 'Sin Asignar'}}</td>
@@ -71,18 +72,13 @@
                 <td>{{ item.placa }}</td> 
                 <td>{{ item.fechaAsignacion ? formatDate(item.fechaAsignacion) : 'Pendiente' }}</td>
                 <td>{{ item.fechaCarga ? formatDate(item.fechaCarga) : 'Pendiente' }}</td>
-                <td
-                  >
-                  {{ item.usuarioVerifica || 'Sin Confirmar' }}</td>
-                <td >{{ item.fechaVerificacion ? formatDate(item.fechaVerificacion) : 'Pendiente' }}</td>
+                <td>{{ item.usuarioVerifica || 'Sin Confirmar' }}</td>
+                <td>{{ item.fechaVerificacion ? formatDate(item.fechaVerificacion) : 'Pendiente' }}</td>
                 <td>{{ item.observaciones }}</td>
                 <td>{{ item.direccion }}</td>
               </tr>
             </tbody>
           </table>
-
-
-
         </div>
       </div>
     </div>
@@ -158,12 +154,9 @@
 import apiClient from "@/services/api";
 import { useAuthStore } from "@/stores/authStore";
 import { useLoaderStore } from "@/stores/loaderStore";
-
 import * as XLSX from "xlsx";
 import { useClientStore } from "@/stores/clientStore";
 import { DateTime } from "luxon";
-
-
 
 export default {
   name: "Prestamos",
@@ -171,8 +164,8 @@ export default {
     const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
     return {
       totalRegistros: null,
-      fechaDesde: today,  // Valor por defecto: hoy
-      fechaHasta: today,  // Valor por defecto: hoy
+      fechaDesde: today,
+      fechaHasta: today,
       selectedEstado: "TODOS",
       estadosDisponibles: [],
       transferencias: [],
@@ -191,44 +184,22 @@ export default {
     clientStore() {
       return useClientStore();
     },
-    // Devuelve la fecha actual en formato "YYYY-MM-DD"
+    // Computed property para formatear fechas
     maxDate() {
       return new Date().toISOString().split("T")[0];
     },
-    filteredtransferencias() {
-    const term = this.searchTerm.toLowerCase();
-    // Filtrado por búsqueda (searchTerm)
-    let filtered = this.transferencias.filter((item) => {
-      return (
-        String(item.id).toLowerCase().includes(term) ||
-        (item.referencia1 || "").toLowerCase().includes(term) ||
-        (this.formatDate(item.fechaSolicitud) || "").toLowerCase().includes(term)
-      );
-    });
-
-    // Filtrar por estado solo si se seleccionó un valor distinto a "TODOS"
-    if (this.selectedEstado && this.selectedEstado !== "TODOS") {
-      filtered = filtered.filter((item) => item.estado === this.selectedEstado);
-    }
-
-    // Filtrado por rango de fechas si se han definido
-    if (this.fechaDesde || this.fechaHasta) {
-      filtered = filtered.filter((item) => {
-        const itemDateLocal = DateTime.fromISO(item.fechaSolicitud, { zone: "utc" });
-        let isValid = true;
-        if (this.fechaDesde) {
-          const desdeLocal = DateTime.fromISO(this.fechaDesde).startOf("day");
-          isValid = isValid && itemDateLocal >= desdeLocal;
-        }
-        if (this.fechaHasta) {
-          const hastaLocal = DateTime.fromISO(this.fechaHasta).endOf("day");
-          isValid = isValid && itemDateLocal <= hastaLocal;
-        }
-        return isValid;
+    // Nueva propiedad computada de filtrado (basada en el ejemplo)
+    registrosFiltrados() {
+      if (!this.searchTerm) return this.transferencias;
+      const termino = this.searchTerm.toLowerCase();
+      return this.transferencias.filter(registro => {
+        return (
+          String(registro.id).toLowerCase().includes(termino) ||
+          (registro.referencia1 || "").toLowerCase().includes(termino) ||
+          (this.formatDate(registro.fechaSolicitud) || "").toLowerCase().includes(termino)
+        );
       });
-    }
-    return filtered;
-  },
+    },
     // Funciones de formateo utilizando Luxon
     formatDate() {
       return (dateString) => {
@@ -244,7 +215,6 @@ export default {
         return dt.setLocale("es").toFormat("hh:mm a");
       };
     },
-
   },
   mounted() {
     this.fetchEstados();
@@ -254,7 +224,6 @@ export default {
     showDetalle(solicitudId) {
       console.log("ID solicitud transferencia:", solicitudId);
       this.loadingDetalle = true;
-      // Muestra el modal y consulta el detalle de la transferencia
       this.detalleVisible = true;
       apiClient
         .post("/api/transferencias/detalle", { solicitudId })
@@ -272,7 +241,6 @@ export default {
     },
     closeDetalleModal() {
       this.detalleVisible = false;
-      // Reiniciamos el detalle si es necesario
       this.detalle = { solicitud: {}, detalle: [] };
     },
     async fetchEstados() {
@@ -298,13 +266,11 @@ export default {
         }
         const requestBody = { clienteId };
         const response = await apiClient.post("/api/transferencias/consultar", requestBody);
-        // Filtrar las transferencias que tengan modulo igual a "transferencia"
+        // Filtrar las transferencias que tengan modulo igual a "prestamo"
         this.transferencias = (response.data.data || []).filter(item =>
           item.modulo && item.modulo.toLowerCase() === "prestamo"
         );
-
         this.totalRegistros = response.data.data.length;
-
         console.info(response.data.data);
         console.info(this.totalRegistros);
         useLoaderStore().hideLoader();
@@ -315,40 +281,32 @@ export default {
     handleReloadData() {
       this.fetchtransferencias();
     },
-    // Retorna la fecha formateada "dd/MM/yyyy" en la zona de Bogotá
-    formatDate(dateString) {
-      if (!dateString) return "N/A";
-      const dt = DateTime.fromISO(dateString, { zone: "utc" });
-      return dt.setLocale("es").toFormat("dd/MM/yyyy");
-    },
-    // Retorna la hora formateada "HH:mm" en la zona de Bogotá
-    formatTime(dateString) {
-      if (!dateString) return "N/A";
-      const dt = DateTime.fromISO(dateString, { zone: "utc" });
-      return dt.setLocale("es").toFormat("hh:mm a");
-    },
     exportToExcel() {
-      const dataToExport = this.filteredtransferencias.map((item) => ({
-        ID: item.id,
-        Cliente: item.cliente_nombre,
-        Usuario: item.usuario_nombre || (item.usuarioCarga || item.usuarioVerifica),
-        Objeto: item.objeto,
-        Bodega: item.bodega,
-        "Referencia 1": item.referencia1,
-        "Referencia 2": item.referencia2,
-        "Referencia 3": item.referencia3,
-        Estado: item.estado,
-        Modalidad: item.modalidad,
-        "Dirección Entrega": item.direccion_entrega,
-        Observaciones: item.observaciones,
-        "Fecha Estimada": this.formatDate(item.fechaEstimada),
-        "URL PDF": item.urlPdf || "N/A",
-      }));
-      const ws = XLSX.utils.json_to_sheet(dataToExport);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "transferencias");
-      XLSX.writeFile(wb, `Bodegapp_transferencias_${dayjs().format("YYYY-MM-DD")}.xlsx`);
-    },
+  const dataToExport = this.transferencias.map(item => ({
+    "Consecutivo": item.consecutivo,
+    "Traslado N°": item.id,
+    "Estado": item.estado,
+    "Ultima Actualizacion": item.updatedAt !== item.createdAt 
+      ? this.formatDate(item.updatedAt) + ' - ' + this.formatTime(item.updatedAt)
+      : 'Sin Actualizacion',
+    "Fecha Solicitud": this.formatDate(item.createdAt) + ' - ' + this.formatTime(item.createdAt),
+    "Transportista": item.transportista || 'Sin Asignar',
+    "Documento de Identidad": item.documentoIdentidad,
+    "Placa Vehiculo": item.placa,
+    "Fecha Asignación": item.fechaAsignacion ? this.formatDate(item.fechaAsignacion) : 'Pendiente',
+    "Fecha Entrega": item.fechaCarga ? this.formatDate(item.fechaCarga) : 'Pendiente',
+    "Confirmo Entrega": item.usuarioVerifica || 'Sin Confirmar',
+    "Fecha de Confirmacion": item.fechaVerificacion ? this.formatDate(item.fechaVerificacion) : 'Pendiente',
+    "Observaciones": item.observaciones,
+    "Dirección": item.direccion
+  }));
+  
+  const ws = XLSX.utils.json_to_sheet(dataToExport);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "transferencias");
+  XLSX.writeFile(wb, `Bodegapp_transferencias_${new Date().toISOString().split("T")[0]}.xlsx`);
+}
+
   },
 };
 </script>
@@ -406,36 +364,28 @@ export default {
   overflow-y: auto;
 }
 
-/* CSS para tablas compactas */
 .table-compact {
   font-size: 0.8rem;
-  /* Tamaño de fuente reducido */
   width: 100%;
   border-collapse: collapse;
 }
 
-/* Para fijar el encabezado */
 .table-compact thead th {
   position: sticky;
   top: 0;
   background-color: #f2f2f2;
-  /* color de fondo para que se vea bien */
   z-index: 2;
-  /* para que se superponga sobre las celdas */
 }
 
-/* Para fijar la primera columna */
 .table-compact tbody td:first-child,
 .table-compact thead th:first-child {
   position: sticky;
   left: 0;
   margin-left: -10px;
   background-color: #c5c5c5;
-  /* color de fondo (ajústalo si es necesario) */
   z-index: 1;
 }
 
-/* Opcional: para evitar conflictos entre el encabezado y la primera columna */
 .table-compact thead th:first-child {
   z-index: 3;
 }
@@ -443,10 +393,8 @@ export default {
 .table-compact th,
 .table-compact td {
   padding: 0.4rem;
-  /* Menor espacio interno */
   border: 1px solid #ddd;
   white-space: nowrap;
-  /* Evita saltos de línea */
 }
 
 .table-compact thead {

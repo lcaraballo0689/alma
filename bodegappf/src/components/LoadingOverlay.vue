@@ -41,7 +41,7 @@ export default {
     position: fixed;
     width:  48px;
     height: 48px;
-    background: #de3500;
+    background: #CC1417;
     transform: rotateX(65deg) rotate(45deg);
    
     transform: perspective(200px) rotateX(65deg) rotate(45deg); 

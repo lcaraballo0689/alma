@@ -22,13 +22,13 @@
               class="me-2"
             />
           </a>
-          <img v-if="clienteNombre === 'HACIENDA'"
-              :src="themeStore.isDarkTheme ? hacienda : hacienda"
-              alt="hacienda"
-              height="40"
-              class="me-2"
-            />
-            
+          <img
+            v-if="clienteNombre === 'HACIENDA'"
+            :src="hacienda"
+            alt="Hacienda"
+            height="40"
+            class="me-2"
+          />
           <strong
             v-if="clienteNombre"
             class="ms-2 pe-none d-none d-sm-inline-block text-uppercase"
@@ -52,7 +52,7 @@
 
           <!-- Contenido colapsable -->
           <div class="collapse navbar-collapse" id="navbarContent">
-            <!-- Pestañas de navegación con roles y transiciones -->
+            <!-- Pestañas de navegación -->
             <ul class="navbar-nav mx-auto my-2 my-lg-0" role="tablist">
               <li
                 class="nav-item"
@@ -78,7 +78,7 @@
               <NotificationsNavbar />
               <div class="me-3 pe-none d-none d-sm-flex align-items-center me-4">
                 <i class="bi bi-person-circle me-1 fs-5"></i>
-                <span class="fw-semibold"></span>
+                <span class="fw-semibold">{{ user.nombre || "N/A" }}</span>
               </div>
               <div class="nav-item dropdown">
                 <a
@@ -113,9 +113,9 @@
                     <hr class="dropdown-divider" />
                   </li>
                   <li>
-                    <a class="dropdown-item" href="#" @click.prevent="logout"
-                      ><i class="bi bi-power me-2"></i>Cerrar sesión</a
-                    >
+                    <a class="dropdown-item" href="#" @click.prevent="logout">
+                      <i class="bi bi-power me-2"></i>Cerrar sesión
+                    </a>
                   </li>
                 </ul>
               </div>
@@ -145,12 +145,16 @@ import { useNotificationStore } from "@/stores/notificationStore";
 
 // Carga asíncrona de componentes
 const movimientosreg = defineAsyncComponent(() =>
-  import("../admin/TransferenciasManager.vue")
+  import("./TransferenciasManager.vue")
 );
 const NomenclaturaManager = defineAsyncComponent(() =>
-  import("../admin/NomenclaturaManager.vue")
+  import("./NomenclaturaManager.vue")
+);
+const usuarios = defineAsyncComponent(() =>
+  import("./usuarios.vue")
 );
 
+// Si necesitas incluir más componentes, agrégalos aquí
 const fallbackComponent = {
   template: `
     <div class="text-center py-4">
@@ -160,10 +164,9 @@ const fallbackComponent = {
   `,
 };
 
-// Importar assets del logo
 import Logo from "@/assets/img/siglo.png";
-import hacienda from "@/assets/img/hacienda.png";
 import Logolight from "@/assets/img/logolight.svg";
+import hacienda from "@/assets/img/hacienda.png";
 import NotificationsNavbar from "@/components/NotificationsNavbar.vue";
 
 export default {
@@ -171,8 +174,8 @@ export default {
   components: {
     breadcrumb,
     NotificationsNavbar,
-    // Se registra el componente si se utiliza directamente en el template.
     NomenclaturaManager,
+    usuarios,
   },
   data() {
     return {
@@ -182,10 +185,9 @@ export default {
       tabs: [
         { name: "movimientosreg", label: "Solicitudes", icon: "bi bi-stack" },
         { name: "NomenclaturaManager", label: "Configuraciones", icon: "bi bi-gear-fill" },
+        { name: "usuarios", label: "Usuarios", icon: "bi bi-people-fill" },
+        // Puedes agregar más pestañas según lo necesites
       ],
-      tabs2: [],
-      movimientosTabs: [],
-      informesTabs: [],
     };
   },
   computed: {
@@ -212,8 +214,10 @@ export default {
     },
     currentComponent() {
       const componentMap = {
-        movimientosreg: movimientosreg,
-        NomenclaturaManager: NomenclaturaManager,
+        movimientosreg,
+        NomenclaturaManager,
+        usuarios,
+        // Si agregas más pestañas, asigna aquí el componente correspondiente.
       };
       return componentMap[this.currentTab] || fallbackComponent;
     },
@@ -237,11 +241,13 @@ export default {
     },
   },
   mounted() {
-    // Establecemos la pestaña inicial usando el store.
+    // Establece la pestaña inicial
     this.tabStore.setTab("movimientosreg");
+    // Si usas socket, puedes suscribirte aquí:
     // socket.on("notify", this.handleSocketNotification);
   },
   beforeUnmount() {
+    // Desuscribirse del socket si es necesario:
     // socket.off("notify", this.handleSocketNotification);
   },
 };
@@ -263,6 +269,7 @@ export default {
     transform: translateY(0);
   }
 }
+
 /* Transiciones suaves */
 .fade-enter-active,
 .fade-leave-active {
