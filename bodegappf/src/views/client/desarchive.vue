@@ -62,7 +62,7 @@
                 <td>{{ item.placa }}</td>
                 <td>{{ item.fechaAsignacion ? formatDate(item.fechaAsignacion) : 'Pendiente' }}</td>
                 <td>{{ item.direccion }}</td>
-                <td>{{ item.fechaCarga ? formatDate(item.fechaCarga) : 'Pendiente' }}</td>
+                <td>{{ item.fechaRecogida ? (formatDate(item.fechaRecogida) + ' - ' + formatTime(item.fechaRecogida)) : 'Pendiente' }}</td>
                 <td>{{ item.usuarioVerifica }}</td>
                 <td>{{ item.fechaVerificacion }}</td>
                 <td>{{ item.observaciones }}</td>

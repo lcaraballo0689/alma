@@ -25,10 +25,10 @@ let baseURL;
 
 if (window.location.hostname === "localhost") {
   baseURL = "http://localhost:3001"; // URL para desarrollo local
-} else if (window.location.hostname === "bbdd.melenasco.com") {
-  baseURL = "https://apis.melenasco.com:3001"; // URL para el dominio específico
+} else if (window.location.hostname === "bodegapp.siglo21.com.co") {
+  baseURL = "https://api.siglo21.com.co"; // URL para el dominio específico
 } else {
-  baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:3001"; // URL por defecto (puedes ajustarla)
+  baseURL = import.meta.env.VITE_API_BASE_URL; // URL por defecto (puedes ajustarla)
 }
 
 

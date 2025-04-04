@@ -59,7 +59,7 @@
                 <td>{{ item.documentoIdentidad }}</td>
                 <td>{{ item.placa }}</td>
                 <td>{{ item.fechaAsignacion ? formatDate(item.fechaAsignacion) : 'Pendiente' }}</td>
-                <td>{{ item.fechaCarga ? formatDate(item.fechaCarga) : 'Pendiente' }}</td>
+                <td>{{ item.fechaRecogida ? (formatDate(item.fechaRecogida) + ' - ' + formatTime(item.fechaRecogida)) : 'Pendiente' }}</td>
                 <td>{{ item.observaciones }}</td>
                 <td>{{ item.direccion }}</td>
               </tr>

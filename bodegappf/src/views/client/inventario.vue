@@ -392,7 +392,7 @@ export default {
       authStore: useAuthStore(),
       currentTab: "inventario", // "inventario", "Disponible para prestar", "Disponible para devolver"
       searchTerm: "",
-      recordsPerPage: 500,
+      recordsPerPage: 1000,
       recordsOptions: [25, 50, 100, 250, 500],
       inventarios: [],
       selectedItems: [],

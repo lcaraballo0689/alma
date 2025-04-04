@@ -12,7 +12,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3001', // Aquí se redirigen las peticiones al backend
+        target: 'https://api.siglo21.com.co', // Aquí se redirigen las peticiones al backend
         changeOrigin: true
       }
     }

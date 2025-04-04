@@ -37,7 +37,7 @@
                 <th>Documento de Identidad</th>
                 <th>Placa Vehiculo</th>
                 <th>Fecha Asignación</th>
-                <th>Dirección</th>
+                <th>Dirección Entrega</th>
                 <th>Fecha Entrega</th>
                 <th>Confirma</th>
                 <th>Fecha Confirmacion</th>
@@ -62,9 +62,9 @@
                 <td>{{ item.placa }}</td>
                 <td>{{ item.fechaAsignacion ? formatDate(item.fechaAsignacion) : 'Pendiente' }}</td>
                 <td>{{ item.direccion }}</td>
-                <td>{{ item.fechaCarga ? formatDate(item.fechaCarga) : 'Pendiente' }}</td>
+                <td>{{ item.fechaRecogida ? (formatDate(item.fechaRecogida) + ' - ' + formatTime(item.fechaRecogida)) : 'Pendiente' }}</td>
                 <td>{{ item.usuarioVerifica }}</td>
-                <td>{{ item.fechaVerificacion }}</td>
+                <td>{{ item.fechaVerificacion ? (formatDate(item.fechaVerificacion) + ' - ' + formatTime(item.fechaVerificacion)) : 'Pendiente' }}</td>
                 <td>{{ item.observaciones }}</td>
               </tr>
             </tbody>
