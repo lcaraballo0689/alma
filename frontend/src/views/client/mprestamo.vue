@@ -42,6 +42,7 @@
                 <th>Confirma</th>
                 <th>Fecha Confirmacion</th>
                 <th>Observaciones</th>
+                <th>Acta</th>
               </tr>
             </thead>
             <tbody>
@@ -66,6 +67,13 @@
                 <td>{{ item.usuarioVerifica }}</td>
                 <td>{{ item.fechaVerificacion ? (formatDate(item.fechaVerificacion) + ' - ' + formatTime(item.fechaVerificacion)) : 'Pendiente' }}</td>
                 <td>{{ item.observaciones }}</td>
+                <td @click.stop>
+                  <!-- Se pasa el consecutivo para que el componente haga la petición y descargue el PDF -->
+                  <FormatoPrestamo style="margin-top: -2px; width: 100px; "  v-if="item.estado === 'entrega Confirmada'" :consecutivo="item.consecutivo" /> 
+                  <button class="btn buttons-actions text-white " style="margin-top: -5px; height: 20px !important; background-color:darkgrey !important;" v-else :consecutivo="item.consecutivo" disabled>
+                    <span>No Disponible</span>
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -246,6 +254,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import QRCode from "qrcode";
+import FormatoPrestamo from "@/components/FormatoPrestamo.vue";
 
 const timelineMap = {
   Prestamo: [
@@ -281,6 +290,7 @@ const timelineMap = {
 
 export default {
   name: "Prestamos",
+  components: { FormatoPrestamo },
   data() {
     const today = new Date().toISOString().split("T")[0];
     return {
@@ -365,6 +375,47 @@ export default {
     this.fetchtransferencias();
   },
   methods: {
+    async generarFormatoPrestamo(consecutivo) {
+      try {
+        const response = await apiClient.post("/api/detalleSolicitud/prestamo", {
+          id: consecutivo,
+        });
+
+        const rawData = response.data;
+
+        // Convertimos los campos numéricos y nulos a strings seguros
+        const cleanedData = {
+          ...rawData,
+          noSolicitud: String(rawData.noSolicitud ?? ""),
+          solicitudId: String(rawData.solicitudId ?? ""),
+          entidad: String(rawData.entidad ?? ""),
+          solicitadoPor: String(rawData.solicitadoPor ?? ""),
+          direccion: String(rawData.direccion ?? ""),
+          prioridad: String(rawData.prioridad ?? ""),
+          contacto: String(rawData.contacto ?? ""),
+          fechaElaboracion: String(rawData.fechaElaboracion ?? ""),
+          horaSolicitud: String(rawData.horaSolicitud ?? ""),
+          horaEntrega: String(rawData.horaEntrega ?? ""),
+          stickerSeguridad: String(rawData.stickerSeguridad ?? ""),
+          entregadoPor: String(rawData.entregadoPor ?? ""),
+          recibidoPor: String(rawData.recibidoPor ?? ""),
+          items: Array.isArray(rawData.items)
+            ? rawData.items.map((item) => ({
+              item: String(item.item ?? ""),
+              caja: String(item.caja ?? ""),
+              codigoXXI: String(item.codigoXXI ?? ""),
+              observacion: String(item.observacion ?? ""),
+            }))
+            : [],
+        };
+
+        this.formatoData = cleanedData;
+        this.activeTab = "acciones"; // Tab donde está FormatoDevolucion
+        this.detalleVisible = true;
+      } catch (error) {
+        console.error("❌ Error al obtener el formato de devolución:", error);
+      }
+    },
     async generarHashUnico() {
       const sol = this.detalle.solicitud || {};
       const dataToHash = `solicitud_${sol.id || "N/A"}_${new Date().toISOString()}`;
