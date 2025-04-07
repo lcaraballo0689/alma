@@ -1,1 +1,0 @@
-Servidor escuchando en el puerto \\.\pipe\9c366eeb-7cb3-4bcf-9814-a82f158e3fed
