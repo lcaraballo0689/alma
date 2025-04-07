@@ -1,473 +1,295 @@
 <template>
-    <div class="container-fluid px-4 py-4">
-      <!-- Fila superior con tarjetas de estadísticas -->
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside :class="['sidebar', { close: isCollapsed }]">
+      <!-- Encabezado (puedes agregar logo o información si lo deseas) -->
 
-  
-      <!-- Filtro por Módulo -->
-      <div class="row mb-3">
-        <div class="col-md-4">
-          <label class="form-label fw-bold">Filtrar por Módulo</label>
-          <select class="form-select" v-model="selectedModulo">
-            <option value="">Todos</option>
-            <option v-for="mod in distinctModulos" :key="mod" :value="mod">
-              {{ mod }}
-            </option>
-          </select>
-        </div>
-      </div>
-  
-      <!-- Vista previa de la referencia para el módulo seleccionado -->
-      <div v-if="selectedModulo" class="mb-3">
-        <label class="form-label fw-bold"
-          >Vista previa de la referencia para módulo "{{ selectedModulo }}"</label
-        >
-        <div class="alert alert-secondary">
-          <code>{{ previewTemplate }}</code>
-        </div>
-      </div>
-  
-      <!-- Botón para crear una nueva nomenclatura -->
-      <div class="d-flex justify-content-end mb-3">
-        <button class="btn btn-primary" @click="openModalToCreate">
-          <i class="bi bi-plus-lg me-2"></i> Crear Nueva
-        </button>
-      </div>
-  
-      <!-- Tabla de Nomenclaturas -->
-      <div class="card shadow-sm">
-        <div class="card-header fw-bold">Nomenclaturas Registradas</div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle mb-0">
-              <thead class="table-primary">
-                <tr>
-                  <th>ID</th>
-                  <th>Cliente ID</th>
-                  <th>Módulo</th>
-                  <th>Tipo Componente</th>
-                  <th>Componente</th>
-                  <th>Orden</th>
-                  <th>Separador</th>
-                  <th>Valor Fijo</th>
-                  <th>Placeholder</th>
-                  <th class="text-end">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="n in filteredNomenclaturas" :key="n.id">
-                  <td>{{ n.id }}</td>
-                  <td>{{ n.clienteId }}</td>
-                  <td>{{ n.modulo }}</td>
-                  <td>
-                    <span>
-                      {{
-                        fixedComponents.includes(n.componente.toLowerCase())
-                          ? "Placeholder fijo"
-                          : "Personalizado"
-                      }}
-                    </span>
-                  </td>
-                  <td>{{ n.componente }}</td>
-                  <td>{{ n.orden }}</td>
-                  <td>{{ n.separador || "N/A" }}</td>
-                  <td>{{ n.valorFijo || "N/A" }}</td>
-                  <td>
-                    <span
-                      class="badge"
-                      :class="n.esPlaceholder ? 'bg-info' : 'bg-secondary'"
-                    >
-                      {{ n.esPlaceholder ? "Sí" : "No" }}
-                    </span>
-                  </td>
-                  <td class="text-end">
-                    <button
-                      class="btn btn-sm btn-outline-primary me-2"
-                      @click="openModalToEdit(n)"
-                    >
-                      <i class="bi bi-pencil-square"></i>
-                    </button>
-                    <button
-                      class="btn btn-sm btn-outline-danger"
-                      @click="deleteNomenclatura(n)"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr v-if="filteredNomenclaturas.length === 0">
-                  <td colspan="10" class="text-center">
-                    No hay nomenclaturas registradas.
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-  
-      <!-- Modal para Crear/Editar Nomenclatura -->
-      <div
-        class="modal fade"
-        id="nomenclaturaModal"
-        tabindex="-1"
-        aria-labelledby="nomenclaturaModalLabel"
-        aria-hidden="true"
-        ref="nomenclaturaModal"
-      >
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content border-0 shadow">
-            <form
-              @submit.prevent="isEditing ? updateNomenclatura() : createNomenclatura()"
-            >
-              <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="nomenclaturaModalLabel">
-                  {{ isEditing ? "Editar Nomenclatura" : "Crear Nomenclatura" }}
-                </h5>
-                <button
-                  type="button"
-                  class="btn-close btn-close-white"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
-                  @click="clearForm"
-                ></button>
+      <!-- Menú principal -->
+      <div class="menu-bar">
+        <ul class="menu-links">
+          <li v-for="(item, index) in menu" :key="index">
+            <!-- Ítem simple sin submenús -->
+            <div v-if="!item.children">
+              <a :href="item.link" :class="{ active: activeItem === item.name }" @click="setActive(item.name)">
+                <i :class="item.icon"></i>
+                <span class="nav-text" v-if="!isCollapsed">{{ item.name }}</span>
+              </a>
+            </div>
+
+            <!-- Ítem con submenús -->
+            <div v-else class="dropdown">
+              <div class="menu-link" @click="toggleDropdown(index)">
+                <div class="d-flex align-items-center">
+                  <i :class="item.icon"></i>
+                  <span class="nav-text" v-if="!isCollapsed">{{ item.name }}</span>
+                </div>
+                <i class="bx bx-chevron-down arrow" v-if="!isCollapsed" :class="{ open: item.open }"></i>
               </div>
-              <div class="modal-body">
-                <input type="hidden" v-model.number="form.clienteId" />
-  
-                <div class="mb-3">
-                  <label class="form-label fw-bold">Módulo</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    v-model="form.modulo"
-                    required
-                  />
-                </div>
-                <div class="mb-3">
-                  <label class="form-label fw-bold">Tipo de Componente</label>
-                  <select
-                    class="form-select"
-                    v-model="form.tipoComponente"
-                    required
-                  >
-                    <option value="placeholder">Placeholder fijo</option>
-                    <option value="input">Valor personalizado</option>
-                  </select>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label fw-bold">Componente</label>
-                  <template v-if="form.tipoComponente === 'placeholder'">
-                    <select
-                      class="form-select"
-                      v-model="form.componente"
-                      required
-                    >
-                      <option value="anio">Año</option>
-                      <option value="mes">Mes</option>
-                      <option value="dia">Día</option>
-                      <option value="secuencia">Secuencia</option>
-                      <option value="prefijo">Prefijo</option>
-                    </select>
-                  </template>
-                  <template v-else>
-                    <input
-                      type="text"
-                      class="form-control"
-                      v-model="form.componente"
-                      required
-                    />
-                  </template>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label fw-bold">Orden</label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    v-model.number="form.orden"
-                    required
-                  />
-                </div>
-                <div class="mb-3">
-                  <label class="form-label fw-bold">Separador</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    v-model="form.separador"
-                  />
-                </div>
-                <div class="mb-3">
-                  <label class="form-label fw-bold">Valor Fijo</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    v-model="form.valorFijo"
-                    placeholder="Si no es placeholder, ingresa el valor fijo"
-                  />
-                </div>
-                <div class="mb-3">
-                  <label class="form-label fw-bold">¿Es Placeholder?</label>
-                  <select class="form-select" v-model="form.esPlaceholder" required>
-                    <option :value="true">Sí</option>
-                    <option :value="false">No</option>
-                  </select>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button
-                  type="button"
-                  class="btn btn-secondary"
-                  data-bs-dismiss="modal"
-                  @click="clearForm"
+              <ul class="sub-menu" v-show="item.open && !isCollapsed">
+                <li
+                  v-for="(child, idx) in item.children"
+                  :key="idx"
+                  :class="{ active: activeItem === child.name }"
+                  @click.stop="setActive(child.name)"
                 >
-                  Cancelar
-                </button>
-                <button type="submit" class="btn btn-primary">
-                  {{ isEditing ? "Actualizar" : "Crear" }}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+                  <a :href="child.link">{{ child.name }}</a>
+                </li>
+              </ul>
+            </div>
+          </li>
+        </ul>
       </div>
-    </div>
-  </template>
-  
-  <script>
-  import { Modal } from "bootstrap";
-  import apiClient from "@/services/api";
-  
-  export default {
-    name: "NomenclaturaManager",
-    data() {
-      return {
-        nomenclaturas: [],
-        // Cliente fijo en 2
-        form: {
-          id: null,
-          clienteId: 2,
-          modulo: "",
-          tipoComponente: "input",
-          componente: "",
-          orden: 0,
-          separador: "",
-          valorFijo: "",
-          esPlaceholder: true,
+
+      <!-- Footer (Cerrar sesión en esquina inferior izquierda) -->
+      <div class="sidebar-footer">
+        <a href="#" class="logout" @click="logout">
+          <i class="bx bx-log-out"></i>
+          <span class="nav-text" v-if="!isCollapsed">Cerrar sesión</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Área de contenido principal -->
+    <main class="main-content">
+      <h2>{{ activeItem }}</h2>
+      <clientes v-if="activeItem === 'Clientes'" />
+      <TransferenciaManager v-else-if="activeItem === 'Transferencias'" />
+      <Dashboard v-else-if="activeItem === 'Dashboard'" />
+      <div v-else-if="activeItem === 'Administrar Usuarios'">
+        <usuarios />
+      </div>
+      <div v-else-if="activeItem === 'Administrar Bodegas'">
+        <bodegas />
+      </div>
+      <div v-else-if="activeItem === 'Ubicar Flotas'">
+        <Traccker />
+      </div>
+      <div v-else-if="activeItem === 'Ver Flotas en Ruta'">
+        <RealTimeRouteMap />
+      </div>
+    </main>
+  </div>
+</template>
+
+<script>
+import clientes from "./Clientes.vue";
+import usuarios from "./Usuarios.vue";
+import bodegas from "./Bodegas.vue";
+import Traccker from "./Traccker.vue";
+import RealTimeRouteMap from "./RealTimeRouteMap.vue";
+import TransferenciaManager from "./TransferenciasManager.vue";
+import Dashboard from "./Dashboard.vue";
+import { useAuthStore } from "@/stores/authStore";
+
+export default {
+  name: "DashboardSidebar",
+  components: {
+    clientes,
+    usuarios,
+    bodegas,
+    Traccker,
+    RealTimeRouteMap,
+    TransferenciaManager,
+    Dashboard
+  },
+  data() {
+    return {
+      isCollapsed: false,
+      activeItem: "Dashboard",
+      menu: [
+        { name: "Dashboard", icon: "bx bxs-dashboard", link: "#" },
+        { name: "Transferencias", icon: "bx bxs-directions", link: "#" },
+        {
+          name: "Administrar Clientes",
+          icon: "bi bi-building-fill",
+          children: [
+            { name: "Clientes", link: "#" },
+            { name: "Direcciones", link: "#" },
+            { name: "Horas Laborables", link: "#" }
+          ],
+          open: false
         },
-        isEditing: false,
-        modalInstance: null,
-        selectedModulo: "",
-        fixedComponents: ["anio", "mes", "dia", "secuencia", "prefijo"],
-      };
+        {
+          name: "Administrar Usuarios",
+          icon: "bx bx-group",
+          children: [
+            { name: "Usuarios", link: "#" },
+            { name: "Roles y Permisos", link: "#" }
+          ],
+          open: false
+        },
+        {
+          name: "Administrar Bodegas",
+          icon: "bx bx-building-house",
+          children: [
+            { name: "Bodegas", link: "#" },
+            { name: "Ubicaciones", link: "#" }
+          ],
+          open: false
+        },
+        {
+          name: "Administrar Flotas",
+          icon: "bx bxs-truck",
+          children: [
+            { name: "Flotas", link: "#" },
+            { name: "Agregar Flota", link: "#" },
+            { name: "Ubicar Flotas", link: "#" },
+            { name: "Ver Flotas en Ruta", link: "#" }
+          ],
+          open: false
+        }
+      ]
+    };
+  },
+  computed: {
+    authStore() {
+      return useAuthStore();
+    }
+  },
+  methods: {
+    toggleSidebar() {
+      this.isCollapsed = !this.isCollapsed;
     },
-    computed: {
-      // --- Cálculos para las tarjetas de la parte superior ---
-      totalNomenclaturas() {
-        return this.nomenclaturas.length;
-      },
-      placeholdersFijos() {
-        return this.nomenclaturas.filter((n) =>
-          this.fixedComponents.includes(n.componente.toLowerCase())
-        ).length;
-      },
-      personalizadas() {
-        return this.nomenclaturas.filter(
-          (n) => !this.fixedComponents.includes(n.componente.toLowerCase())
-        ).length;
-      },
-      conSeparador() {
-        return this.nomenclaturas.filter((n) => n.separador).length;
-      },
-      sinSeparador() {
-        return this.nomenclaturas.filter((n) => !n.separador).length;
-      },
-  
-      // --- Para el filtro de la tabla ---
-      distinctModulos() {
-        const mods = this.nomenclaturas.map((n) => n.modulo);
-        return [...new Set(mods)].sort();
-      },
-      filteredNomenclaturas() {
-        if (this.selectedModulo) {
-          return this.nomenclaturas.filter(
-            (n) => n.modulo.toLowerCase() === this.selectedModulo.toLowerCase()
-          );
+    toggleDropdown(index) {
+      // Primero cerrar todos los dropdowns
+      this.menu.forEach((item, idx) => {
+        if (item.children && idx !== index) {
+          item.open = false;
         }
-        return this.nomenclaturas;
-      },
-  
-      // --- Vista previa para el módulo seleccionado ---
-      previewTemplate() {
-        const items = [...this.filteredNomenclaturas];
-        if (items.length === 0) return "";
-        items.sort((a, b) => a.orden - b.orden);
-  
-        let template = "";
-        items.forEach((item) => {
-          const piece = item.esPlaceholder ? `{${item.componente}}` : item.valorFijo;
-          template += piece + (item.separador || "");
-        });
-  
-        // Eliminar el separador del último item si lo hubiera
-        const lastItem = items[items.length - 1];
-        const lastSeparator = lastItem?.separador || "";
-        if (lastSeparator && template.endsWith(lastSeparator)) {
-          template = template.slice(0, -lastSeparator.length);
-        }
-        return template;
-      },
+      });
+      // Luego toggle el que se hizo clic
+      if (this.menu[index].children) {
+        this.menu[index].open = !this.menu[index].open;
+      }
     },
-    methods: {
-      async fetchNomenclaturas() {
-        try {
-          const response = await apiClient.post("/api/nomenclatura/getAll", {
-            clienteId: 2,
-          });
-          this.nomenclaturas = response.data;
-        } catch (error) {
-          console.error("Error fetching nomenclaturas:", error);
-        }
-      },
-      openModalToCreate() {
-        this.isEditing = false;
-        this.clearForm();
-        this.showModal();
-      },
-      openModalToEdit(n) {
-        this.isEditing = true;
-        this.form = { ...n };
-        this.form.tipoComponente = this.fixedComponents.includes(
-          n.componente.toLowerCase()
-        )
-          ? "placeholder"
-          : "input";
-        this.showModal();
-      },
-      showModal() {
-        if (!this.modalInstance) {
-          const modalEl = this.$refs.nomenclaturaModal;
-          this.modalInstance = new Modal(modalEl, {});
-        }
-        this.modalInstance.show();
-      },
-      hideModal() {
-        if (this.modalInstance) {
-          this.modalInstance.hide();
-        }
-      },
-      async createNomenclatura() {
-        try {
-          await apiClient.post("/api/nomenclatura/create", this.form);
-          this.fetchNomenclaturas();
-          this.hideModal();
-        } catch (error) {
-          console.error("Error creating nomenclatura:", error);
-        }
-      },
-      async updateNomenclatura() {
-        try {
-          await apiClient.post("/api/nomenclatura/update", this.form);
-          this.fetchNomenclaturas();
-          this.hideModal();
-        } catch (error) {
-          console.error("Error updating nomenclatura:", error);
-        }
-      },
-      async deleteNomenclatura(n) {
-        if (!confirm(`¿Eliminar la nomenclatura con ID ${n.id}?`)) return;
-        try {
-          await apiClient.post("/api/nomenclatura/delete", {
-            id: n.id,
-            clienteId: n.clienteId,
-          });
-          this.fetchNomenclaturas();
-        } catch (error) {
-          console.error("Error deleting nomenclatura:", error);
-        }
-      },
-      clearForm() {
-        this.form = {
-          id: null,
-          clienteId: 2,
-          modulo: "",
-          tipoComponente: "input",
-          componente: "",
-          orden: 0,
-          separador: "",
-          valorFijo: "",
-          esPlaceholder: true,
-        };
-        this.isEditing = false;
-      },
+    setActive(name) {
+      this.activeItem = name;
     },
-    mounted() {
-      this.fetchNomenclaturas();
-    },
-  };
-  </script>
-  
-  <style scoped>
-  /* ==== Tarjetas de la parte superior ==== */
-  .info-card {
-    background-color: #1b2e4b;
-    color: #fff;
-    padding: 1rem;
-    border-radius: 0.5rem;
+    logout() {
+      this.authStore.resetAuth();
+      localStorage.clear();
+      this.$router.replace({ name: "Login" });
+    }
   }
-  
-  .info-card-sm {
-    background-color: #1b2e4b;
-    color: #fff;
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-  }
-  
-  .info-card i {
-    font-size: 2rem;
-  }
-  
-  .info-card-sm h4 {
-    margin: 0;
-  }
-  
-  .info-card-sm small {
-    display: block;
-    font-size: 0.8rem;
-  }
-  
-  /* ==== Tabla y Modal ==== */
-  .table-responsive {
-    margin-top: 1rem;
-  }
-  
-  .table thead th {
-    vertical-align: middle;
-  }
-  
-  .table tbody td {
-    vertical-align: middle;
-  }
-  
-  .badge {
-    font-size: 0.9rem;
-    padding: 0.5em 0.75em;
-  }
-  
-  .modal-content {
-    border-radius: 0.5rem;
-    overflow: hidden;
-  }
-  
-  .modal-header {
-    padding: 1rem 1.5rem;
-  }
-  
-  .modal-body {
-    padding: 1.5rem;
-  }
-  
-  .modal-footer {
-    padding: 1rem 1.5rem;
-    border-top: none;
-  }
-  </style>
-  
+};
+</script>
+
+<style scoped>
+@import url('https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css');
+
+.dashboard-layout {
+  display: flex;
+  height: calc(100vh - 70px);
+  position: relative;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  width: 250px;
+  height: 100%;
+  background: #11101d;
+  transition: width 0.3s ease;
+  overflow: hidden;
+}
+.sidebar.close {
+  width: 80px;
+}
+
+/* Menú */
+.menu-bar {
+  height: calc(100% - 80px);
+  overflow-y: auto;
+  padding: 20px 0;
+}
+.menu-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.menu-links li {
+  margin: 10px 0;
+}
+.menu-links a,
+.menu-link {
+  display: flex;
+  align-items: center;
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 20px;
+  transition: background 0.3s;
+  cursor: pointer;
+}
+.menu-links a:hover,
+.menu-link:hover {
+  background: #1d1b31;
+  border-radius: 4px;
+}
+.nav-text {
+  font-size: 16px;
+  font-weight: 500;
+  margin-left: 10px;
+}
+
+/* Dropdown */
+.dropdown .arrow {
+  margin-left: auto;
+  transition: transform 0.3s;
+}
+.dropdown .arrow.open {
+  transform: rotate(180deg);
+}
+.sub-menu {
+  list-style: none;
+  padding-left: 40px;
+  margin-top: 5px;
+}
+.sub-menu li a {
+  padding: 8px 0;
+  font-size: 14px;
+  color: #fff;
+  text-decoration: none;
+  transition: background 0.3s;
+}
+.sub-menu li a:hover {
+  background: #1d1b31;
+  border-radius: 4px;
+}
+
+/* Footer del sidebar: cerrar sesión en esquina inferior izquierda */
+.sidebar-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 0px;
+  border-top: 1px solid rgba(255, 255, 255, 0.171);
+  background-color: #010102;
+}
+.logout {
+  display: flex;
+  align-items: center;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.3s;
+  padding: 10px 0px;
+  margin-bottom: 110px;
+  margin-left: 55px;
+}
+.logout:hover {
+  color: #c7c7c7;
+}
+
+/* Contenido principal */
+.main-content {
+  margin-left: 250px;
+  padding: 20px;
+  width: calc(100% - 250px);
+  transition: margin-left 0.3s, width 0.3s;
+}
+.sidebar.close ~ .main-content {
+  margin-left: 80px;
+  width: calc(100% - 80px);
+}
+</style>

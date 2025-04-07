@@ -1,16 +1,16 @@
 <template>
-  <div class="container-fluid p-3">
+  <div class="container-fluid p-0 pt-2">
     <!-- Card de Filtros -->
     <div class="card shadow-sm mb-4">
       <div class="card-header  ">
-        <div class="row align-items-center">
+        <div class="row align-items-center justify-content-between">
           <div class="col-md-3">
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-search"></i></span>
               <input v-model="search" type="text" class="form-control" placeholder="Buscar..." />
             </div>
           </div>
-          <div class="col-md-2">
+          <!-- <div class="col-md-2">
             <select class="form-select" v-model="selectedEstado">
               <option value="">Todos los estados</option>
               <option value="solicitud creada">Solicitud creada</option>
@@ -20,15 +20,15 @@
               <option value="en bodega">En bodega</option>
               <option value="completado">Completado</option>
             </select>
-          </div>
+          </div> -->
           <div class="col-md-4">
             <ul class="nav nav-pills justify-content-center">
               <li class="nav-item" v-for="mod in modules" :key="mod">
-                <button class="btn btn-sm me-2" :class="{
+                <button class="btn btn-sm me-2"  :class="{
                   'btn-outline-secondary': activeModule !== mod,
                   'btn-secondary': activeModule === mod
                 }" @click="activeModule = mod">
-                  {{ mod }}
+                    {{ mod }}
                 </button>
               </li>
             </ul>
@@ -37,13 +37,13 @@
             <ul class="nav nav-tabs justify-content-end">
               <li class="nav-item">
                 <button class="nav-link" :class="{ active: activeTab === 'pendientes' }"
-                  @click="activeTab = 'pendientes'">
+                  @click="activeTab = 'pendientes'"  >
                   Pendientes
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link" :class="{ active: activeTab === 'completadas' }"
-                  @click="activeTab = 'completadas'">
+                  @click="activeTab = 'completadas'"  >
                   Completadas
                 </button>
               </li>

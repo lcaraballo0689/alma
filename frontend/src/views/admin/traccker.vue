@@ -1,7 +1,7 @@
 <template>
   <div class="container my-4">
     <!-- Navegación por pestañas -->
-    <ul class="nav nav-tabs mb-3">
+    <!-- <ul class="nav nav-tabs mb-3">
       <li class="nav-item" v-for="tab in tabs" :key="tab">
         <a 
           class="nav-link" 
@@ -12,7 +12,7 @@
           {{ tab }}
         </a>
       </li>
-    </ul>
+    </ul> -->
 
     <div>
       <!-- Pestaña: Mapa en Tiempo Real -->

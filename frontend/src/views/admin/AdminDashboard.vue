@@ -1,20 +1,16 @@
 <template>
-  <div :class="{ 'dark-mode': themeStore.isDarkTheme }">
-    <!-- Navbar con transición y sticky -->
-    <div>
-      <nav
-        class="navbar navbar-expand-lg shadow fixed-top p-0 m-0 navegacion"
-        :class="themeStore.isDarkTheme ? 'navbar-dark bg-dark' : 'navbar-light bg-white'"
-        style="min-height: 60px"
-        aria-label="Barra de navegación principal"
-      >
-        <div class="container-fluid">
-          <!-- Logo e Identificación del cliente -->
-          <a
-            class="navbar-brand d-flex align-items-center"
-            href="#"
-            aria-label="Inicio"
-          >
+  <div>
+    <!-- Navbar con sticky y sombra -->
+    <nav
+      class="navbar navbar-expand-lg fixed-top shadow p-0"
+      :class="themeStore.isDarkTheme ? 'navbar-dark bg-dark' : 'navbar-light bg-white'"
+      style="min-height: 60px"
+      aria-label="Barra de navegación principal"
+    >
+      <div class="container-fluid">
+        <!-- Sección izquierda: Logo e identificación del cliente -->
+        <div class="d-flex align-items-center">
+          <a class="navbar-brand d-flex align-items-center me-3" href="#" aria-label="Inicio">
             <img
               :src="themeStore.isDarkTheme ? Logolight : Logo"
               alt="Siglo"
@@ -22,115 +18,27 @@
               class="me-2"
             />
           </a>
-          <img
-            v-if="clienteNombre === 'HACIENDA'"
-            :src="hacienda"
-            alt="Hacienda"
-            height="40"
-            class="me-2"
-          />
-          <strong
-            v-if="clienteNombre"
-            class="ms-2 pe-none d-none d-sm-inline-block text-uppercase"
-            aria-label="Nombre del cliente"
-          >
-            <i class="bi bi-building me-1"></i>{{ clienteNombre }}
-          </strong>
-
-          <!-- Botón toggler para móviles -->
-          <button
-            class="navbar-toggler border-0"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#navbarContent"
-            aria-controls="navbarContent"
-            aria-expanded="false"
-            aria-label="Alternar navegación"
-          >
-            <span class="navbar-toggler-icon"></span>
-          </button>
-
-          <!-- Contenido colapsable -->
-          <div class="collapse navbar-collapse" id="navbarContent">
-            <!-- Pestañas de navegación -->
-            <ul class="navbar-nav mx-auto my-2 my-lg-0" role="tablist">
-              <li
-                class="nav-item"
-                v-for="tabItem in tabs"
-                :key="tabItem.name"
-                role="presentation"
-              >
-                <button
-                  class="nav-link nav-btn"
-                  :class="{ active: currentTab === tabItem.name }"
-                  @click.prevent="setTab(tabItem.name)"
-                  role="tab"
-                  :aria-selected="currentTab === tabItem.name"
-                >
-                  <i :class="tabItem.icon + ' me-1'"></i>
-                  <span class="d-none d-sm-inline">{{ tabItem.label }}</span>
-                </button>
-              </li>
-            </ul>
-
-            <!-- Sección de usuario con dropdown -->
-            <div class="d-flex align-items-center">
-              <NotificationsNavbar />
-              <div class="me-3 pe-none d-none d-sm-flex align-items-center me-4">
-                <i class="bi bi-person-circle me-1 fs-5"></i>
-                <span class="fw-semibold">{{ user.nombre || "N/A" }}</span>
-              </div>
-              <div class="nav-item dropdown">
-                <a
-                  class="nav-link dropdown-toggle nav-link-profile"
-                  href="#"
-                  id="userDropdown"
-                  role="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >
-                  Perfil
-                </a>
-                <ul
-                  class="dropdown-menu dropdown-menu-end"
-                  style="min-width: 300px;"
-                  :class="themeStore.isDarkTheme ? 'dropdown-menu-dark' : ''"
-                  aria-labelledby="userDropdown"
-                >
-                  <li>
-                    <span class="dropdown-item-text" style="width: fit-content">
-                      <i class="bi bi-person-circle me-1 fs-5"></i>
-                      {{ user.nombre || "N/A" }}
-                    </span>
-                  </li>
-                  <li>
-                    <span class="dropdown-item-text">
-                      <i class="bi bi-envelope me-1 fs-5"></i>
-                      {{ user.email || "N/A" }}
-                    </span>
-                  </li>
-                  <li>
-                    <hr class="dropdown-divider" />
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="#" @click.prevent="logout">
-                      <i class="bi bi-power me-2"></i>Cerrar sesión
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
+          <div v-if="clienteNombre === 'HACIENDA'">
+            <img :src="hacienda" alt="Hacienda" height="40" />
           </div>
         </div>
-      </nav>
-    </div>
 
-    <!-- Contenido de la pestaña actual -->
-    <main>
-      <div class="custom-mt" style="height: calc(100vh - 90px)">
-        <!-- <breadcrumb :path="breadcrumbPath" /> -->
-        <component :is="currentComponent" :key="currentTab" />
+  
+
+        <!-- Sección derecha: Notificaciones y perfil de usuario -->
+        <div class="d-flex align-items-center">
+          <NotificationsNavbar />
+          <div class="d-none d-sm-flex align-items-center me-3">
+            <i class="bi bi-person-circle me-1 fs-5"></i>
+            <span class="fw-semibold">{{ user.nombre || "N/A" }}</span>
+          </div>
+        </div>
       </div>
+    </nav>
+
+    <!-- Contenido principal (ajustado para evitar que se oculte bajo el navbar) -->
+    <main style="padding-top: 70px">
+      <component :is="currentComponent" :key="currentTab" />
     </main>
   </div>
 </template>
@@ -193,7 +101,7 @@ export default {
       hacienda,
       tabs: [
         { name: "movimientosreg", label: "Solicitudes", icon: "bi bi-stack" },
-        { name: "NomenclaturaManager", label: "Configuraciones", icon: "bi bi-gear-fill" },
+        { name: "NomenclaturaManager", label: "Administrar Sistema", icon: "bi bi-gear-fill" },
         // { name: "usuarios", label: "Usuarios", icon: "bi bi-people-fill" },
         // { name: "traccker", label: "traccker", icon: "bi bi-pin-map" },
         // { name: "RealTimeRouteMap", label: "Ruta en tiempo real", icon: "bi bi-map" },
@@ -255,7 +163,7 @@ export default {
   },
   mounted() {
     // Establece la pestaña inicial
-    this.tabStore.setTab("movimientosreg");
+    this.tabStore.setTab("NomenclaturaManager");
     // Si usas socket, puedes suscribirte aquí:
     // socket.on("notify", this.handleSocketNotification);
   },
@@ -356,5 +264,24 @@ a {
 }
 .navegacion {
   z-index: 10000;
+}
+/* Ajusta el estilo del navbar para que se mantenga coherente con el look and feel */
+.navegacion {
+  min-height: 60px;
+  padding: 0 15px;
+}
+
+.navbar-brand img {
+  /* Puedes ajustar el tamaño del logo según necesites */
+  height: 40px;
+}
+
+.dropdown-menu {
+  font-size: 14px;
+}
+
+/* Asegura que el contenido principal no quede oculto tras el navbar */
+main {
+  padding-top: 60px !important;
 }
 </style>
