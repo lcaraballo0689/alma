@@ -455,7 +455,7 @@ export default {
     },
     confirmedDeliveryCount() {
       return this.inventarios.filter(
-        (item) => item.estado.toLowerCase() === "entrega confirmada"
+        (item) => item.estado.toLowerCase() === "entregado"
       ).length;
     },
     totalCount() {
@@ -497,7 +497,7 @@ export default {
         );
       } else if (this.currentTab == "Disponible para devolver") {
         console.log(`output->filtered`, filtered);
-        filtered = filtered.filter((item) => item.estado == "ENTREGADO");
+        filtered = filtered.filter((item) => item.estado.toLowerCase() === "entregado" );
       }
       return filtered;
     },
@@ -590,7 +590,7 @@ export default {
           console.log("Request body:", body);
         }
 
-        this.loaderStore.showLoader();
+        //this.loaderStore.showLoader();
         const response = await apiClient.post(`/api/custodias/cliente`, body);
         // Si la API devuelve { data: [...], totalCount: ... }:
         const datos = response.data.data ? response.data.data : response.data;

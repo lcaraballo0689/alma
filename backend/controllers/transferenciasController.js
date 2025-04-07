@@ -1751,7 +1751,7 @@ async function listarUbicaciones(req, res, next) {
   try {
     const pool = await connectDB();
     const result = await pool.request().query(`
-      SELECT TOP (1000)
+      SELECT 
              id,
              bodega_id,
              modulo,
