@@ -127,7 +127,7 @@ async function enviarNotificacionPorCanal(pool, usuarioId, subject, message) {
 // Controlador actualizado para crear una cabecera y múltiples detalles de préstamo
 async function createDevolucion(req, res) {
   const logoPath = path.join(__dirname, "../assets/siglo.png");
-  const { custodiaIds, usuarioId, observaciones, fecha_recoleccion, direccion_recoleccion } = req.body;
+  const { custodiaIds, usuarioId, observaciones, fecha_recoleccion, direccion_recoleccion, urgencia } = req.body;
 
   const errores = [];
   if (!custodiaIds?.length)
@@ -169,16 +169,18 @@ async function createDevolucion(req, res) {
     const createdDevolucion = [];
 
 
-    const paywer  = {
+    const paywer = {
       usuarioId,
       consecutivo: consecutivos.ultimaDevolucion,
       fechaSolicitud: new Date(),
       entregadoPor: "",
       observaciones,
-      fecha_recoleccion: fecha_recoleccion
+      fecha_recoleccion: fecha_recoleccion,
+      urgencia: urgencia,
+      direccion_recoleccion: direccion_recoleccion,
 
     }
-    console.log(`output->paywer`,paywer)
+    console.log(`output->paywer`, paywer)
     // esto inserta en la tabla devolucion
     const devolucionId = await createDevolucionCabecera(transaction, paywer);
 
@@ -196,9 +198,9 @@ async function createDevolucion(req, res) {
         referencia3: custodia.referencia3,
         observaciones
       }
-      console.log(`output->payload>>>>>>>>>`,payload)
+      console.log(`output->payload>>>>>>>>>`, payload)
       //esto inserta en la tabla devoluciones
-      await createDevolucionDetalle(transaction, payload );
+      await createDevolucionDetalle(transaction, payload);
 
       await marcarCustodiaEnDevolucion(transaction, custodia.id);
 
@@ -217,6 +219,7 @@ async function createDevolucion(req, res) {
       modulo: "Devolucion",
       observaciones: observaciones,
       fecha_recoleccion: fecha_recoleccion,
+      urgencia: urgencia,
       direccion_recoleccion: direccion_recoleccion,
       items: custodias.map((custodia) => ({
         referencia2: custodia.referencia2,

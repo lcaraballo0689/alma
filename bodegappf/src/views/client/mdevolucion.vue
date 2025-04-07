@@ -37,9 +37,10 @@
                 <th>Documento de Identidad</th>
                 <th>Placa Vehiculo</th>
                 <th>Fecha Asignación</th>
-                <th>Fecha Recogida</th>
+                <th>Fecha Entrega</th>
                 <th>Observaciones</th>
                 <th>Dirección</th>
+                <th>Acta</th>
               </tr>
             </thead>
             <tbody>
@@ -59,9 +60,19 @@
                 <td>{{ item.documentoIdentidad }}</td>
                 <td>{{ item.placa }}</td>
                 <td>{{ item.fechaAsignacion ? formatDate(item.fechaAsignacion) : 'Pendiente' }}</td>
-                <td>{{ item.fechaRecogida ? (formatDate(item.fechaRecogida) + ' - ' + formatTime(item.fechaRecogida)) : 'Pendiente' }}</td>
+                <td>{{ item.fechaRecogida ? (formatDate(item.fechaRecogida) + ' - ' + formatTime(item.fechaRecogida)) :
+                  'Pendiente' }}</td>
                 <td>{{ item.observaciones }}</td>
                 <td>{{ item.direccion }}</td>
+                <td @click.stop>
+                  <!-- Se pasa el consecutivo para que el componente haga la petición y descargue el PDF -->
+
+
+                  <FormatoDevolucion style="margin-top: -2px; width: 100px; "  v-if="item.estado === 'devolucion completada'" :consecutivo="item.consecutivo" />
+                  <button class="btn buttons-actions text-white " style="margin-top: -5px; height: 20px !important; background-color:darkgrey !important;" v-else :consecutivo="item.consecutivo" disabled>
+                    <span>No Disponible</span>
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -77,7 +88,7 @@
 
             <h5 class="modal-title">
               <strong class="text-muted">Detalles de Solicitud</strong>
-              
+
             </h5>
             <button class="custom-btn me-2" @click="closeDetalleModal">
               <span>Cerrar</span>
@@ -93,17 +104,19 @@
             <div class="info-basica row my-1">
               <div class="col-md-6">
                 <p class="my-1"><strong>Devolucion N°:</strong> {{ detalle.solicitud.consecutivo || 'N/A' }}</p>
-              <p class="my-1"><strong>Traslado N°:</strong> {{ detalle.solicitud.id || 'N/A' }}</p>
-              <p class="my-1"><strong>Observaciones:</strong> {{ detalle.solicitud.observaciones || 'Sin observaciones' }}</p>
-            </div>
-            <div class="col-md-6">
-              <p class="my-1"><strong>Fecha Solicitud:</strong> {{ formatDate(detalle.solicitud.fechaSolicitud) || 'N/A' }}</p>
-              <p class="my-1"><strong>Última Actualización:</strong> {{ formatDate(detalle.solicitud.updatedAt) || 'N/A' }}</p>
-              <p class="my-1"><strong>Dirección:</strong> {{ detalle.solicitud.direccion || 'No disponible' }}</p>
+                <p class="my-1"><strong>Traslado N°:</strong> {{ detalle.solicitud.id || 'N/A' }}</p>
+                <p class="my-1"><strong>Observaciones:</strong> {{ detalle.solicitud.observaciones || 'Sin observaciones' }}</p>
+              </div>
+              <div class="col-md-6">
+                <p class="my-1"><strong>Fecha Solicitud:</strong> {{ formatDate(detalle.solicitud.fechaSolicitud) ||
+                  'N/A' }}</p>
+                <p class="my-1"><strong>Última Actualización:</strong> {{ formatDate(detalle.solicitud.updatedAt) ||
+                  'N/A' }}</p>
+                <p class="my-1"><strong>Dirección:</strong> {{ detalle.solicitud.direccion || 'No disponible' }}</p>
               </div>
             </div>
-     
-<hr class="my-0 ">
+
+            <hr class="my-0 ">
 
             <!-- Tabs -->
             <div class="tabs-container mt-0">
@@ -190,6 +203,7 @@
                     <button class="btn btn-sm btn-primary me-2" @click="reprogramarEntrega">Reprogramar Entrega</button>
                     <button class="btn btn-sm btn-success me-2" @click="confirmarRecepcion">Confirmar Recepción</button>
                     <button class="btn btn-sm btn-secondary" @click="generarReportePDF">Generar Reporte</button>
+                    
                   </div>
                   <div class="comentarios-section mt-3">
                     <h6>Comentarios / Notas</h6>
@@ -242,6 +256,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import QRCode from "qrcode";
+import FormatoDevolucion from "@/components/FormatoDevolucion.vue";
+
 
 const timelineMap = {
   Prestamo: [
@@ -277,6 +293,7 @@ const timelineMap = {
 
 export default {
   name: "devoluciones",
+  components: { FormatoDevolucion },
   data() {
     const today = new Date().toISOString().split("T")[0];
     return {
@@ -299,7 +316,8 @@ export default {
         solicitud: {},
         detalle: [],
         historial: []
-      }
+      },
+      formatoData: {}
     };
   },
   computed: {
@@ -361,6 +379,49 @@ export default {
     this.fetchtransferencias();
   },
   methods: {
+    async generarFormatoDevolucion(consecutivo) {
+  try {
+    const response = await apiClient.post("/api/detalleSolicitud", {
+      id: consecutivo,
+    });
+
+    const rawData = response.data;
+
+    // Convertimos los campos numéricos y nulos a strings seguros
+    const cleanedData = {
+      ...rawData,
+      noSolicitud: String(rawData.noSolicitud ?? ""),
+      solicitudId: String(rawData.solicitudId ?? ""),
+      entidad: String(rawData.entidad ?? ""),
+      solicitadoPor: String(rawData.solicitadoPor ?? ""),
+      direccion: String(rawData.direccion ?? ""),
+      prioridad: String(rawData.prioridad ?? ""),
+      contacto: String(rawData.contacto ?? ""),
+      fechaElaboracion: String(rawData.fechaElaboracion ?? ""),
+      horaSolicitud: String(rawData.horaSolicitud ?? ""),
+      horaEntrega: String(rawData.horaEntrega ?? ""),
+      stickerSeguridad: String(rawData.stickerSeguridad ?? ""),
+      entregadoPor: String(rawData.entregadoPor ?? ""),
+      recibidoPor: String(rawData.recibidoPor ?? ""),
+      items: Array.isArray(rawData.items)
+        ? rawData.items.map((item) => ({
+            item: String(item.item ?? ""),
+            caja: String(item.caja ?? ""),
+            codigoXXI: String(item.codigoXXI ?? ""),
+            observacion: String(item.observacion ?? ""),
+          }))
+        : [],
+    };
+
+    this.formatoData = cleanedData;
+    this.activeTab = "acciones"; // Tab donde está FormatoDevolucion
+    this.detalleVisible = true;
+  } catch (error) {
+    console.error("❌ Error al obtener el formato de devolución:", error);
+  }
+},
+
+
     async generarHashUnico() {
       const sol = this.detalle.solicitud || {};
       const dataToHash = `solicitud_${sol.id || "N/A"}_${new Date().toISOString()}`;
@@ -372,172 +433,172 @@ export default {
       return hashHex;
     },
     async generarReportePDF() {
-    // Forzar que la pestaña de Progreso esté activa para que el timeline se renderice
-    this.activeTab = "progreso";
-    await this.$nextTick();
+      // Forzar que la pestaña de Progreso esté activa para que el timeline se renderice
+      this.activeTab = "progreso";
+      await this.$nextTick();
 
-    // Crea el documento PDF en formato A4 vertical
-    const doc = new jsPDF("p", "mm", "a4");
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
+      // Crea el documento PDF en formato A4 vertical
+      const doc = new jsPDF("p", "mm", "a4");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
 
-    const marginLeft = 15;
-    let currentY = 20;
-    const pageWidth = doc.internal.pageSize.getWidth();
+      const marginLeft = 15;
+      let currentY = 20;
+      const pageWidth = doc.internal.pageSize.getWidth();
 
-    // 1. Agrega el logo en la parte superior izquierda
-    doc.addImage(Logo, "PNG", 10, 10, 30, 15);
+      // 1. Agrega el logo en la parte superior izquierda
+      doc.addImage(Logo, "PNG", 10, 10, 30, 15);
 
-    // Genera el QR code (opcional) en la esquina superior derecha
-    const sol = this.detalle.solicitud || {};
-    const qrContent = "solicitud_" + (sol.id || "N/A");
-    let qrDataUrl = "";
-    try {
-      const QRCode = (await import("qrcode")).default;
-      qrDataUrl = await QRCode.toDataURL(qrContent);
-    } catch (error) {
-      console.error("Error generando QR:", error);
-    }
-    const qrWidth = 30;
-    const qrHeight = 30;
-    const qrX = pageWidth - marginLeft - qrWidth;
-    const qrY = 10;
-    if (qrDataUrl) {
-      doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrWidth, qrHeight);
-    }
+      // Genera el QR code (opcional) en la esquina superior derecha
+      const sol = this.detalle.solicitud || {};
+      const qrContent = "solicitud_" + (sol.id || "N/A");
+      let qrDataUrl = "";
+      try {
+        const QRCode = (await import("qrcode")).default;
+        qrDataUrl = await QRCode.toDataURL(qrContent);
+      } catch (error) {
+        console.error("Error generando QR:", error);
+      }
+      const qrWidth = 30;
+      const qrHeight = 30;
+      const qrX = pageWidth - marginLeft - qrWidth;
+      const qrY = 10;
+      if (qrDataUrl) {
+        doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrWidth, qrHeight);
+      }
 
-    // 2. Título y fecha
-    currentY = 30; // debajo del logo
-    doc.setTextColor(204, 20, 23); // color #cc1417
-    doc.setFontSize(18);
-    doc.text("Reporte de Prestamos", marginLeft, currentY);
-    currentY += 10;
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    const fechaHoy = new Date().toLocaleDateString();
-    doc.text(`Fecha: ${fechaHoy}`, marginLeft, currentY);
-    currentY += 10;
-
-    // 3. Sección: Detalle de Prestamo
-    doc.setFontSize(14);
-    doc.setTextColor(204, 20, 23);
-    doc.text("Detalle de Prestamo", marginLeft, currentY);
-    currentY += 7;
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text(`Traslado N°: ${sol.id || ""}`, marginLeft, currentY);
-    currentY += 6;
-    doc.text(`Estado: ${sol.estado || ""}`, marginLeft, currentY);
-    currentY += 6;
-    doc.text(`Observaciones: ${sol.observaciones || ""}`, marginLeft, currentY);
-    currentY += 6;
-    doc.text(`Fecha Solicitud: ${this.formatDate(sol.fechaSolicitud) || ""}`, marginLeft, currentY);
-    currentY += 10;
-
-    // 4. Sección: Timeline capturado como imagen
-    const timelineElement = this.$refs.timelineRef;
-    if (timelineElement) {
-      const canvas = await html2canvas(timelineElement);
-      const timelineImage = canvas.toDataURL("image/png");
-      const pdfWidth = pageWidth - marginLeft * 2;
-      const imgProps = doc.getImageProperties(timelineImage);
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      currentY += 5;
-      doc.addImage(timelineImage, "PNG", marginLeft, currentY, pdfWidth, pdfHeight);
-      currentY += pdfHeight + 10;
-    } else {
-      doc.text("Timeline no disponible.", marginLeft, currentY);
+      // 2. Título y fecha
+      currentY = 30; // debajo del logo
+      doc.setTextColor(204, 20, 23); // color #cc1417
+      doc.setFontSize(18);
+      doc.text("Reporte de Prestamos", marginLeft, currentY);
       currentY += 10;
-    }
-
-    // 5. Sección: Historial de Estados
-    doc.setFontSize(14);
-    doc.setTextColor(204, 20, 23);
-    doc.text("Historial de Estados", marginLeft, currentY);
-    currentY += 7;
-    if (this.detalle.historial && this.detalle.historial.length > 0) {
-      const historialData = this.detalle.historial.map(item => [
-        item.estado,
-        `${this.formatDate(item.fecha)} - ${this.formatTime(item.fecha)}`,
-        item.usuario
-      ]);
-      autoTable(doc, {
-        head: [["Estado", "Fecha", "Usuario"]],
-        body: historialData,
-        startY: currentY,
-        styles: { fontSize: 10 },
-        headStyles: { fillColor: [204, 20, 23], textColor: 255 }
-      });
-      currentY = doc.lastAutoTable.finalY + 10;
-    } else {
+      doc.setFontSize(11);
       doc.setTextColor(0);
-      doc.text("No hay historial disponible.", marginLeft, currentY);
+      const fechaHoy = new Date().toLocaleDateString();
+      doc.text(`Fecha: ${fechaHoy}`, marginLeft, currentY);
       currentY += 10;
-    }
 
-    // 6. Sección: Datos de Contacto
-    doc.setFontSize(14);
-    doc.setTextColor(204, 20, 23);
-    doc.text("Datos de Contacto", marginLeft, currentY);
-    currentY += 7;
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text(`Transportista: ${sol.transportista || "Sin asignar"}`, marginLeft, currentY);
-    currentY += 6;
-    doc.text(`Documento de Identidad: ${sol.documentoIdentidad || "Sin asignar"}`, marginLeft, currentY);
-    currentY += 6;
-    doc.text(`Placa Vehiculo: ${sol.placa || "Sin asignar"}`, marginLeft, currentY);
-    currentY += 6;
-    if (sol.telefono) {
-      doc.text(`Teléfono: ${sol.telefono}`, marginLeft, currentY);
+      // 3. Sección: Detalle de Prestamo
+      doc.setFontSize(14);
+      doc.setTextColor(204, 20, 23);
+      doc.text("Detalle de Prestamo", marginLeft, currentY);
+      currentY += 7;
+      doc.setFontSize(11);
+      doc.setTextColor(0);
+      doc.text(`Traslado N°: ${sol.id || ""}`, marginLeft, currentY);
       currentY += 6;
-    }
-    if (sol.email) {
-      doc.text(`Email: ${sol.email}`, marginLeft, currentY);
+      doc.text(`Estado: ${sol.estado || ""}`, marginLeft, currentY);
       currentY += 6;
-    }
-    currentY += 10;
+      doc.text(`Observaciones: ${sol.observaciones || ""}`, marginLeft, currentY);
+      currentY += 6;
+      doc.text(`Fecha Solicitud: ${this.formatDate(sol.fechaSolicitud) || ""}`, marginLeft, currentY);
+      currentY += 10;
 
-    // 7. Sección: Comentarios / Notas
-    doc.setFontSize(14);
-    doc.setTextColor(204, 20, 23);
-    doc.text("Comentarios / Notas", marginLeft, currentY);
-    currentY += 7;
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text(this.comentario || "Sin comentarios.", marginLeft, currentY);
-    currentY += 10;
+      // 4. Sección: Timeline capturado como imagen
+      const timelineElement = this.$refs.timelineRef;
+      if (timelineElement) {
+        const canvas = await html2canvas(timelineElement);
+        const timelineImage = canvas.toDataURL("image/png");
+        const pdfWidth = pageWidth - marginLeft * 2;
+        const imgProps = doc.getImageProperties(timelineImage);
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        currentY += 5;
+        doc.addImage(timelineImage, "PNG", marginLeft, currentY, pdfWidth, pdfHeight);
+        currentY += pdfHeight + 10;
+      } else {
+        doc.text("Timeline no disponible.", marginLeft, currentY);
+        currentY += 10;
+      }
 
-    // 8. Footer: Información de la Empresa y Hash Único
-    // Genera el hash único (Identificador de Autenticidad)
-    const hashUnico = await this.generarHashUnico();
+      // 5. Sección: Historial de Estados
+      doc.setFontSize(14);
+      doc.setTextColor(204, 20, 23);
+      doc.text("Historial de Estados", marginLeft, currentY);
+      currentY += 7;
+      if (this.detalle.historial && this.detalle.historial.length > 0) {
+        const historialData = this.detalle.historial.map(item => [
+          item.estado,
+          `${this.formatDate(item.fecha)} - ${this.formatTime(item.fecha)}`,
+          item.usuario
+        ]);
+        autoTable(doc, {
+          head: [["Estado", "Fecha", "Usuario"]],
+          body: historialData,
+          startY: currentY,
+          styles: { fontSize: 10 },
+          headStyles: { fillColor: [204, 20, 23], textColor: 255 }
+        });
+        currentY = doc.lastAutoTable.finalY + 10;
+      } else {
+        doc.setTextColor(0);
+        doc.text("No hay historial disponible.", marginLeft, currentY);
+        currentY += 10;
+      }
 
-    // Posición del footer (por ejemplo, 20 mm desde el final de la página)
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const footerY = pageHeight - 20;
+      // 6. Sección: Datos de Contacto
+      doc.setFontSize(14);
+      doc.setTextColor(204, 20, 23);
+      doc.text("Datos de Contacto", marginLeft, currentY);
+      currentY += 7;
+      doc.setFontSize(11);
+      doc.setTextColor(0);
+      doc.text(`Transportista: ${sol.transportista || "Sin asignar"}`, marginLeft, currentY);
+      currentY += 6;
+      doc.text(`Documento de Identidad: ${sol.documentoIdentidad || "Sin asignar"}`, marginLeft, currentY);
+      currentY += 6;
+      doc.text(`Placa Vehiculo: ${sol.placa || "Sin asignar"}`, marginLeft, currentY);
+      currentY += 6;
+      if (sol.telefono) {
+        doc.text(`Teléfono: ${sol.telefono}`, marginLeft, currentY);
+        currentY += 6;
+      }
+      if (sol.email) {
+        doc.text(`Email: ${sol.email}`, marginLeft, currentY);
+        currentY += 6;
+      }
+      currentY += 10;
 
-    // Dibuja una línea horizontal para separar el contenido del footer
-    doc.setLineWidth(0.5);
-    doc.setDrawColor(204, 20, 23);
-    doc.line(marginLeft, footerY - 5, pageWidth - marginLeft, footerY - 5);
+      // 7. Sección: Comentarios / Notas
+      doc.setFontSize(14);
+      doc.setTextColor(204, 20, 23);
+      doc.text("Comentarios / Notas", marginLeft, currentY);
+      currentY += 7;
+      doc.setFontSize(11);
+      doc.setTextColor(0);
+      doc.text(this.comentario || "Sin comentarios.", marginLeft, currentY);
+      currentY += 10;
 
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    // Información de la empresa (ajusta los datos según tu empresa)
-    doc.text(
-      "Siglo21 Documental | Dirección: Av. Principal 123, Bogota, Colombia | documental@siglo21.com.co | siglo21.com.co",
-      marginLeft,
-      footerY
-    );
-    doc.text(
-      "SECUREID: " + hashUnico,
-      marginLeft,
-      footerY + 5
-    );
+      // 8. Footer: Información de la Empresa y Hash Único
+      // Genera el hash único (Identificador de Autenticidad)
+      const hashUnico = await this.generarHashUnico();
 
-    // 9. Guarda el PDF
-    doc.save(`Solicitud de Devolucion Nro- ${sol.id}.pdf`);
-  },
+      // Posición del footer (por ejemplo, 20 mm desde el final de la página)
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const footerY = pageHeight - 20;
+
+      // Dibuja una línea horizontal para separar el contenido del footer
+      doc.setLineWidth(0.5);
+      doc.setDrawColor(204, 20, 23);
+      doc.line(marginLeft, footerY - 5, pageWidth - marginLeft, footerY - 5);
+
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      // Información de la empresa (ajusta los datos según tu empresa)
+      doc.text(
+        "Siglo21 Documental | Dirección: Av. Principal 123, Bogota, Colombia | documental@siglo21.com.co | siglo21.com.co",
+        marginLeft,
+        footerY
+      );
+      doc.text(
+        "SECUREID: " + hashUnico,
+        marginLeft,
+        footerY + 5
+      );
+
+      // 9. Guarda el PDF
+      doc.save(`Solicitud de Devolucion Nro- ${sol.id}.pdf`);
+    },
     circleRelativePosition(index) {
       const totalSteps = this.timelineSteps.length;
       if (totalSteps <= 1) return 0;
@@ -884,10 +945,6 @@ export default {
 
 .tab-content {
   padding: 0 0;
-}
-
-.tab-pane {
-  /* Espacio interno para cada tab */
 }
 
 /* ----- Secciones adicionales ----- */

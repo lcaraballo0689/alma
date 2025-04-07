@@ -174,6 +174,11 @@
                   <input type="text" id="placa" class="form-control" v-model="placa"
                     placeholder="Ingrese la placa del vehículo" required />
                 </div>
+                <div class="mb-3">
+                  <label for="sticker" class="form-label">Sticker Seguridad:</label>
+                  <input type="text" id="sticker" class="form-control" v-model="sticker"
+                    placeholder="Ingrese el codigo del sticker"  />
+                </div>
               </div>
 
               <!-- Asignación de Ubicaciones (solo si el estado permitido es 'completado') -->
@@ -253,6 +258,7 @@ export default {
       transportista: '',
       documentoIdentidad: '',
       placa: '',
+      sticker: '',
     };
   },
   computed: {
@@ -391,6 +397,7 @@ export default {
       this.detalle = null;
       this.transportista = '';
       this.placa = '';
+      this.sticker = '';
       this.documentoIdentidad = '';
     },
     async cambiarEstado() {
@@ -442,6 +449,7 @@ export default {
           transportista: this.transportista,
           documentoIdentidad: this.documentoIdentidad,
           placa: this.placa,
+          sticker: this.sticker || '',
         };
 
         console.log("Cambio de estado antes:", body);

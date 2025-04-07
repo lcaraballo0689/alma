@@ -27,7 +27,7 @@
         </div>
 
         <!-- Mostrar controles según la acción -->
-        <div v-if="actionType.toLowerCase() !== 'devolver'" class="mb-3 mt-3">
+        <div  class="mb-3 mt-3">
           <label class="form-label">Prioridad</label>
           <div class="input-group mb-3">
             <span
@@ -76,7 +76,7 @@
 
         <!-- Para devolución se muestran el datepicker y observaciones -->
         <div v-if="actionType.toLowerCase() === 'devolver'" class="mb-3">
-          <label class="form-label">Dirección de devolución</label>
+          <label class="form-label">Dirección de Recoleccion</label>
           <div class="input-group mb-3">
             <span class="input-group-text" id="basic-addon1">
               <i class="bi bi-map"></i>
@@ -233,6 +233,7 @@ export default {
           usuarioId: authStore.user.id,
           direccion_recoleccion: this.selectedAddress,
           fecha_recoleccion: this.fechaRecoleccion,
+          urgencia: this.urgencia,
           observaciones: this.observations,  
         };
       } else {

@@ -32,6 +32,8 @@ const notificaciones = require("./routes/notificacioneSRoutes");
 const nomenclaturas = require('./routes/referenciaRoutes');
 const obtenerHistorialSolicitudes = require('./routes/auditoriaRoutes')
 const estadoTransicionesRoutes = require('./routes/estadoTransicionesRoutes');
+const obtenerDetalleSolicitud  = require("./routes/obtenerDetalleSolicitudRoutes");
+const cargarFirma = require("./routes/firmaRoutes");
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -58,9 +60,11 @@ app.use("/api/transferencias", transferenciasRoutes);
 app.use("/api/prestamosReports", prestamosReporteRoutes);
 app.use("/api/devolucionesReports", devolucionesReportesRoutes);
 app.use("/api/downloadReportsPdf", downloadReportsPdfRoutes);
-app.use('/api/nomenclatura', nomenclaturas)
-app.use('/api/auditoria', obtenerHistorialSolicitudes)
+app.use('/api/nomenclatura', nomenclaturas);
+app.use('/api/auditoria', obtenerHistorialSolicitudes);
 app.use('/api/estados', estadoTransicionesRoutes);
+app.use("/api/detalleSolicitud", obtenerDetalleSolicitud);
+app.use("/api/cargarFirma", cargarFirma);
 
 
 app.get("/api", (req, res) => {

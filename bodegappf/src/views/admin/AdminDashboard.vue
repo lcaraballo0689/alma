@@ -143,6 +143,7 @@ import { useTabStore } from "@/stores/tabStore";
 import { useThemeStore } from "@/stores/themeStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 
+
 // Carga asíncrona de componentes
 const movimientosreg = defineAsyncComponent(() =>
   import("./TransferenciasManager.vue")
@@ -152,6 +153,12 @@ const NomenclaturaManager = defineAsyncComponent(() =>
 );
 const usuarios = defineAsyncComponent(() =>
   import("./usuarios.vue")
+);
+const traccker = defineAsyncComponent(() =>
+  import("./traccker.vue")
+);
+const RealTimeRouteMap = defineAsyncComponent(() =>
+  import("./RealTimeRouteMap.vue")
 );
 
 // Si necesitas incluir más componentes, agrégalos aquí
@@ -176,6 +183,8 @@ export default {
     NotificationsNavbar,
     NomenclaturaManager,
     usuarios,
+    traccker,
+    RealTimeRouteMap
   },
   data() {
     return {
@@ -186,6 +195,8 @@ export default {
         { name: "movimientosreg", label: "Solicitudes", icon: "bi bi-stack" },
         { name: "NomenclaturaManager", label: "Configuraciones", icon: "bi bi-gear-fill" },
         { name: "usuarios", label: "Usuarios", icon: "bi bi-people-fill" },
+        { name: "traccker", label: "traccker", icon: "bi bi-pin-map" },
+        { name: "RealTimeRouteMap", label: "Ruta en tiempo real", icon: "bi bi-map" },
         // Puedes agregar más pestañas según lo necesites
       ],
     };
@@ -217,6 +228,8 @@ export default {
         movimientosreg,
         NomenclaturaManager,
         usuarios,
+        traccker,
+        RealTimeRouteMap,
         // Si agregas más pestañas, asigna aquí el componente correspondiente.
       };
       return componentMap[this.currentTab] || fallbackComponent;

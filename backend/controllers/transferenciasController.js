@@ -223,13 +223,13 @@ async function registrarAuditoria(
 }
 
 async function procesarTransferenciaInterna(payload, pool, transaction) {
-  const { clienteId, usuarioId, items, observaciones, modulo, direccion_entrega, fecha_recoleccion, direccion_recoleccion } = payload;
-  console.log("aqui 1");
+  const { clienteId, usuarioId, items, observaciones, modulo, direccion_entrega, fecha_recoleccion, direccion_recoleccion, urgencia } = payload;
+
 
   if (!clienteId || !usuarioId || !Array.isArray(items) || items.length === 0) {
     throw new Error("Datos incompletos para la transferencia.");
   }
-  console.log("aqui 2");
+
   // Determinar la columna de consecutivo según el módulo
   let columnaConsecutivo = "";
   switch (modulo) {
@@ -248,7 +248,6 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
     default:
       throw new Error(`Módulo no reconocido: ${modulo}`);
   }
-  console.log("aqui 3", columnaConsecutivo);
   const querys = `SELECT ${columnaConsecutivo} AS ultimoNumero FROM Consecutivos WHERE clienteId = ${clienteId}`
   console.log(querys);
 
@@ -258,7 +257,7 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
     .query(querys);
 
 
-  console.log("aqui 4", resultCons);
+
   let ultimoNumero = resultCons.recordset[0]?.ultimoNumero || 0;
   const nuevoConsecutivo = ultimoNumero + 1;
 
@@ -278,12 +277,14 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
     .input("estado", sql.VarChar, "solicitud creada")
     .input("observaciones", sql.VarChar, observaciones)
     .input("modulo", sql.VarChar, modulo)
+    .input("urgencia", sql.VarChar, urgencia )
     .input("direccion", sql.VarChar, direccion)
+    .input("usuarioId", sql.Int, usuarioId)
     .query(`
       INSERT INTO SolicitudTransporte 
-        (clienteId, modulo, consecutivo, estado, fechaSolicitud, observaciones, createdAt, updatedAt, direccion)
+        (clienteId, modulo, consecutivo, estado, fechaSolicitud, observaciones, createdAt, updatedAt, direccion, prioridad, usuarioSolicitante)
       VALUES 
-        (@clienteId, @modulo, @consecutivo, @estado, GETDATE(), @observaciones, GETDATE(), GETDATE(), @direccion);
+        (@clienteId, @modulo, @consecutivo, @estado, GETDATE(), @observaciones, GETDATE(), GETDATE(), @direccion, @urgencia, @usuarioId);
       SELECT SCOPE_IDENTITY() AS solicitudId;
     `);
 
@@ -957,7 +958,7 @@ function generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items) {
 
 async function scanQR(req, res, next) {
   try {
-    const { qrToken, accion, usuarioId, clienteId, asignaciones, transportista, documentoIdentidad, placa } = req.body;
+    const { qrToken, accion, usuarioId, clienteId, asignaciones, transportista, documentoIdentidad, placa, sticker } = req.body;
 
     // Validación inicial de campos obligatorios
     if (!qrToken || !accion || !usuarioId || !clienteId) {
@@ -982,7 +983,9 @@ async function scanQR(req, res, next) {
       .input("clienteId", sql.Int, clienteId)
       .input("transportista", sql.NVarChar, transportista)
       .input("documentoIdentidad", sql.NVarChar, documentoIdentidad)
-      .input("placa", sql.NVarChar, placa);
+      .input("placa", sql.NVarChar, placa)
+      .input("sticker", sql.NVarChar, sticker || null);
+
 
     // Manejo de asignaciones según la acción
     if (accion.toLowerCase() === 'completado') {

@@ -1,5 +1,6 @@
 const { connectDB, sql } = require("../config/db");
 const logger = require("../logger");
+const { DateTime } = require("luxon");
 
 async function obtenerDetalleSolicitud(req, res) {
   const { id } = req.body;
@@ -15,7 +16,7 @@ async function obtenerDetalleSolicitud(req, res) {
     const pool = await connectDB();
     logger.info(`📄 Generar PDF Devolucion ID: ${id} | Conectado a la base de datos.`);
 
-    // 🔹 Obtener solicitud
+    // 🔹 Solicitud principal
     const solicitudResult = await pool.request()
       .input("solicitudId", sql.Int, id)
       .query(`
@@ -27,6 +28,7 @@ async function obtenerDetalleSolicitud(req, res) {
           ST.direccion,
           ST.prioridad,
           ST.fechaSolicitud,
+          ST.fechaRecogida,
           ST.observaciones,
           ST.stickerSeguridad,
           ST.transportista,
@@ -53,29 +55,32 @@ async function obtenerDetalleSolicitud(req, res) {
     const usuarioSolicitanteResult = await pool.request()
       .input("usuarioId", sql.Int, solicitud.usuarioSolicitante)
       .query(`SELECT nombre, telefono FROM Usuario WHERE id = @usuarioId`);
+
     const solicitadoPor = usuarioSolicitanteResult.recordset[0]?.nombre || "";
     const contacto = usuarioSolicitanteResult.recordset[0]?.telefono || "";
-    logger.info(`📄 Generar PDF Devolucion ID: ${id} | usuarioSolicitanteResult: ${JSON.stringify(usuarioSolicitanteResult.recordset[0])}`);
 
-    // 🔹 Firma transportista
+    logger.info(`📄 Generar PDF Devolucion ID: ${id} | Solicitante: ${solicitadoPor}`);
+
+    // 🔹 Firmas
     let firmaTransportista = "";
     if (solicitud.transportista) {
       const transportistaFirma = await pool.request()
         .input("nombre", sql.VarChar, solicitud.transportista)
         .query(`SELECT firma FROM Usuario WHERE nombre = @nombre`);
+      console.log("transportistaFirma", transportistaFirma.recordset[0]);
+
       firmaTransportista = transportistaFirma.recordset[0]?.firma || "";
     }
 
-    // 🔹 Firma verificador
     let firmaVerificador = "";
-    if (solicitud.usuarioVerifica) {
+    if (solicitud.usuarioSolicitante) {
       const verificadorFirma = await pool.request()
-        .input("id", sql.Int, solicitud.usuarioVerifica)
+        .input("id", sql.Int, solicitud.usuarioSolicitante)
         .query(`SELECT firma FROM Usuario WHERE id = @id`);
       firmaVerificador = verificadorFirma.recordset[0]?.firma || "";
     }
 
-    // 🔹 Detalles de ítems
+    // 🔹 Detalles
     const detallesResult = await pool.request()
       .input("solicitudId", sql.Int, solicitud.solicitudId)
       .query(`
@@ -108,9 +113,28 @@ async function obtenerDetalleSolicitud(req, res) {
 
     logger.info(`📄 Generar PDF Devolucion ID: ${id} | Se procesaron ${items.length} ítems.`);
 
-   
+    // Parsear las fechas usando new Date() para que Luxon genere un DateTime
+    const fechaSolicitudDT = DateTime.fromJSDate(new Date(solicitud.fechaSolicitud), {
+      zone: "America/Bogota"
+    });
+    const fechaRecogidaDT = DateTime.fromJSDate(new Date(solicitud.fechaRecogida), {
+      zone: "America/Bogota"
+    });
 
-    // 🔹 Objeto final
+    // Verificar si los DateTime son válidos
+    if (!fechaSolicitudDT.isValid) {
+      console.error("Fecha de solicitud inválida:", fechaSolicitudDT.invalidExplanation);
+    }
+    if (!fechaRecogidaDT.isValid) {
+      console.error("Fecha de recogida inválida:", fechaRecogidaDT.invalidExplanation);
+    }
+
+    // Formatear fechas y horas
+    const fechaElaboracion = fechaSolicitudDT.toFormat("dd-MM-yyyy"); // Ej: 06-04-2025
+    const fechaRecogida = fechaRecogidaDT.toFormat("dd-MM-yyyy"); // Ej: 06-04-2025
+    const horaSolicitud = fechaSolicitudDT.toFormat("hh:mm a");         // Ej: 06:32 PM
+    const horaEntrega = fechaRecogidaDT.toFormat("hh:mm a");            // Ej: 07:22 PM
+
     const formatoData = {
       noSolicitud: solicitud.noSolicitud?.toString() || "",
       solicitudId: solicitud.solicitudId?.toString() || "",
@@ -120,19 +144,21 @@ async function obtenerDetalleSolicitud(req, res) {
       prioridad: solicitud.prioridad || "",
       observaciones: solicitud.observaciones || "",
       contacto,
-      fechaElaboracion,
-      horaSolicitud,
-      horaEntrega,
+      // Combinación de fecha y hora si se requiere
+      fechaElaboracion: `${fechaElaboracion} / ${horaSolicitud}`,
+      horaSolicitud:  `${fechaElaboracion} / ${horaSolicitud}`,
+      horaEntrega:  `${fechaRecogida} / ${horaEntrega}`,
       stickerSeguridad: solicitud.stickerSeguridad || "",
       items,
-      entregadoPor: firmaTransportista ? `data:image/png;base64,${firmaTransportista}` : "",
-      recibidoPor: firmaVerificador ? `data:image/png;base64,${firmaVerificador}` : ""
+      entregadoPor: firmaTransportista,
+      recibidoPor: firmaVerificador
     };
 
     logger.info(`📄 Generar PDF Devolucion ID: ${id} | Respuesta construida correctamente.`);
     res.json(formatoData);
+
   } catch (error) {
-    logger.error(`📄 Generar PDF Devolucion ID: ${id} | ❌ Error en el proceso: ${error.message}`);
+    logger.error(`📄 Generar PDF Devolucion ID: ${id} | ❌ Error: ${error.message}`);
     res.status(500).json({ error: "Error interno del servidor." });
   }
 }
