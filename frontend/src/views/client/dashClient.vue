@@ -95,7 +95,7 @@
                   </div> -->
                 </div>
                 <div class="card-body p-0" style="max-height: 350px; overflow-y: auto">
-                  <table class="table table-sm table-striped mb-0 table-header" :class="{ 'table-dark-custom': themeStore.theme === 'dark' }">
+                  <table class="table table-sm table-striped mb-0 table-header" >
                     <thead>
                       <tr>
                         <th class="text-start">ID Solicitud</th>

@@ -194,9 +194,9 @@ export default {
       tabs: [
         { name: "movimientosreg", label: "Solicitudes", icon: "bi bi-stack" },
         { name: "NomenclaturaManager", label: "Configuraciones", icon: "bi bi-gear-fill" },
-        { name: "usuarios", label: "Usuarios", icon: "bi bi-people-fill" },
-        { name: "traccker", label: "traccker", icon: "bi bi-pin-map" },
-        { name: "RealTimeRouteMap", label: "Ruta en tiempo real", icon: "bi bi-map" },
+        // { name: "usuarios", label: "Usuarios", icon: "bi bi-people-fill" },
+        // { name: "traccker", label: "traccker", icon: "bi bi-pin-map" },
+        // { name: "RealTimeRouteMap", label: "Ruta en tiempo real", icon: "bi bi-map" },
         // Puedes agregar más pestañas según lo necesites
       ],
     };
