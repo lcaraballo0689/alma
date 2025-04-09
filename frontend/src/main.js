@@ -18,12 +18,16 @@ import 'sweetalert2/dist/sweetalert2.min.css';
 import VueToast from 'vue-toast-notification';
 import 'vue-toast-notification/dist/theme-default.css'; // También puedes usar 'theme-sugar.css', etc.
 
+import 'leaflet/dist/leaflet.css'; // importante para que el mapa se vea
+import './plugins/leaflet-config'; // 👈 esta es la línea clave
 
 
 // Importa Bootstrap y Bootstrap Icons
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import 'boxicons/css/boxicons.min.css';
+
 import './style.css';
 
 const app = createApp(App);

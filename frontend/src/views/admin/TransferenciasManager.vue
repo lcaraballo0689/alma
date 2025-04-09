@@ -2,7 +2,7 @@
   <div class="container-fluid p-0 pt-2">
     <!-- Card de Filtros -->
     <div class="card shadow-sm mb-4">
-      <div class="card-header  ">
+      <div class="card-header">
         <div class="row align-items-center justify-content-between">
           <div class="col-md-3">
             <div class="input-group">
@@ -38,6 +38,7 @@
               <li class="nav-item">
                 <button class="nav-link" :class="{ active: activeTab === 'pendientes' }"
                   @click="activeTab = 'pendientes'"  >
+                  
                   Pendientes
                 </button>
               </li>

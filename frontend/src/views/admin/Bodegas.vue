@@ -1,127 +1,127 @@
 <template>
-  <div class="container my-4">
-    <h2 class="mb-4">Mantenedor de Clientes</h2>
-    <!-- Botón para agregar nuevo cliente -->
-    <div class="mb-3">
-      <button class="btn btn-primary" @click="openNewClientForm">
-        Nuevo Cliente
-      </button>
+  <div>
+    <!-- Encabezado y botón para nueva bodega -->
+    <div class="container-fluid p-0">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Bodegas</h3>
+        <button class="btn btn-primary" @click="openBodegaModal()">Nueva Bodega</button>
+      </div>
+      
+      <!-- Tabla de bodegas -->
+      <div class="table-responsive">
+        <table class="table table-striped align-middle shadow-sm">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Código Ubicación</th>
+              <th>Cant. Módulos</th>
+              <th>Cant. Entrepaños</th>
+              <th>Cant. Caras</th>
+              <th>Cant. Pisos</th>
+              <th>Dimensiones (X, Y, Z)</th>
+              <th>Fecha Creación</th>
+              <th>Espacios</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="loading">
+              <td colspan="11" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Cargando...</span>
+                </div>
+              </td>
+            </tr>
+            <tr v-else-if="bodegas.length === 0">
+              <td colspan="11" class="text-center text-muted py-4">No hay bodegas</td>
+            </tr>
+            <tr v-else v-for="bodega in bodegas" :key="bodega.id">
+              <td>{{ bodega.id }}</td>
+              <td>{{ bodega.nombre }}</td>
+              <td>{{ bodega.codigoUbicacion }}</td>
+              <td>{{ bodega.cantidadModulos }}</td>
+              <td>{{ bodega.cantidadEntrepanos }}</td>
+              <td>{{ bodega.cantidadCaras }}</td>
+              <td>{{ bodega.cantidadPisos }}</td>
+              <td>{{ bodega.dimensionX }} x {{ bodega.dimensionY }} x {{ bodega.dimensionZ }}</td>
+              <td>{{ formatDate(bodega.fechaCreacion) }}</td>
+              <td>{{ bodega.espacios }}</td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-warning me-2" @click="editBodega(bodega)">
+                  <i class="bx bx-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" @click="deleteBodega(bodega.id)">
+                  <i class="bx bx-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Tabla de clientes -->
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Teléfono</th>
-          <th>NIT</th>
-          <th>ANS Devolución</th>
-          <th>ANS Especial</th>
-          <th>ANS Normal</th>
-          <th>ANS Urgente</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="cliente in clientes" :key="cliente.id">
-          <td>{{ cliente.id }}</td>
-          <td>{{ cliente.nombre }}</td>
-          <td>{{ cliente.telefono }}</td>
-          <td>{{ cliente.nit }}</td>
-          <td>{{ cliente.ansDevolucion }}</td>
-          <td>{{ cliente.ansEspecial }}</td>
-          <td>{{ cliente.ansNormal }}</td>
-          <td>{{ cliente.ansUrgente }}</td>
-          <td>
-            <button class="btn btn-sm btn-warning me-1" @click="editCliente(cliente)">
-              Editar
-            </button>
-            <button class="btn btn-sm btn-danger" @click="deleteCliente(cliente.id)">
-              Eliminar
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- Formulario para crear o editar un cliente -->
-    <div v-if="showForm" class="card mt-4">
-      <div class="card-header">
-        <h5>{{ isEditing ? 'Editar Cliente' : 'Nuevo Cliente' }}</h5>
-      </div>
-      <div class="card-body">
-        <form @submit.prevent="saveCliente">
-          <div class="mb-3">
-            <label class="form-label">Nombre</label>
-            <input
-              type="text"
-              class="form-control"
-              v-model="currentCliente.nombre"
-              required
-            />
+    <!-- Modal para crear/editar bodega -->
+    <div ref="bodegaModal" class="modal fade" tabindex="-1" aria-hidden="true" aria-labelledby="bodegaModalLabel">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content" v-if="currentBodega">
+          <div class="modal-header">
+            <h5 class="modal-title" id="bodegaModalLabel">
+              {{ currentBodega.id ? 'Editar Bodega' : 'Nueva Bodega' }}
+            </h5>
+            <button type="button" class="btn-close" @click="closeBodegaModal" aria-label="Cerrar"></button>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Teléfono</label>
-            <input
-              type="text"
-              class="form-control"
-              v-model="currentCliente.telefono"
-              required
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">NIT</label>
-            <input
-              type="text"
-              class="form-control"
-              v-model="currentCliente.nit"
-              required
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">ANS Devolución</label>
-            <input
-              type="number"
-              class="form-control"
-              v-model.number="currentCliente.ansDevolucion"
-              required
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">ANS Especial</label>
-            <input
-              type="number"
-              class="form-control"
-              v-model.number="currentCliente.ansEspecial"
-              required
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">ANS Normal</label>
-            <input
-              type="number"
-              class="form-control"
-              v-model.number="currentCliente.ansNormal"
-              required
-            />
-          </div>
-          <div class="mb-3">
-            <label class="form-label">ANS Urgente</label>
-            <input
-              type="number"
-              class="form-control"
-              v-model.number="currentCliente.ansUrgente"
-              required
-            />
-          </div>
-          <button type="submit" class="btn btn-success">
-            {{ isEditing ? 'Actualizar' : 'Crear' }}
-          </button>
-          <button type="button" class="btn btn-secondary ms-2" @click="cancelForm">
-            Cancelar
-          </button>
-        </form>
+          <form @submit.prevent="saveBodega">
+            <div class="modal-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label" for="bodegaNombre">Nombre</label>
+                  <input type="text" id="bodegaNombre" class="form-control" v-model="currentBodega.nombre" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="codigoUbicacion">Código Ubicación</label>
+                  <input type="text" id="codigoUbicacion" class="form-control" v-model="currentBodega.codigoUbicacion" required />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="cantidadModulos">Cant. Módulos</label>
+                  <input type="number" id="cantidadModulos" class="form-control" v-model.number="currentBodega.cantidadModulos" required />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="cantidadEntrepanos">Cant. Entrepaños</label>
+                  <input type="number" id="cantidadEntrepanos" class="form-control" v-model.number="currentBodega.cantidadEntrepanos" required />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="cantidadCaras">Cant. Caras</label>
+                  <input type="number" id="cantidadCaras" class="form-control" v-model.number="currentBodega.cantidadCaras" required />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="cantidadPisos">Cant. Pisos</label>
+                  <input type="number" id="cantidadPisos" class="form-control" v-model.number="currentBodega.cantidadPisos" required />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="dimensionX">Dimensión X</label>
+                  <input type="number" step="0.01" id="dimensionX" class="form-control" v-model.number="currentBodega.dimensionX" required />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="dimensionY">Dimensión Y</label>
+                  <input type="number" step="0.01" id="dimensionY" class="form-control" v-model.number="currentBodega.dimensionY" required />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label" for="dimensionZ">Dimensión Z</label>
+                  <input type="number" step="0.01" id="dimensionZ" class="form-control" v-model.number="currentBodega.dimensionZ" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="espacios">Espacios</label>
+                  <input type="number" id="espacios" class="form-control" v-model.number="currentBodega.espacios" required />
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="closeBodegaModal">Cerrar</button>
+              <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -129,126 +129,102 @@
 
 <script>
 import axios from 'axios';
-import { ref, reactive, onMounted } from 'vue';
+import { Modal } from 'bootstrap';
 
 export default {
-  name: 'ClientesCrud',
-  setup() {
-    const clientes = ref([]);
-    const showForm = ref(false);
-    const isEditing = ref(false);
-    const currentCliente = reactive({
-      id: null,
-      nombre: '',
-      telefono: '',
-      nit: '',
-      ansDevolucion: 0,
-      ansEspecial: 0,
-      ansNormal: 0,
-      ansUrgente: 0
-    });
-
-    // Cargar todos los clientes
-    const loadClientes = async () => {
-      try {
-        const response = await axios.get('/api/clientes');
-        clientes.value = response.data;
-      } catch (error) {
-        console.error('Error al cargar clientes:', error);
-      }
-    };
-
-    // Abre el formulario para un nuevo cliente
-    const openNewClientForm = () => {
-      resetForm();
-      isEditing.value = false;
-      showForm.value = true;
-    };
-
-    // Asigna el cliente seleccionado al formulario para editar
-    const editCliente = (cliente) => {
-      currentCliente.id = cliente.id;
-      currentCliente.nombre = cliente.nombre;
-      currentCliente.telefono = cliente.telefono;
-      currentCliente.nit = cliente.nit;
-      currentCliente.ansDevolucion = cliente.ansDevolucion;
-      currentCliente.ansEspecial = cliente.ansEspecial;
-      currentCliente.ansNormal = cliente.ansNormal;
-      currentCliente.ansUrgente = cliente.ansUrgente;
-      isEditing.value = true;
-      showForm.value = true;
-    };
-
-    // Guardar (crear o actualizar) cliente
-    const saveCliente = async () => {
-      try {
-        if (isEditing.value) {
-          // Actualizar cliente
-          await axios.put(`/api/clientes/${currentCliente.id}`, currentCliente);
-        } else {
-          // Crear cliente
-          await axios.post('/api/clientes', currentCliente);
-        }
-        await loadClientes();
-        cancelForm();
-      } catch (error) {
-        console.error('Error al guardar cliente:', error);
-      }
-    };
-
-    // Eliminar cliente
-    const deleteCliente = async (id) => {
-      if (confirm('¿Estás seguro de eliminar este cliente?')) {
-        try {
-          await axios.delete(`/api/clientes/${id}`);
-          await loadClientes();
-        } catch (error) {
-          console.error('Error al eliminar cliente:', error);
-        }
-      }
-    };
-
-    // Cancelar y limpiar formulario
-    const cancelForm = () => {
-      showForm.value = false;
-      resetForm();
-    };
-
-    // Reiniciar los valores del formulario
-    const resetForm = () => {
-      currentCliente.id = null;
-      currentCliente.nombre = '';
-      currentCliente.telefono = '';
-      currentCliente.nit = '';
-      currentCliente.ansDevolucion = 0;
-      currentCliente.ansEspecial = 0;
-      currentCliente.ansNormal = 0;
-      currentCliente.ansUrgente = 0;
-    };
-
-    onMounted(() => {
-      loadClientes();
-    });
-
+  name: 'Bodegas',
+  data() {
     return {
-      clientes,
-      showForm,
-      isEditing,
-      currentCliente,
-      openNewClientForm,
-      editCliente,
-      saveCliente,
-      deleteCliente,
-      cancelForm
+      bodegas: [],
+      currentBodega: null,
+      loading: false,
+      modalInstance: null
     };
+  },
+  methods: {
+    async loadBodegas() {
+      this.loading = true;
+      try {
+        const res = await axios.get('/api/bodegas');
+        this.bodegas = res.data;
+      } catch (error) {
+        console.error('Error al cargar las bodegas:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+    openBodegaModal() {
+      this.resetForm();
+      this.showModal();
+    },
+    editBodega(bodega) {
+      // Clona la bodega para evitar la mutación directa
+      this.currentBodega = { ...bodega };
+      this.showModal();
+    },
+    async saveBodega() {
+      try {
+        if (this.currentBodega.id) {
+          // Actualización
+          await axios.put(`/api/bodegas/${this.currentBodega.id}`, this.currentBodega);
+        } else {
+          // Creación
+          await axios.post('/api/bodegas', this.currentBodega);
+        }
+        this.loadBodegas();
+        this.closeBodegaModal();
+      } catch (error) {
+        console.error('Error al guardar la bodega:', error);
+      }
+    },
+    async deleteBodega(id) {
+      if (confirm('¿Estás seguro de eliminar esta bodega?')) {
+        try {
+          await axios.delete(`/api/bodegas/${id}`);
+          this.loadBodegas();
+        } catch (error) {
+          console.error('Error al eliminar la bodega:', error);
+        }
+      }
+    },
+    resetForm() {
+      this.currentBodega = {
+        nombre: '',
+        codigoUbicacion: '',
+        cantidadModulos: 0,
+        cantidadEntrepanos: 0,
+        cantidadCaras: 0,
+        cantidadPisos: 0,
+        dimensionX: 0,
+        dimensionY: 0,
+        dimensionZ: 0,
+        espacios: 0
+      };
+    },
+    showModal() {
+      if (!this.modalInstance) {
+        this.modalInstance = new Modal(this.$refs.bodegaModal, { backdrop: 'static' });
+      }
+      this.modalInstance.show();
+    },
+    closeBodegaModal() {
+      if (this.modalInstance) {
+        this.modalInstance.hide();
+      }
+    },
+    formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString();
+    }
+  },
+  mounted() {
+    this.loadBodegas();
   }
 };
 </script>
 
 <style scoped>
-/* Puedes agregar estilos adicionales o personalizar Bootstrap según tus necesidades */
-.table th,
-.table td {
-  vertical-align: middle;
+.table thead th {
+  background-color: #f8f9fa;
 }
 </style>

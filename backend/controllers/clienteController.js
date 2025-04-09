@@ -1,8 +1,6 @@
 // controllers/clienteController.js
 const sql = require("mssql");
 
-// Se asume que la conexión se maneja mediante una variable de entorno o un archivo de configuración.
-// Ejemplo: process.env.DB_CONNECTION debe contener la cadena de conexión.
 module.exports = {
   // Obtener todos los registros de Cliente
   getAll: async (req, res) => {
@@ -33,7 +31,8 @@ module.exports = {
     const { id } = req.params;
     try {
       const pool = await sql.connect(process.env.DB_CONNECTION);
-      const result = await pool.request()
+      const result = await pool
+        .request()
         .input("id", sql.Int, id)
         .query(`
           SELECT 
@@ -69,22 +68,31 @@ module.exports = {
       ansNormal,
       ansUrgente,
     } = req.body;
-    
-    // Validación básica (ajusta según lo que necesites)
+
+    // Validación básica
     if (!nombre || !telefono || !nit) {
-      return res.status(400).json({ error: "Faltan campos obligatorios (nombre, teléfono, nit)." });
+      return res
+        .status(400)
+        .json({ error: "Faltan campos obligatorios (nombre, teléfono, nit)." });
     }
-    
+
+    // Convertir a enteros o asignar valor por defecto (0)
+    const ansDev = parseInt(ansDevolucion, 10) || 0;
+    const ansEsp = parseInt(ansEspecial, 10) || 0;
+    const ansNor = parseInt(ansNormal, 10) || 0;
+    const ansUrg = parseInt(ansUrgente, 10) || 0;
+
     try {
       const pool = await sql.connect(process.env.DB_CONNECTION);
-      const result = await pool.request()
-        .input("nombre", sql.NVarChar, nombre)
-        .input("telefono", sql.NVarChar, telefono)
-        .input("nit", sql.NVarChar, nit)
-        .input("ansDevolucion", sql.NVarChar, ansDevolucion || "")
-        .input("ansEspecial", sql.NVarChar, ansEspecial || "")
-        .input("ansNormal", sql.NVarChar, ansNormal || "")
-        .input("ansUrgente", sql.NVarChar, ansUrgente || "")
+      const result = await pool
+        .request()
+        .input("nombre", sql.NVarChar(1000), nombre)
+        .input("telefono", sql.NVarChar(1000), telefono)
+        .input("nit", sql.NVarChar(1000), nit)
+        .input("ansDevolucion", sql.Int, ansDev)
+        .input("ansEspecial", sql.Int, ansEsp)
+        .input("ansNormal", sql.Int, ansNor)
+        .input("ansUrgente", sql.Int, ansUrg)
         .query(`
           INSERT INTO dbo.Cliente
           ([nombre], [telefono], [nit], [ansDevolucion], [ansEspecial], [ansNormal], [ansUrgente])
@@ -92,7 +100,6 @@ module.exports = {
           (@nombre, @telefono, @nit, @ansDevolucion, @ansEspecial, @ansNormal, @ansUrgente);
           SELECT SCOPE_IDENTITY() as insertedId;
         `);
-      
       const newId = result.recordset[0].insertedId;
       return res.status(201).json({ message: "Cliente creado", id: newId });
     } catch (error) {
@@ -116,7 +123,7 @@ module.exports = {
     
     try {
       const pool = await sql.connect(process.env.DB_CONNECTION);
-      // Verificar si existe
+      // Verificar existencia
       const check = await pool.request()
         .input("id", sql.Int, id)
         .query(`SELECT id FROM dbo.Cliente WHERE id = @id`);
@@ -124,16 +131,21 @@ module.exports = {
       if (check.recordset.length === 0) {
         return res.status(404).json({ error: "Cliente no encontrado." });
       }
-      
+
+      const ansDev = parseInt(ansDevolucion, 10) || 0;
+      const ansEsp = parseInt(ansEspecial, 10) || 0;
+      const ansNor = parseInt(ansNormal, 10) || 0;
+      const ansUrg = parseInt(ansUrgente, 10) || 0;
+
       await pool.request()
         .input("id", sql.Int, id)
-        .input("nombre", sql.NVarChar, nombre)
-        .input("telefono", sql.NVarChar, telefono)
-        .input("nit", sql.NVarChar, nit)
-        .input("ansDevolucion", sql.NVarChar, ansDevolucion)
-        .input("ansEspecial", sql.NVarChar, ansEspecial)
-        .input("ansNormal", sql.NVarChar, ansNormal)
-        .input("ansUrgente", sql.NVarChar, ansUrgente)
+        .input("nombre", sql.NVarChar(1000), nombre)
+        .input("telefono", sql.NVarChar(1000), telefono)
+        .input("nit", sql.NVarChar(1000), nit)
+        .input("ansDevolucion", sql.Int, ansDev)
+        .input("ansEspecial", sql.Int, ansEsp)
+        .input("ansNormal", sql.Int, ansNor)
+        .input("ansUrgente", sql.Int, ansUrg)
         .query(`
           UPDATE dbo.Cliente
           SET
@@ -154,12 +166,12 @@ module.exports = {
     }
   },
 
-  // Eliminar un registro de Cliente (baja física)
+  // Eliminar un registro de Cliente
   delete: async (req, res) => {
     const { id } = req.params;
     try {
       const pool = await sql.connect(process.env.DB_CONNECTION);
-      // Verificar si existe
+      // Verificar existencia
       const check = await pool.request()
         .input("id", sql.Int, id)
         .query(`SELECT id FROM dbo.Cliente WHERE id = @id`);
@@ -176,5 +188,5 @@ module.exports = {
       console.error("Error en delete Cliente:", error);
       return res.status(500).json({ error: "Error interno del servidor." });
     }
-  },
+  }
 };

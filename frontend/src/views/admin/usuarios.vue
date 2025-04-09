@@ -1,437 +1,521 @@
 <template>
-    <div class="usuarios-container">
-      <!-- Encabezado de la sección -->
-      <div class="usuarios-header">
-        <h1>Usuarios</h1>
-        <div class="header-actions">
-          <input
-            type="text"
-            v-model="searchTerm"
-            placeholder="Buscar..."
-            class="search-input"
-            @input="filterUsers"
-          />
-          <select v-model="selectedStatus" @change="filterUsers" class="filter-select">
-            <option value="">Todos los estados</option>
-            <option value="true">Activos</option>
-            <option value="false">Inactivos</option>
-          </select>
-          <button class="btn btn-primary" @click="openCreateForm">Nuevo Usuario</button>
+  <div class="container-fluid m-0 p-0">
+    <!-- Encabezado: Buscador y Botón Nuevo -->
+    <div class="row m-0 p-0 mt-2">
+      <div class="col-md-12 m-0 p-0">
+        <div class="card m-0 p-0 shadow-sm">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <div class="input-group search-pill">
+              <span class="input-group-text">
+                <i class="bx bx-search"></i>
+              </span>
+              <input type="text" class="form-control" placeholder="Buscar por nombre o email" v-model="searchQuery"
+                aria-label="Buscar usuario" autofocus />
+            </div>
+            <button class="buttons-actions my-custom-height" @click="openNewUserModal" aria-label="Crear nuevo usuario">
+              <i class="bx bx-plus-circle me-1"></i> Nuevo Usuario
+            </button>
+          </div>
+          <div class="card-body m-0 p-0">
+            <div class="table-responsive">
+              <table class="table table-striped align-middle shadow-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Cliente</th>
+                    <th class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-if="loading">
+                    <td colspan="5" class="text-center py-5">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr v-else-if="filteredUsers.length === 0">
+                    <td colspan="5" class="text-center text-muted py-5">
+                      <i class="bx bx-user-x fs-1 d-block mb-2 text-secondary"></i>
+                      No hay usuarios registrados aún.
+                    </td>
+                  </tr>
+                  <tr v-else v-for="user in filteredUsers" :key="user.id">
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.nombre }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ getClientName(user.clienteId) }}</td>
+                    <td class="text-center">
+                      <button class="btn btn-sm btn-warning me-1" @click="editUser(user)" title="Editar usuario">
+                        <i class="bx bx-edit"></i>
+                      </button>
+                      <button class="btn btn-sm btn-danger" @click="deleteUser(user.id)" title="Eliminar usuario">
+                        <i class="bx bx-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Fin card-body -->
         </div>
       </div>
-  
-      <!-- Tabla de usuarios -->
-      <div class="table-container">
-        <table class="usuarios-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Cliente</th>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th>Teléfono</th>
-              <th>Activo</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="user in filteredUsers" :key="user.id">
-              <td>{{ user.id }}</td>
-              <td>{{ user.clienteId }}</td>
-              <td>{{ user.nombre }}</td>
-              <td>{{ user.email }}</td>
-              <td>{{ user.telefono }}</td>
-              <td>
-                <span v-if="user.activo" class="status-active">Activo</span>
-                <span v-else class="status-inactive">Inactivo</span>
-              </td>
-              <td>
-                <button class="btn btn-secondary" @click="editUser(user)">Editar</button>
-                <button class="btn btn-danger" @click="deleteUser(user.id)">Eliminar</button>
-              </td>
-            </tr>
-            <tr v-if="filteredUsers.length === 0">
-              <td colspan="7">No se encontraron usuarios.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-  
-      <!-- Formulario para crear/editar usuario -->
-      <div v-if="showForm" class="form-overlay">
-        <div class="form-dialog">
-          <h2>{{ isEditing ? 'Editar Usuario' : 'Crear Usuario' }}</h2>
+    </div>
+
+    <!-- Modal para Crear/Editar Usuario (Modal extra grande) -->
+    <div ref="userModal" class="modal fade" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content modal-custom">
           <form @submit.prevent="saveUser">
-            <div class="form-group">
-              <label>Cliente ID:</label>
-              <input type="number" v-model="userForm.clienteId" required />
+            <div class="modal-header modal-header-custom">
+              <h5 class="modal-title" id="userModalLabel">
+                {{ isEditing ? 'Editar Usuario' : 'Nuevo Usuario' }}
+              </h5>
+              <button type="button" class="btn-close" @click="closeUserModal" aria-label="Cerrar"></button>
             </div>
-            <div class="form-group">
-              <label>Tipo de Usuario ID:</label>
-              <input type="number" v-model="userForm.tipoUsuarioId" required />
+            <div class="modal-body">
+              <!-- Sección: Datos Básicos -->
+              <h6 class="mb-2 fw-bold">Datos Básicos</h6>
+              <div class="row row-cols-1 row-cols-md-4 g-4 mb-3">
+                <div class="col-3">
+                  <label class="form-label">Nombre</label>
+                  <input type="text" class="form-control" v-model="currentUser.nombre" required
+                    placeholder="Nombre completo" />
+                </div>
+                <div class="col-3">
+                  <label class="form-label">Email</label>
+                  <input type="email" class="form-control" v-model="currentUser.email" required
+                    placeholder="ejemplo@dominio.com" />
+                </div>
+                <div class="col-2">
+                  <label class="form-label">Teléfono</label>
+                  <input type="tel" class="form-control" v-model="currentUser.telefono"
+                    placeholder="Número de contacto" />
+                </div>
+                <div class="col-2">
+                  <label class="form-label">Núm. Documento</label>
+                  <input type="text" class="form-control" v-model="currentUser.cc" placeholder="Ej: 123456789" />
+                </div>
+              </div>
+
+               <!-- Sección: Firma -->
+               <h6 class="mb-2 fw-bold">Firma</h6>
+              <div class="row row-cols-1 row-cols-md-2 g-3 mb-3">
+                <div class="col">
+                  <label class="form-label">Cargar Firma (PNG)</label>
+                  <input type="file" accept=".png" class="form-control" @change="onFirmaChange" />
+                  <small class="form-text text-muted">
+                    Seleccione un archivo .png. Se previsualizará la firma.
+                  </small>
+                </div>
+                <div class="col d-flex align-items-center">
+                  <div v-if="firmaPreview" class="mt-1">
+                    <p class="mb-1 fw-light">Firma Actual / Previsualización:</p>
+                    <img :src="firmaPreview" alt="Firma" class="img-thumbnail" width="130" />
+                  </div>
+                  <div v-else class="text-muted small">
+                    <p class="mb-0">No hay firma cargada.</p>
+                  </div>
+                </div>
+              </div>
+               <!-- Sección: Contraseña -->
+               <h6 class="mb-2 fw-bold">Contraseña</h6>
+              <div class="row row-cols-1 row-cols-md-2 g-3">
+                <div class="col">
+                  <label class="form-label">Contraseña</label>
+                  <div class="input-group">
+                    <input :type="showPassword ? 'text' : 'password'" class="form-control"
+                      v-model="currentUser.password" :required="!isEditing" placeholder="Ingrese la contraseña"
+                      @input="validatePassword" />
+                    <button type="button" class="btn btn-outline-secondary" @click="showPassword = !showPassword">
+                      <i :class="showPassword ? 'bx bx-show' : 'bx bx-hide'"></i>
+                    </button>
+                  </div>
+                  <!-- Lista dinámica de validación de requisitos -->
+                  <ul class="list-unstyled mt-2" v-if="currentUser.password">
+                    <li v-for="check in passwordChecks" :key="check.text">
+                      <i :class="check.valid
+                        ? 'bx bx-check text-success'
+                        : 'bx bx-x text-danger'"></i>
+                      <small class="ms-1">{{ check.text }}</small>
+                    </li>
+                  </ul>
+                  <div v-if="passwordError" class="text-danger small">
+                    {{ passwordError }}
+                  </div>
+                </div>
+                <div class="col">
+                  <label class="form-label">Confirmar Contraseña</label>
+                  <div class="input-group">
+                    <input :type="showConfirmPassword ? 'text' : 'password'" class="form-control"
+                      v-model="confirmPassword" :required="!isEditing" placeholder="Repita la contraseña"
+                      @input="validateConfirmPassword" />
+                    <button type="button" class="btn btn-outline-secondary"
+                      @click="showConfirmPassword = !showConfirmPassword">
+                      <i :class="showConfirmPassword
+                        ? 'bx bx-show'
+                        : 'bx bx-hide'"></i>
+                    </button>
+                  </div>
+                  <div v-if="confirmPasswordError" class="text-danger small mt-1">
+                    {{ confirmPasswordError }}
+                  </div>
+                </div>
+              </div>
+ 
+              <!-- Sección: Datos del Cliente -->
+              <h6 class="mb-2 fw-bold">Datos del Cliente</h6>
+              <div class="row row-cols-1 row-cols-md-3 g-3 mb-3">
+                <div class="col">
+                  <label class="form-label">Cliente</label>
+                  <select class="form-select" v-model="currentUser.clienteId" required>
+                    <option disabled value="">-- Seleccionar --</option>
+                    <option v-for="cli in clientes" :key="cli.id" :value="cli.id">
+                      {{ cli.nombre }} (ID: {{ cli.id }})
+                    </option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label class="form-label">Tipo Usuario</label>
+                  <select class="form-select" v-model="currentUser.tipoUsuarioId" required>
+                    <option disabled value="">-- Seleccionar --</option>
+                    <option v-for="tipo in tiposUsuario" :key="tipo.id" :value="tipo.id">
+                      {{ tipo.nombre }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label class="form-label">Activo</label>
+                  <div class="form-check form-switch mt-1">
+                    <input type="checkbox" class="form-check-input" id="activoSwitch" v-model="currentUser.activo" />
+                    <label class="form-check-label" for="activoSwitch">
+                      {{ currentUser.activo ? 'Sí' : 'No' }}
+                    </label>
+                  </div>
+                </div>
+
+              </div>
+
+             
+             
+              <!-- Fin Sección Contraseña -->
             </div>
-            <div class="form-group">
-              <label>Nombre:</label>
-              <input type="text" v-model="userForm.nombre" required />
-            </div>
-            <div class="form-group">
-              <label>Dirección:</label>
-              <input type="text" v-model="userForm.direccion" />
-            </div>
-            <div class="form-group">
-              <label>Teléfono:</label>
-              <input type="text" v-model="userForm.telefono" required />
-            </div>
-            <div class="form-group">
-              <label>Cédula (CC):</label>
-              <input type="text" v-model="userForm.cc" />
-            </div>
-            <div class="form-group">
-              <label>Email:</label>
-              <input type="email" v-model="userForm.email" required />
-            </div>
-            <div class="form-group">
-              <label>Contraseña:</label>
-              <input
-                type="password"
-                v-model="userForm.password"
-                :required="!isEditing"
-                placeholder="(Sólo llenar si se va a cambiar)"
-              />
-            </div>
-            <div class="form-group">
-              <label>Activo:</label>
-              <select v-model="userForm.activo" required>
-                <option :value="true">Sí</option>
-                <option :value="false">No</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Firma:</label>
-              <input type="text" v-model="userForm.firma" />
-            </div>
-  
-            <div class="dialog-actions">
-              <button type="submit" class="btn btn-primary">
-                {{ isEditing ? 'Actualizar' : 'Crear' }}
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="closeUserModal">
+                <i class="bx bx-x me-0"></i> Cancelar
               </button>
-              <button type="button" class="btn btn-secondary" @click="closeForm">Cancelar</button>
+              <button type="submit" class="btn btn-success" :disabled="isLoading || !isFormValid">
+                <i :class="isEditing ? 'bx bx-edit-alt me-1' : 'bx bx-save me-1'"></i>
+                <span v-if="!isLoading">{{ isEditing ? 'Actualizar' : 'Crear' }}</span>
+                <span v-else class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              </button>
             </div>
           </form>
         </div>
       </div>
     </div>
-  </template>
-  
-  <script>
-  import { ref, reactive, computed, onMounted } from 'vue';
-  import axios from 'axios';
-  
-  export default {
-    name: 'Usuarios',
-    setup() {
-      // Estados
-      const users = ref([]);
-      const searchTerm = ref('');
-      const selectedStatus = ref('');
-      const showForm = ref(false);
-      const isEditing = ref(false);
-  
-      // Datos del formulario
-      const userForm = reactive({
+    <!-- Fin Modal -->
+  </div>
+</template>
+
+<script>
+import apiClient from '@/services/api';
+import { Modal } from 'bootstrap';
+import Swal from 'sweetalert2';
+
+export default {
+  name: 'UsuariosCrud',
+  data() {
+    return {
+      users: [],
+      clientes: [],
+      tiposUsuario: [],
+      searchQuery: '',
+      loading: true,
+      isLoading: false,
+      isEditing: false,
+      currentUser: this.getEmptyUser(),
+      modalInstance: null,
+      confirmPassword: '',
+      passwordError: '',
+      confirmPasswordError: '',
+      showPassword: false,
+      showConfirmPassword: false
+    };
+  },
+  computed: {
+    filteredUsers() {
+      const query = this.searchQuery.toLowerCase();
+      return query
+        ? this.users.filter(
+          u =>
+            (u.nombre && u.nombre.toLowerCase().includes(query)) ||
+            (u.email && u.email.toLowerCase().includes(query))
+        )
+        : this.users;
+    },
+    // Validación dinámica de requisitos de contraseña
+    passwordChecks() {
+      const pwd = this.currentUser.password || '';
+      return [
+        { text: 'Al menos 8 caracteres', valid: pwd.length >= 8 },
+        { text: 'Contiene letra minúscula', valid: /[a-z]/.test(pwd) },
+        { text: 'Contiene letra mayúscula', valid: /[A-Z]/.test(pwd) },
+        { text: 'Contiene número', valid: /\d/.test(pwd) },
+        { text: 'Contiene símbolo', valid: /[\W_]/.test(pwd) }
+      ];
+    },
+    isFormValid() {
+      return !this.passwordError && !this.confirmPasswordError;
+    },
+    firmaPreview() {
+      return this.currentUser.firma
+        ? 'data:image/png;base64,' + this.currentUser.firma
+        : null;
+    }
+  },
+  methods: {
+    getEmptyUser() {
+      return {
         id: null,
+        nombre: '',
         clienteId: '',
         tipoUsuarioId: '',
-        nombre: '',
-        direccion: '',
-        telefono: '',
-        cc: '',
         email: '',
+        telefono: '',
+        firma: '',
         password: '',
         activo: true,
-        firma: '',
-      });
-  
-      // Obtener usuarios al montar el componente
-      const fetchUsers = async () => {
-        try {
-          const response = await axios.get('/usuarios');
-          users.value = response.data;
-        } catch (error) {
-          console.error('Error al obtener usuarios:', error);
-        }
-      };
-  
-      onMounted(() => {
-        fetchUsers();
-      });
-  
-      // Filtro en memoria
-      const filteredUsers = computed(() => {
-        // Filtrar por término de búsqueda
-        let result = users.value.filter(u => {
-          const term = searchTerm.value.toLowerCase();
-          return (
-            u.nombre?.toLowerCase().includes(term) ||
-            u.email?.toLowerCase().includes(term) ||
-            u.telefono?.toLowerCase().includes(term)
-          );
-        });
-  
-        // Filtrar por estado (activo/inactivo) si se selecciona
-        if (selectedStatus.value !== '') {
-          const statusBool = selectedStatus.value === 'true';
-          result = result.filter(u => u.activo === statusBool);
-        }
-  
-        return result;
-      });
-  
-      // Función para refiltrar cuando cambie la búsqueda o estado
-      const filterUsers = () => {
-        // Computed ya se encarga, sólo reactiva la actualización
-      };
-  
-      // Abrir formulario en modo crear
-      const openCreateForm = () => {
-        isEditing.value = false;
-        clearForm();
-        showForm.value = true;
-      };
-  
-      // Cerrar formulario
-      const closeForm = () => {
-        showForm.value = false;
-        clearForm();
-      };
-  
-      // Editar usuario
-      const editUser = (user) => {
-        isEditing.value = true;
-        userForm.id = user.id;
-        userForm.clienteId = user.clienteId;
-        userForm.tipoUsuarioId = user.tipoUsuarioId;
-        userForm.nombre = user.nombre;
-        userForm.direccion = user.direccion;
-        userForm.telefono = user.telefono;
-        userForm.cc = user.cc;
-        userForm.email = user.email;
-        userForm.password = ''; // Se deja vacío para no sobrescribir si no se cambia
-        userForm.activo = user.activo;
-        userForm.firma = user.firma;
-        showForm.value = true;
-      };
-  
-      // Guardar (crear/actualizar)
-      const saveUser = async () => {
-        try {
-          if (isEditing.value) {
-            // Actualizar usuario
-            await axios.put(`/usuarios/${userForm.id}`, {
-              clienteId: userForm.clienteId,
-              tipoUsuarioId: userForm.tipoUsuarioId,
-              nombre: userForm.nombre,
-              direccion: userForm.direccion,
-              telefono: userForm.telefono,
-              cc: userForm.cc,
-              email: userForm.email,
-              password: userForm.password,
-              activo: userForm.activo,
-              firma: userForm.firma,
-            });
-          } else {
-            // Crear usuario
-            await axios.post('/usuarios', {
-              clienteId: userForm.clienteId,
-              tipoUsuarioId: userForm.tipoUsuarioId,
-              nombre: userForm.nombre,
-              direccion: userForm.direccion,
-              telefono: userForm.telefono,
-              cc: userForm.cc,
-              email: userForm.email,
-              password: userForm.password,
-              activo: userForm.activo,
-              firma: userForm.firma,
-            });
-          }
-          await fetchUsers();
-          closeForm();
-        } catch (error) {
-          console.error('Error al guardar usuario:', error);
-        }
-      };
-  
-      // Eliminar usuario
-      const deleteUser = async (id) => {
-        try {
-          await axios.delete(`/usuarios/${id}`);
-          await fetchUsers();
-        } catch (error) {
-          console.error('Error al eliminar usuario:', error);
-        }
-      };
-  
-      // Limpiar formulario
-      const clearForm = () => {
-        userForm.id = null;
-        userForm.clienteId = '';
-        userForm.tipoUsuarioId = '';
-        userForm.nombre = '';
-        userForm.direccion = '';
-        userForm.telefono = '';
-        userForm.cc = '';
-        userForm.email = '';
-        userForm.password = '';
-        userForm.activo = true;
-        userForm.firma = '';
-      };
-  
-      return {
-        users,
-        searchTerm,
-        selectedStatus,
-        showForm,
-        isEditing,
-        userForm,
-        filteredUsers,
-        filterUsers,
-        openCreateForm,
-        closeForm,
-        editUser,
-        saveUser,
-        deleteUser,
+        cc: ''
       };
     },
-  };
-  </script>
-  
-  <style scoped>
-  /* Ajusta los estilos a tu layout y colores */
-  
-  /* Contenedor principal */
-  .usuarios-container {
-    padding: 20px;
-    background-color: #fff; /* Si tu layout usa un fondo diferente, ajústalo */
+    async loadUsers() {
+      this.loading = true;
+      try {
+        const res = await apiClient.get('/api/usuarios');
+        this.users = res.data;
+      } catch (err) {
+        console.error('Error al cargar usuarios:', err);
+        this.users = [];
+      } finally {
+        this.loading = false;
+      }
+    },
+    async loadClientes() {
+      try {
+        const res = await apiClient.get('/api/clientes');
+        this.clientes = res.data;
+      } catch (err) {
+        console.error('Error al cargar clientes:', err);
+        this.clientes = [];
+      }
+    },
+    async loadTiposUsuario() {
+      try {
+        const res = await apiClient.get('/api/tipos-usuario');
+        this.tiposUsuario = res.data;
+      } catch (err) {
+        console.error('Error al cargar tipos de usuario:', err);
+        this.tiposUsuario = [];
+      }
+    },
+    getClientName(clientId) {
+      const cli = this.clientes.find(c => c.id === clientId);
+      return cli ? cli.nombre : '';
+    },
+    openNewUserModal() {
+      this.resetForm();
+      this.isEditing = false;
+      this.showModal();
+    },
+    editUser(user) {
+      this.resetForm();
+      this.isEditing = true;
+      // Clonamos e inicializamos la contraseña en blanco
+      this.currentUser = { ...user, password: '' };
+      this.showModal();
+    },
+    async saveUser() {
+      this.validatePassword();
+      this.validateConfirmPassword();
+      if (this.passwordError || this.confirmPasswordError) {
+        return;
+      }
+      this.isLoading = true;
+      try {
+        if (this.isEditing && this.currentUser.id) {
+          await apiClient.put(`/api/usuarios/${this.currentUser.id}`, this.currentUser);
+          Swal.fire('Actualizado', 'Usuario actualizado correctamente', 'success');
+        } else {
+          const res = await apiClient.post('/api/usuarios', this.currentUser);
+          this.currentUser.id = res.data.id;
+          Swal.fire('Creado', 'Usuario creado correctamente', 'success');
+        }
+        await this.loadUsers();
+        this.closeUserModal();
+      } catch (error) {
+        console.error('Error al guardar usuario:', error);
+        Swal.fire('Error', 'No se pudo guardar el usuario', 'error');
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    async deleteUser(id) {
+      const confirm = await Swal.fire({
+        title: '¿Eliminar usuario?',
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      });
+      if (confirm.isConfirmed) {
+        try {
+          await apiClient.delete(`/api/usuarios/${id}`);
+          await this.loadUsers();
+          Swal.fire('Eliminado', 'Usuario eliminado correctamente', 'success');
+        } catch (error) {
+          Swal.fire('Error', 'No se pudo eliminar el usuario', 'error');
+        }
+      }
+    },
+    onFirmaChange(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (!file.name.toLowerCase().endsWith('.png')) {
+        Swal.fire('Error', 'Por favor selecciona un archivo .png', 'error');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = e => {
+        const base64String = e.target.result;
+        // Remove data:image/png;base64,
+        this.currentUser.firma = base64String.replace(/^data:image\/png;base64,/, '');
+      };
+      reader.readAsDataURL(file);
+    },
+    validatePassword() {
+      const pwd = this.currentUser.password || '';
+      const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+      if (pwd && !regex.test(pwd)) {
+        this.passwordError = 'La contraseña no cumple todos los requisitos.';
+      } else {
+        this.passwordError = '';
+      }
+    },
+    validateConfirmPassword() {
+      if (
+        this.currentUser.password &&
+        this.confirmPassword &&
+        this.currentUser.password !== this.confirmPassword
+      ) {
+        this.confirmPasswordError = 'Las contraseñas no coinciden.';
+      } else {
+        this.confirmPasswordError = '';
+      }
+    },
+    resetForm() {
+      this.currentUser = this.getEmptyUser();
+      this.confirmPassword = '';
+      this.passwordError = '';
+      this.confirmPasswordError = '';
+      this.showPassword = false;
+      this.showConfirmPassword = false;
+    },
+    showModal() {
+      if (!this.modalInstance) {
+        this.modalInstance = new Modal(this.$refs.userModal, {
+          backdrop: 'static',
+          keyboard: false
+        });
+      }
+      this.modalInstance.show();
+    },
+    closeUserModal() {
+      this.modalInstance?.hide();
+    }
+  },
+  async mounted() {
+    await Promise.all([this.loadUsers(), this.loadClientes(), this.loadTiposUsuario()]);
   }
-  
-  /* Encabezado */
-  .usuarios-header {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+};
+</script>
+
+<style scoped>
+.table thead th {
+  background-color: #f8f9fa;
+}
+
+.search-pill {
+  border-radius: 2rem;
+  overflow: hidden;
+  background-color: #fff;
+  height: 36px;
+  max-width: 300px;
+  border: 1px solid #ced4da;
+}
+
+.search-pill .input-group-text {
+  background-color: transparent;
+  border: none;
+  padding-left: 14px;
+  padding-right: 8px;
+  color: #6c757d;
+}
+
+.search-pill .form-control {
+  border: none;
+  border-radius: 0;
+  height: 36px;
+  box-shadow: none;
+  padding-left: 0;
+}
+
+.buttons-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 41px;
+  width: 150px;
+  padding: 0 1rem;
+  gap: 0.25rem;
+  font-weight: 500;
+  font-size: 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Modal */
+.modal-custom {
+  border-radius: 10px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal-header-custom {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  .usuarios-header h1 {
-    margin: 0;
-    font-size: 24px;
-    color: #333;
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .search-input {
-    flex: 1;
-    padding: 6px;
-  }
-  .filter-select {
-    padding: 6px;
-  }
-  .btn {
-    cursor: pointer;
-    border: none;
-    border-radius: 4px;
-    padding: 6px 12px;
-  }
-  .btn-primary {
-    background-color: #007bff;
-    color: #fff;
-  }
-  .btn-secondary {
-    background-color: #6c757d;
-    color: #fff;
-  }
-  .btn-danger {
-    background-color: #dc3545;
-    color: #fff;
-  }
-  
-  /* Tabla */
-  .table-container {
-    margin-top: 20px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    overflow: hidden;
-    background: #f9f9f9;
-  }
-  .usuarios-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .usuarios-table th,
-  .usuarios-table td {
-    padding: 10px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-  }
-  .usuarios-table thead {
-    background-color: #f4f4f4;
-    font-weight: bold;
-  }
-  
-  /* Estados */
-  .status-active {
-    color: green;
-    font-weight: bold;
-  }
-  .status-inactive {
-    color: red;
-    font-weight: bold;
-  }
-  
-  /* Formulario en overlay */
-  .form-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .form-dialog {
-    background-color: #fff;
-    padding: 20px;
-    width: 400px;
-    max-width: 90%;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-  }
-  .form-dialog h2 {
-    margin-top: 0;
-    margin-bottom: 10px;
-  }
-  .form-group {
-    margin-bottom: 10px;
-  }
-  .form-group label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: 5px;
-  }
-  .form-group input,
-  .form-group select {
-    width: 100%;
-    padding: 8px;
-    box-sizing: border-box;
-  }
-  .dialog-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 15px;
-  }
-  </style>
-  
+}
+
+/* Ajusta altura y fuente de inputs y selects para una apariencia más compacta */
+.form-select,
+.form-control {
+  height: 36px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+</style>

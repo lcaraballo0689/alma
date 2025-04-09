@@ -1,24 +1,11 @@
-/**
- * @fileoverview Controlador para la entidad Direccion.
- * Maneja operaciones CRUD y la consulta de direcciones por clienteId.
- */
-
 const { connectDB, sql } = require('../config/db');
 
-/**
- * Obtiene los TOP 1000 registros de Direccion.
- * @async
- * @param {Object} req - Request.
- * @param {Object} res - Response.
- * @returns {Promise<Object[]>} Lista de direcciones.
- */
+// Obtener todas las direcciones
 async function getAllDirecciones(req, res) {
   try {
     const pool = await connectDB();
     const result = await pool.request().query(`
-      SELECT TOP (1000) [id],
-             [direccion],
-             [clienteId]
+      SELECT id, direccion, clienteId, lat, lng, alias
       FROM dbo.Direccion
       ORDER BY id DESC
     `);
@@ -29,13 +16,7 @@ async function getAllDirecciones(req, res) {
   }
 }
 
-/**
- * Obtiene una dirección por su ID.
- * @async
- * @param {Object} req - Request con req.params.id.
- * @param {Object} res - Response.
- * @returns {Promise<Object>} Registro de dirección.
- */
+// Obtener dirección por ID
 async function getDireccionById(req, res) {
   const { id } = req.params;
   try {
@@ -43,13 +24,11 @@ async function getDireccionById(req, res) {
     const result = await pool.request()
       .input('id', sql.Int, id)
       .query(`
-        SELECT [id],
-               [direccion],
-               [clienteId]
+        SELECT id, direccion, clienteId, lat, lng,alias
         FROM dbo.Direccion
         WHERE id = @id
       `);
-    if (!result.recordset || result.recordset.length === 0) {
+    if (!result.recordset.length) {
       return res.status(404).json({ error: 'Dirección no encontrada.' });
     }
     return res.json(result.recordset[0]);
@@ -59,13 +38,7 @@ async function getDireccionById(req, res) {
   }
 }
 
-/**
- * Obtiene todas las direcciones para un cliente dado.
- * @async
- * @param {Object} req - Request con req.params.clienteId.
- * @param {Object} res - Response.
- * @returns {Promise<Object>} Objeto con las direcciones asociadas al cliente.
- */
+// Obtener direcciones por cliente
 async function getDireccionesByClienteId(req, res) {
   const { clienteId } = req.params;
   try {
@@ -73,9 +46,7 @@ async function getDireccionesByClienteId(req, res) {
     const result = await pool.request()
       .input('clienteId', sql.Int, clienteId)
       .query(`
-        SELECT [id],
-               [direccion],
-               [clienteId]
+        SELECT id, direccion, clienteId, lat, lng
         FROM dbo.Direccion
         WHERE clienteId = @clienteId
       `);
@@ -86,15 +57,9 @@ async function getDireccionesByClienteId(req, res) {
   }
 }
 
-/**
- * Crea una nueva dirección.
- * @async
- * @param {Object} req - Request con datos en req.body.
- * @param {Object} res - Response.
- * @returns {Promise<Object>} Objeto JSON con el ID del registro creado.
- */
+// Crear nueva dirección
 async function createDireccion(req, res) {
-  const { direccion, clienteId } = req.body;
+  const { direccion, clienteId, lat, lng, alias } = req.body;
   if (!direccion || !clienteId) {
     return res.status(400).json({ error: 'Faltan campos obligatorios: direccion y clienteId.' });
   }
@@ -102,50 +67,50 @@ async function createDireccion(req, res) {
     const pool = await connectDB();
     const result = await pool.request()
       .input('direccion', sql.NVarChar, direccion)
+      .input('alias', sql.NVarChar, alias) // <--- Nuevo
       .input('clienteId', sql.Int, clienteId)
+      .input('lat', sql.Float, lat)
+      .input('lng', sql.Float, lng)
       .query(`
-        INSERT INTO dbo.Direccion (direccion, clienteId)
-        VALUES (@direccion, @clienteId);
-        SELECT SCOPE_IDENTITY() as insertedId;
+        INSERT INTO dbo.Direccion (direccion, alias, clienteId, lat, lng)
+        VALUES (@direccion, @alias, @clienteId, @lat, @lng);
+        SELECT SCOPE_IDENTITY() AS insertedId;
       `);
-    const newId = result.recordset[0].insertedId;
-    return res.status(201).json({ message: 'Dirección creada', id: newId });
+    return res.status(201).json({ message: 'Dirección creada', id: result.recordset[0].insertedId });
   } catch (error) {
     console.error('Error en createDireccion:', error);
     return res.status(500).json({ error: 'Error interno del servidor.' });
   }
 }
 
-/**
- * Actualiza una dirección existente.
- * @async
- * @param {Object} req - Request con req.params.id y datos en req.body.
- * @param {Object} res - Response.
- * @returns {Promise<Object>} Objeto JSON con mensaje de confirmación.
- */
+
+// Actualizar dirección
 async function updateDireccion(req, res) {
   const { id } = req.params;
-  const { direccion, clienteId } = req.body;
+  const { direccion, clienteId, lat, lng, alias } = req.body; // <--- Nuevo
   if (!direccion || !clienteId) {
     return res.status(400).json({ error: 'Faltan campos obligatorios: direccion y clienteId.' });
   }
   try {
     const pool = await connectDB();
-    // Verificar si la dirección existe
-    const check = await pool.request()
-      .input('id', sql.Int, id)
-      .query(`SELECT id FROM dbo.Direccion WHERE id = @id`);
-    if (!check.recordset || check.recordset.length === 0) {
+    const check = await pool.request().input('id', sql.Int, id).query(`SELECT id FROM dbo.Direccion WHERE id = @id`);
+    if (!check.recordset.length) {
       return res.status(404).json({ error: 'Dirección no encontrada.' });
     }
     await pool.request()
       .input('id', sql.Int, id)
       .input('direccion', sql.NVarChar, direccion)
+      .input('alias', sql.NVarChar, alias) // <--- Nuevo
       .input('clienteId', sql.Int, clienteId)
+      .input('lat', sql.Float, lat)
+      .input('lng', sql.Float, lng)
       .query(`
         UPDATE dbo.Direccion
         SET direccion = @direccion,
-            clienteId = @clienteId
+            alias = @alias,
+            clienteId = @clienteId,
+            lat = @lat,
+            lng = @lng
         WHERE id = @id
       `);
     return res.json({ message: 'Dirección actualizada exitosamente.' });
@@ -155,27 +120,17 @@ async function updateDireccion(req, res) {
   }
 }
 
-/**
- * Elimina una dirección (baja física).
- * @async
- * @param {Object} req - Request con req.params.id.
- * @param {Object} res - Response.
- * @returns {Promise<Object>} Objeto JSON con mensaje de confirmación.
- */
+
+// Eliminar dirección
 async function deleteDireccion(req, res) {
   const { id } = req.params;
   try {
     const pool = await connectDB();
-    // Verificar si la dirección existe
-    const check = await pool.request()
-      .input('id', sql.Int, id)
-      .query(`SELECT id FROM dbo.Direccion WHERE id = @id`);
-    if (!check.recordset || check.recordset.length === 0) {
+    const check = await pool.request().input('id', sql.Int, id).query(`SELECT id FROM dbo.Direccion WHERE id = @id`);
+    if (!check.recordset.length) {
       return res.status(404).json({ error: 'Dirección no encontrada.' });
     }
-    await pool.request()
-      .input('id', sql.Int, id)
-      .query(`DELETE FROM dbo.Direccion WHERE id = @id`);
+    await pool.request().input('id', sql.Int, id).query(`DELETE FROM dbo.Direccion WHERE id = @id`);
     return res.json({ message: 'Dirección eliminada exitosamente.' });
   } catch (error) {
     console.error('Error en deleteDireccion:', error);

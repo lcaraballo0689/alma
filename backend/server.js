@@ -34,6 +34,8 @@ const obtenerHistorialSolicitudes = require('./routes/auditoriaRoutes')
 const estadoTransicionesRoutes = require('./routes/estadoTransicionesRoutes');
 const obtenerDetalleSolicitud  = require("./routes/obtenerDetalleSolicitudRoutes");
 const cargarFirma = require("./routes/firmaRoutes");
+const horariosRouter = require('./routes/horariosRoutes');
+import Bodega  from "./routes/bodegaRoutes";  
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -65,6 +67,8 @@ app.use('/api/auditoria', obtenerHistorialSolicitudes);
 app.use('/api/estados', estadoTransicionesRoutes);
 app.use("/api/detalleSolicitud", obtenerDetalleSolicitud);
 app.use("/api/cargarFirma", cargarFirma);
+app.use('/api/horarios', horariosRouter);
+app.use("/api/bodega", Bodega); // Rutas de bodegas
 
 
 app.get("/api", (req, res) => {

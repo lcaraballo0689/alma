@@ -2,20 +2,21 @@
   <div class="dashboard-layout">
     <!-- Sidebar -->
     <aside :class="['sidebar', { close: isCollapsed }]">
-      <!-- Encabezado (puedes agregar logo o información si lo deseas) -->
-
       <!-- Menú principal -->
       <div class="menu-bar">
         <ul class="menu-links">
           <li v-for="(item, index) in menu" :key="index">
             <!-- Ítem simple sin submenús -->
             <div v-if="!item.children">
-              <a :href="item.link" :class="{ active: activeItem === item.name }" @click="setActive(item.name)">
+              <a
+                :href="item.link"
+                :class="{ active: activeItem === item.name }"
+                @click="setActive(item.name)"
+              >
                 <i :class="item.icon"></i>
                 <span class="nav-text" v-if="!isCollapsed">{{ item.name }}</span>
               </a>
             </div>
-
             <!-- Ítem con submenús -->
             <div v-else class="dropdown">
               <div class="menu-link" @click="toggleDropdown(index)">
@@ -23,7 +24,11 @@
                   <i :class="item.icon"></i>
                   <span class="nav-text" v-if="!isCollapsed">{{ item.name }}</span>
                 </div>
-                <i class="bx bx-chevron-down arrow" v-if="!isCollapsed" :class="{ open: item.open }"></i>
+                <i
+                  class="bx bx-chevron-down arrow"
+                  v-if="!isCollapsed"
+                  :class="{ open: item.open }"
+                ></i>
               </div>
               <ul class="sub-menu" v-show="item.open && !isCollapsed">
                 <li
@@ -39,7 +44,6 @@
           </li>
         </ul>
       </div>
-
       <!-- Footer (Cerrar sesión en esquina inferior izquierda) -->
       <div class="sidebar-footer">
         <a href="#" class="logout" @click="logout">
@@ -51,10 +55,19 @@
 
     <!-- Área de contenido principal -->
     <main class="main-content">
-      <h2>{{ activeItem }}</h2>
+      <!-- Encabezado con ícono dinámico y título -->
+      <h2>
+        <i :class="activeIcon + ' me-2'"></i> {{ activeItem }}
+      </h2>
+      <!-- Contenido según la opción activa -->
       <clientes v-if="activeItem === 'Clientes'" />
       <TransferenciaManager v-else-if="activeItem === 'Transferencias'" />
       <Dashboard v-else-if="activeItem === 'Dashboard'" />
+      <Direcciones v-else-if="activeItem === 'Direcciones'" />
+      <HorasLaborales v-else-if="activeItem === 'Horas Laborables'" />
+      <bodegas v-else-if="activeItem === 'Bodegas'" />
+      <usuarios v-else-if="activeItem === 'Usuarios'" />
+
       <div v-else-if="activeItem === 'Administrar Usuarios'">
         <usuarios />
       </div>
@@ -73,12 +86,15 @@
 
 <script>
 import clientes from "./Clientes.vue";
+import Direcciones from "./Direcciones.vue";
 import usuarios from "./Usuarios.vue";
 import bodegas from "./Bodegas.vue";
 import Traccker from "./Traccker.vue";
 import RealTimeRouteMap from "./RealTimeRouteMap.vue";
 import TransferenciaManager from "./TransferenciasManager.vue";
 import Dashboard from "./Dashboard.vue";
+import HorasLaborales from "./HorasLaborales.vue";
+
 import { useAuthStore } from "@/stores/authStore";
 
 export default {
@@ -90,12 +106,15 @@ export default {
     Traccker,
     RealTimeRouteMap,
     TransferenciaManager,
-    Dashboard
+    Dashboard,
+    Direcciones,
+    HorasLaborales,
   },
   data() {
     return {
       isCollapsed: false,
       activeItem: "Dashboard",
+      // Menú con submenús (algunos íconos se asignan tanto en el nivel principal como a los hijos)
       menu: [
         { name: "Dashboard", icon: "bx bxs-dashboard", link: "#" },
         { name: "Transferencias", icon: "bx bxs-directions", link: "#" },
@@ -103,61 +122,76 @@ export default {
           name: "Administrar Clientes",
           icon: "bi bi-building-fill",
           children: [
-            { name: "Clientes", link: "#" },
-            { name: "Direcciones", link: "#" },
-            { name: "Horas Laborables", link: "#" }
+            { name: "Clientes", icon: "bi bi-people", link: "#" },
+            { name: "Direcciones", icon: "bx bx-map", link: "#" },
+            { name: "Horas Laborables", icon: "bx bx-time", link: "#" },
           ],
-          open: false
+          open: false,
         },
         {
           name: "Administrar Usuarios",
           icon: "bx bx-group",
           children: [
-            { name: "Usuarios", link: "#" },
-            { name: "Roles y Permisos", link: "#" }
+            { name: "Usuarios", icon: "bx bx-user", link: "#" },
+            { name: "Roles y Permisos", icon: "bx bx-key", link: "#" },
           ],
-          open: false
+          open: false,
         },
         {
           name: "Administrar Bodegas",
           icon: "bx bx-building-house",
           children: [
-            { name: "Bodegas", link: "#" },
-            { name: "Ubicaciones", link: "#" }
+            { name: "Bodegas", icon: "bx bx-buildings", link: "#" },
+            { name: "Ubicaciones", icon: "bx bx-map", link: "#" },
           ],
-          open: false
+          open: false,
         },
         {
           name: "Administrar Flotas",
           icon: "bx bxs-truck",
           children: [
-            { name: "Flotas", link: "#" },
-            { name: "Agregar Flota", link: "#" },
-            { name: "Ubicar Flotas", link: "#" },
-            { name: "Ver Flotas en Ruta", link: "#" }
+            { name: "Flotas", icon: "bx bx-truck", link: "#" },
+            { name: "Agregar Flota", icon: "bx bx-plus", link: "#" },
+            { name: "Ubicar Flotas", icon: "bx bx-map-pin", link: "#" },
+            { name: "Ver Flotas en Ruta", icon: "bx bx-route", link: "#" },
           ],
-          open: false
-        }
-      ]
+          open: false,
+        },
+      ],
     };
   },
   computed: {
     authStore() {
       return useAuthStore();
-    }
+    },
+    activeIcon() {
+      // Buscar en el menú el ícono correspondiente al activeItem.
+      for (const item of this.menu) {
+        if (item.name === this.activeItem) {
+          return item.icon;
+        }
+        if (item.children) {
+          for (const child of item.children) {
+            if (child.name === this.activeItem) {
+              return child.icon;
+            }
+          }
+        }
+      }
+      return ""; // Valor por defecto si no se encuentra
+    },
   },
   methods: {
     toggleSidebar() {
       this.isCollapsed = !this.isCollapsed;
     },
     toggleDropdown(index) {
-      // Primero cerrar todos los dropdowns
+      // Cierra todos los dropdowns excepto el que se hizo clic.
       this.menu.forEach((item, idx) => {
         if (item.children && idx !== index) {
           item.open = false;
         }
       });
-      // Luego toggle el que se hizo clic
       if (this.menu[index].children) {
         this.menu[index].open = !this.menu[index].open;
       }
@@ -169,14 +203,13 @@ export default {
       this.authStore.resetAuth();
       localStorage.clear();
       this.$router.replace({ name: "Login" });
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
-@import url('https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css');
-
+/* Layout general */
 .dashboard-layout {
   display: flex;
   height: calc(100vh - 70px);
@@ -188,15 +221,17 @@ export default {
   position: fixed;
   width: 250px;
   height: 100%;
-  background: #11101d;
+  background: #303030; /* Color claro para el sidebar */
   transition: width 0.3s ease;
   overflow: hidden;
+  border-right: 1px solid #dee2e6;
+  box-shadow: 25px 0 15px -10px rgba(0, 0, 0, 0.3);
 }
 .sidebar.close {
   width: 80px;
 }
 
-/* Menú */
+/* Menú del sidebar */
 .menu-bar {
   height: calc(100% - 80px);
   overflow-y: auto;
@@ -208,21 +243,21 @@ export default {
   margin: 0;
 }
 .menu-links li {
-  margin: 10px 0;
+  margin: 5px 0;
 }
 .menu-links a,
 .menu-link {
   display: flex;
   align-items: center;
-  color: #fff;
+  color: #a3a3a3;
   text-decoration: none;
-  padding: 10px 20px;
+  padding: 10px 10px;
   transition: background 0.3s;
   cursor: pointer;
 }
 .menu-links a:hover,
 .menu-link:hover {
-  background: #1d1b31;
+  background: #353535;
   border-radius: 4px;
 }
 .nav-text {
@@ -247,41 +282,41 @@ export default {
 .sub-menu li a {
   padding: 8px 0;
   font-size: 14px;
-  color: #fff;
+  color: #a3a3a3;
   text-decoration: none;
   transition: background 0.3s;
 }
 .sub-menu li a:hover {
-  background: #1d1b31;
+  background: #353535;
   border-radius: 4px;
 }
 
-/* Footer del sidebar: cerrar sesión en esquina inferior izquierda */
+/* Footer del sidebar */
 .sidebar-footer {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  padding: 0px;
-  border-top: 1px solid rgba(255, 255, 255, 0.171);
-  background-color: #010102;
+  padding: 0;
+  border-top: 1px solid #52515171;
+  background-color: #353535;
 }
 .logout {
   display: flex;
   align-items: center;
-  color: #fff;
+  color: #b9b9b9;
   text-decoration: none;
   cursor: pointer;
   transition: background 0.3s;
-  padding: 10px 0px;
-  margin-bottom: 110px;
-  margin-left: 55px;
+  padding: 10px 0;
+  justify-content: center;
+  margin-bottom: 98px;
 }
 .logout:hover {
-  color: #c7c7c7;
+  background: #684141;
 }
 
-/* Contenido principal */
+/* Área de contenido principal */
 .main-content {
   margin-left: 250px;
   padding: 20px;
