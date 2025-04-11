@@ -3,13 +3,13 @@ import Login from '@/views/Login.vue';
 import AdminDashboard from '@/views/admin/AdminDashboard.vue';
 import ClientHome from '@/views/client/ClientHome.vue';
 import { useAuthStore } from '@/stores/authStore';
-import CaptureMedia from '../views/admin/CaptureMedia.vue';
+import PWA from '../views/admin/CaptureMedia.vue';
 
 const routes = [
   { path: '/login', name: 'Login', component: Login },
   { path: '/Admin', name: 'AdminDashboard', component: AdminDashboard, meta: { requiresAuth: true } },
   { path: '/User', name: 'ClientHome', component: ClientHome, meta: { requiresAuth: true } },
-  { path: '/pwa', name: 'CaptureMedia', component: CaptureMedia, meta: { requiresAuth: true } },
+  { path: '/pwa', name: 'pwa', component: PWA, meta: { requiresAuth: true } },
   { path: '/', redirect: '/login' }
 ];
 

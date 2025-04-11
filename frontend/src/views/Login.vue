@@ -3,8 +3,7 @@
     <div class="row g-0 h-100">
       <!-- Columna del formulario -->
       <div class="col-12 col-lg-4 d-flex flex-column justify-content-center align-items-center">
-        <div class="w-100" style="max-width: 400px"
-          :class="{ 'bg-dark text-light p-4 rounded': themeStore.theme === 'dark' }">
+        <div class="w-100" style="max-width: 400px" :class="{ 'bg-dark text-light p-4 rounded': themeStore.theme === 'dark' }">
           <form class="needs-validation" @submit.prevent="handleLogin" novalidate>
             <!-- Logo -->
             <div class="text-center mb-4">
@@ -21,8 +20,7 @@
             <!-- Campo de contraseña -->
             <div class="mb-3 fw-bold fs-4">
               <label for="input-2" class="form-label">Contraseña</label>
-              <input type="password" id="input-2" v-model="password" class="form-control" placeholder="Contraseña"
-                required />
+              <input type="password" id="input-2" v-model="password" class="form-control" placeholder="Contraseña" required />
               <div class="invalid-feedback">
                 Por favor, ingresa tu contraseña.
               </div>
@@ -145,18 +143,18 @@ export default {
           usuarioId: decoded.id,
         });
         console.log("Usuario se ha unido a la sala: usuario_" + decoded.clienteId);
+        console.log("Tipo de permisos:", Array.isArray(decoded.permisos) ? "Array" : typeof decoded.permisos);
+console.log("Contenido de permisos:", decoded.permisos);
 
-        // Dentro de tu método handleLogin, después de decodificar el token:
-        const isMobileDevice = /Mobi|Android/i.test(navigator.userAgent);
-
+        // Redirigir basado en permisos
         if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'Acceso Panel Administrativo')) {
-          // Si es de escritorio, redirige a AdminDashboard; si es móvil, redirige a 'pwa'
           this.$router.push({ name: 'AdminDashboard' });
         } else if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'Acceso Panel Cliente')) {
-          // Redirige a ClientHome si es de escritorio y a 'pwa' si es móvil
+          this.$router.push({ name: 'ClientHome' });
+        } else if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'pwa')) {
           this.$router.push({ name: 'ClientHome' });
         } else {
-          // Para otros casos, o si no se detecta el rol deseado, redirige a 'pwa'
+          // Otra ruta por defecto
           this.$router.push({ name: 'pwa' });
         }
 
