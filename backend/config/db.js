@@ -11,7 +11,10 @@ const dbConfig = {
   options: {
     encrypt: true,
     trustServerCertificate: process.env.DB_TRUSTCERTIFICATE === 'true'
-  }
+  },
+  // Opcional: aumentar los tiempos de timeout si el servidor responde lentamente
+  connectionTimeout: 30000,  // 30 segundos
+  requestTimeout: 30000
 };
 
 let pool;
