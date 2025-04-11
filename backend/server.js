@@ -35,7 +35,14 @@ const estadoTransicionesRoutes = require('./routes/estadoTransicionesRoutes');
 const obtenerDetalleSolicitud  = require("./routes/obtenerDetalleSolicitudRoutes");
 const cargarFirma = require("./routes/firmaRoutes");
 const horariosRouter = require('./routes/horariosRoutes');
-import Bodega  from "./routes/bodegaRoutes";  
+//const Bodega  = require("./routes/bodegaRoutes");  
+
+const roleRoutes = require("./routes/roleRoutes");
+const permissionRoutes = require("./routes/permissionRoutes");
+const rolePermissionRoutes = require("./routes/rolePermissionRoutes")
+const dashboardRouter = require('./routes/dashboard');
+
+;
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -68,7 +75,11 @@ app.use('/api/estados', estadoTransicionesRoutes);
 app.use("/api/detalleSolicitud", obtenerDetalleSolicitud);
 app.use("/api/cargarFirma", cargarFirma);
 app.use('/api/horarios', horariosRouter);
-app.use("/api/bodega", Bodega); // Rutas de bodegas
+app.use("/api/roles", roleRoutes);
+app.use("/api/permissions", permissionRoutes);
+app.use("/api/role-permissions", rolePermissionRoutes);
+app.use('/api', dashboardRouter);
+//app.use("/api/bodega", Bodega); // Rutas de bodegas
 
 
 app.get("/api", (req, res) => {

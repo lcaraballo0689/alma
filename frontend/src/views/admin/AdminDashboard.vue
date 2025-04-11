@@ -2,7 +2,7 @@
   <div>
     <!-- Navbar con sticky y sombra -->
     <nav
-      class="navbar navbar-expand-lg fixed-top shadow p-0"
+      class="navbar navbar-expand-lg fixed-top shadow-sm p-0"
       :class="themeStore.isDarkTheme ? 'navbar-dark bg-dark' : 'navbar-light bg-white'"
       style="min-height: 60px"
       aria-label="Barra de navegación principal"
@@ -56,8 +56,8 @@ import { useNotificationStore } from "@/stores/notificationStore";
 const movimientosreg = defineAsyncComponent(() =>
   import("./TransferenciasManager.vue")
 );
-const NomenclaturaManager = defineAsyncComponent(() =>
-  import("./NomenclaturaManager.vue")
+const adminPanel = defineAsyncComponent(() =>
+  import("./adminPanel.vue")
 );
 const usuarios = defineAsyncComponent(() =>
   import("./usuarios.vue")
@@ -89,7 +89,7 @@ export default {
   components: {
     breadcrumb,
     NotificationsNavbar,
-    NomenclaturaManager,
+    adminPanel,
     usuarios,
     traccker,
     RealTimeRouteMap
@@ -101,7 +101,7 @@ export default {
       hacienda,
       tabs: [
         { name: "movimientosreg", label: "Solicitudes", icon: "bi bi-stack" },
-        { name: "NomenclaturaManager", label: "Administrar Sistema", icon: "bi bi-gear-fill" },
+        { name: "adminPanel", label: "Administrar Sistema", icon: "bi bi-gear-fill" },
         // { name: "usuarios", label: "Usuarios", icon: "bi bi-people-fill" },
         // { name: "traccker", label: "traccker", icon: "bi bi-pin-map" },
         // { name: "RealTimeRouteMap", label: "Ruta en tiempo real", icon: "bi bi-map" },
@@ -134,7 +134,7 @@ export default {
     currentComponent() {
       const componentMap = {
         movimientosreg,
-        NomenclaturaManager,
+        adminPanel,
         usuarios,
         traccker,
         RealTimeRouteMap,
@@ -163,7 +163,7 @@ export default {
   },
   mounted() {
     // Establece la pestaña inicial
-    this.tabStore.setTab("NomenclaturaManager");
+    this.tabStore.setTab("adminPanel");
     // Si usas socket, puedes suscribirte aquí:
     // socket.on("notify", this.handleSocketNotification);
   },

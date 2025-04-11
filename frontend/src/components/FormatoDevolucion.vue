@@ -117,8 +117,8 @@ export default {
         if (firmaB) {
           doc.addImage(firmaB, "PNG", logoX - 240, 220, logoWidth, logoHeight + 10);
         }
-        console.info("Firmas A:", firmaA);
-        console.info("Firmas B:", firmaB);
+        //console.info("Firmas A:", firmaA);
+        //console.info("Firmas B:", firmaB);
 
         let x = marginLeft;
         let y = 20;

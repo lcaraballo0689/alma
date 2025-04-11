@@ -23,10 +23,13 @@ function parseJwt(token) {
 }
 let baseURL;
 
-if (window.location.hostname === "localhost") {
+if (window.location.hostname === "http://192.168.0.") {
   baseURL = "http://localhost:3001"; // URL para desarrollo local
 } else if (window.location.hostname === "bodegapp.siglo21.com.co") {
   baseURL = "https://api.siglo21.com.co"; // URL para el dominio específico
+}
+else if (window.location.hostname === "https://outline.melenasco.com") {
+  baseURL = "https://vn9mmqm7-3001.use2.devtunnels.ms/"; // URL para el dominio específico
 } else {
   baseURL = import.meta.env.VITE_API_BASE_URL; // URL por defecto (puedes ajustarla)
 }

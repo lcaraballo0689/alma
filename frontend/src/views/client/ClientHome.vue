@@ -42,15 +42,7 @@
                   <span class="d-none d-sm-inline">Reportes</span>
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="moviemientosDropdown">
-                  <li v-for="tabItem in movimientosTabs" :key="tabItem.name">
-                    <a class="dropdown-item" href="#" :class="{ active: currentTab === tabItem.name }"
-                      @click.prevent="setTab(tabItem.name)">
-                      <i :class="tabItem.icon + ' me-2'"></i>
-                      {{ tabItem.label }}
-                    </a>
-                  </li>
-                </ul>
-                <ul class="dropdown-menu" aria-labelledby="movimientos">
+
                   <li v-for="tabItem in movimientosTabs" :key="tabItem.name">
                     <a class="dropdown-item" href="#" :class="{ active: currentTab === tabItem.name }"
                       @click.prevent="setTab(tabItem.name)">

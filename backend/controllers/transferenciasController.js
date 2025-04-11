@@ -1211,16 +1211,12 @@ async function eliminarTransferencia(req, res, next) {
  */
 async function consultarTransferencias(req, res, next) {
   try {
-    if (!req.body || !req.body.clienteId) {
-      return res
-        .status(400)
-        .json({ error: "El campo clienteId es obligatorio." });
-    }
+    // Extraemos los filtros; clienteId es opcional
     const { clienteId, estado, fechaInicio, fechaFin } = req.body;
     const pool = await connectDB();
     const request = new sql.Request(pool);
-    request.input("clienteId", sql.Int, clienteId);
 
+    // Empezamos la consulta con una condición base que siempre es verdadera
     let query = `
       SELECT
           st.id,
@@ -1246,8 +1242,15 @@ async function consultarTransferencias(req, res, next) {
       FROM SolicitudTransporte st
       LEFT JOIN Usuario uv ON st.usuarioVerifica = uv.id
       LEFT JOIN Usuario uc ON st.usuarioCarga = uc.id
-      WHERE st.clienteId = @clienteId`;
+      WHERE 1 = 1
+    `;
 
+    // Si se envía clienteId, se agrega el filtro correspondiente
+    if (clienteId) {
+      query += " AND st.clienteId = @clienteId";
+      request.input("clienteId", sql.Int, clienteId);
+    }
+    // Filtros adicionales opcionales
     if (estado) {
       query += " AND st.estado = @estado";
       request.input("estado", sql.VarChar, estado);
@@ -1263,7 +1266,7 @@ async function consultarTransferencias(req, res, next) {
     query += " ORDER BY st.id DESC";
 
     const result = await request.query(query);
-    logger.info(`Consulta de transferencias para cliente ${clienteId} exitosa.`);
+    logger.info(`Consulta de transferencias exitosa.`);
     return res.status(200).json({
       message: "Transferencias consultadas exitosamente",
       data: result.recordset,
@@ -1273,6 +1276,7 @@ async function consultarTransferencias(req, res, next) {
     return next(error);
   }
 }
+
 
 
 /**
@@ -1285,6 +1289,7 @@ async function consultarDetalleTransferencia(req, res, next) {
         .status(400)
         .json({ error: "El campo solicitudId es obligatorio." });
     }
+    logger.info("consultarDetalleTransferencia - Datos recibidos", { body: req.body });
     const { solicitudId } = req.body;
     const pool = await connectDB();
     const requestHeader = new sql.Request(pool);

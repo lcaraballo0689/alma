@@ -2,6 +2,8 @@
 
 const { connectDB, sql } = require('../config/db');
 const bcrypt = require('bcrypt');
+const { processFirma } = require('./processFirma'); // Importa la función auxiliar
+
 
 /**
  * Obtiene todos los usuarios.
@@ -112,6 +114,14 @@ async function createUser(req, res) {
  * @param {Object} res - Objeto de respuesta.
  * @returns {Promise<Object>} Objeto JSON con un mensaje de éxito.
  */
+/**
+ * Actualiza un usuario existente.
+ * Nota: Si password está vacío, no se actualiza la contraseña.
+ * @async
+ * @param {Object} req - Objeto de solicitud, con req.params.id y datos en req.body.
+ * @param {Object} res - Objeto de respuesta.
+ * @returns {Promise<Object>} Objeto JSON con un mensaje de éxito.
+ */
 async function updateUser(req, res) {
   const { id } = req.params;
   const {
@@ -121,34 +131,48 @@ async function updateUser(req, res) {
     telefono,
     email,
     password,
-    activo,
-    firma
+    activo
   } = req.body;
+  // Se asume que 'firma' puede venir en el body pero se le dará prioridad al archivo si está presente
+  let { firma } = req.body;
 
   try {
     const pool = await connectDB();
-    // Verificar si el usuario existe
+    // Verificar que el usuario exista
     const check = await pool.request()
       .input('id', sql.Int, id)
-      .query('SELECT id FROM dbo.Usuario WHERE id = @id');
+      .query('SELECT password FROM dbo.Usuario WHERE id = @id');
 
     if (!check.recordset || check.recordset.length === 0) {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
     }
+    
+    // Determinar si se proporcionó una nueva contraseña
+    const isPasswordProvided = password && password.trim() !== "";
+    let hashedPassword;
+    if (isPasswordProvided) {
+      hashedPassword = await bcrypt.hash(password, 10);
+    }
 
-    // Actualizar
-    await pool.request()
+    // Si el request incluye un archivo para la firma, se procesa y se asigna a 'firma'
+    if (req.file) {
+      firma = processFirma(req.file);
+    }
+
+    // Construir la consulta SQL según si se actualiza la contraseña o no
+    let queryText;
+    const request = pool.request()
       .input('id', sql.Int, id)
       .input('clienteId', sql.Int, clienteId)
       .input('tipoUsuarioId', sql.Int, tipoUsuarioId)
       .input('nombre', sql.NVarChar, nombre)
       .input('telefono', sql.NVarChar, telefono)
       .input('email', sql.NVarChar, email)
-      // Si se actualiza la contraseña, se debería hashearla nuevamente (aquí se asume que se pasa en texto plano)
-      .input('password', sql.NVarChar, password)
       .input('activo', sql.Bit, activo)
-      .input('firma', sql.NVarChar, firma)
-      .query(`
+      .input('firma', sql.NVarChar, firma || '');
+
+    if (isPasswordProvided) {
+      queryText = `
         UPDATE dbo.Usuario
         SET
           clienteId = @clienteId,
@@ -160,7 +184,24 @@ async function updateUser(req, res) {
           activo = @activo,
           firma = @firma
         WHERE id = @id
-      `);
+      `;
+      request.input('password', sql.NVarChar, hashedPassword);
+    } else {
+      queryText = `
+        UPDATE dbo.Usuario
+        SET
+          clienteId = @clienteId,
+          tipoUsuarioId = @tipoUsuarioId,
+          nombre = @nombre,
+          telefono = @telefono,
+          email = @email,
+          activo = @activo,
+          firma = @firma
+        WHERE id = @id
+      `;
+    }
+
+    await request.query(queryText);
 
     return res.json({ message: 'Usuario actualizado exitosamente.' });
   } catch (error) {
@@ -168,6 +209,7 @@ async function updateUser(req, res) {
     return res.status(500).json({ error: 'Error interno del servidor.' });
   }
 }
+
 
 /**
  * Elimina un usuario.

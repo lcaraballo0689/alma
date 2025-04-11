@@ -18,7 +18,7 @@
           </div>
           <div class="card-body m-0 p-0">
             <div class="table-responsive">
-              <table class="table table-striped align-middle shadow-sm">
+              <table class="table table-striped align-middle ">
                 <thead class="table-light">
                   <tr>
                     <th>ID</th>
@@ -183,7 +183,7 @@
                   <select class="form-select" v-model="currentUser.tipoUsuarioId" required>
                     <option disabled value="">-- Seleccionar --</option>
                     <option v-for="tipo in tiposUsuario" :key="tipo.id" :value="tipo.id">
-                      {{ tipo.nombre }}
+                      {{ tipo.tipo }}
                     </option>
                   </select>
                 </div>
@@ -284,6 +284,7 @@ export default {
         nombre: '',
         clienteId: '',
         tipoUsuarioId: '',
+        tipoUsuario: [],
         email: '',
         telefono: '',
         firma: '',
@@ -315,11 +316,12 @@ export default {
     },
     async loadTiposUsuario() {
       try {
-        const res = await apiClient.get('/api/tipos-usuario');
+        const res = await apiClient.get("/api/roles");
         this.tiposUsuario = res.data;
+        console.log("Tipos de usuario:", this.tiposUsuario);
+        
       } catch (err) {
-        console.error('Error al cargar tipos de usuario:', err);
-        this.tiposUsuario = [];
+        Swal.fire("Error", "No se pudieron cargar los roles", "error");
       }
     },
     getClientName(clientId) {
