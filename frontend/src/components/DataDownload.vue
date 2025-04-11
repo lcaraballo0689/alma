@@ -14,8 +14,8 @@
             : 'bi bi-file-earmark-pdf-fill'
         "
       ></i>
-      <span v-if="hoveredButton !== 'pdf'">PDF</span>
-      <span v-else>Descargar</span>
+      <span v-if="hoveredButton !== 'pdf'"></span>
+      <span v-else></span>
     </button>
 
     <!-- Botón Excel -->
@@ -32,8 +32,8 @@
             : 'bi bi-file-excel-fill'
         "
       ></i>
-      <span v-if="hoveredButton !== 'excel'">Excel</span>
-      <span v-else>Descargar</span>
+      <span v-if="hoveredButton !== 'excel'"></span>
+      <span v-else></span>
     </button>
   </div>
 </template>

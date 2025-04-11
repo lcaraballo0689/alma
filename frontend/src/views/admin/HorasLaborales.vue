@@ -1,136 +1,161 @@
 <template>
-  <div class="container-fluid p-0">
-    <!-- Encabezado, buscador, etc. -->
-
-    <!-- Tabla -->
-    <div class="table-responsive">
-      <table class="table table-striped align-middle shadow-sm">
-        <thead>
-          <tr>
-            <th style="width: 5%;">ID</th>
-            <th style="width: 20%;" class="text-start fw-bold">Cliente</th>
-            <!-- Se muestran los días de la semana -->
-            <th v-for="day in dayNames" :key="day" class="text-center" style="white-space: nowrap;">
-              {{ day }}
-            </th>
-            <th style="width: 10%;" class="text-center">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Loading -->
-          <tr v-if="loading">
-            <td colspan="9" class="text-center py-4">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
-              </div>
-            </td>
-          </tr>
-          <!-- Sin datos -->
-          <tr v-else-if="filteredHorarios.length === 0">
-            <td colspan="9" class="text-center text-muted py-4">
-              Sin datos de horarios.
-            </td>
-          </tr>
-          <!-- Lista de horarios -->
-          <tr v-else v-for="(h, idx) in filteredHorarios" :key="h.clienteId">
-            <td>{{ h.clienteId }}</td>
-            <td class="text-start fw-bold">{{ h.clienteNombre }}</td>
-            <!-- Iteramos por cada día y mostramos un badge -->
-            <td v-for="day in dayNames" :key="day" class="text-center" style="white-space: nowrap;">
-              <span v-if="h.dias[day] && h.dias[day].active" class="badge bg-success" tabindex="0" role="button"
-                :aria-label="`Horario activo para ${day}: Hora inicio ${h.dias[day].horaInicio || 'desconocida'}, Hora fin ${h.dias[day].horaFin || 'desconocida'}`"
-                v-popover="popoverOptions(day, h)">
-                Activo
-              </span>
-              <span v-else class="badge bg-danger">
-                No Laborable
-              </span>
-            </td>
-
-            <td class="text-center">
-              <button class="btn btn-sm btn-warning" @click="editHorario(h)">
-                <i class="bx bx-edit"></i>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <div class="container-fluid m-0 p-0">
+    <div class="card shadow-sm border-0">
+      <div class="card-header">
+        <div class="row align-items-center">
+          <!-- Input de búsqueda en la parte izquierda del header -->
+          <div class="col-2">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Buscar..."
+              v-model="searchQuery"
+            />
+          </div>
+          <!-- Botón u otros elementos en la parte derecha del header -->
+          <div class="col text-md-end">
+            <!-- Puedes agregar aquí otros botones o información si lo requieres -->
+          </div>
+        </div>
+      </div>
+      <div class="card-body m-0 p-0">
+        <!-- Tabla -->
+        <div class="table-responsive m-0 -p-0">
+          <table class="table table-striped align-middle shadow-sm">
+            <thead>
+              <tr>
+                <th style="width: 5%;">ID</th>
+                <th style="width: 20%;" class="text-start fw-bold">Cliente</th>
+                <!-- Se muestran los días de la semana -->
+                <th v-for="day in dayNames" :key="day" class="text-center" style="white-space: nowrap;">
+                  {{ day }}
+                </th>
+                <th style="width: 10%;" class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Loading -->
+              <tr v-if="loading">
+                <td colspan="9" class="text-center py-4">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                  </div>
+                </td>
+              </tr>
+              <!-- Sin datos -->
+              <tr v-else-if="filteredHorarios.length === 0">
+                <td colspan="9" class="text-center text-muted py-4">
+                  Sin datos de horarios.
+                </td>
+              </tr>
+              <!-- Lista de horarios -->
+              <tr v-else v-for="(h, idx) in filteredHorarios" :key="h.clienteId">
+                <td>{{ h.clienteId }}</td>
+                <td class="text-start fw-bold">{{ h.clienteNombre }}</td>
+                <!-- Iteramos por cada día y mostramos un badge -->
+                <td v-for="day in dayNames" :key="day" class="text-center" style="white-space: nowrap;">
+                  <span
+                    v-if="h.dias[day] && h.dias[day].active"
+                    class="badge bg-success"
+                    tabindex="0"
+                    role="button"
+                    :aria-label="`Horario activo para ${day}: Hora inicio ${h.dias[day].horaInicio || 'desconocida'}, Hora fin ${h.dias[day].horaFin || 'desconocida'}`"
+                    v-popover="popoverOptions(day, h)"
+                  >
+                    Activo
+                  </span>
+                  <span v-else class="badge bg-danger">
+                    No Laborable
+                  </span>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-warning" @click="editHorario(h)">
+                    <i class="bx bx-edit"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- Modal -->
     <div ref="horarioModal" class="modal fade" tabindex="-1" aria-hidden="true" aria-labelledby="horarioModalLabel">
       <div class="modal-dialog modal-lg">
-      <div class="modal-content" v-if="currentHorario">
-        <div class="modal-header">
-        <h5 class="modal-title" id="horarioModalLabel">
-          Horario - {{ getClientName(currentHorario.clienteId) || 'Nuevo Cliente' }}
-        </h5>
-        <button type="button" class="btn-close" @click="closeHorarioModal" aria-label="Cerrar"></button>
-        </div>
-        <form @submit.prevent="saveHorario">
-        <div class="modal-body">
-          <!-- Selector de cliente -->
-          <div class="mb-4">
-          <label for="clienteSelect" class="form-label fw-bold">Seleccionar Cliente</label>
-          <select id="clienteSelect" v-model="currentHorario.clienteId" class="form-select" required>
-            <option disabled value="">-- Selecciona un Cliente --</option>
-            <option v-for="cliente in clientes" :key="cliente.id" :value="cliente.id">
-            {{ cliente.nombre }}
-            </option>
-          </select>
+        <div class="modal-content" v-if="currentHorario">
+          <div class="modal-header">
+            <h5 class="modal-title" id="horarioModalLabel">
+              Horario - {{ getClientName(currentHorario.clienteId) || 'Nuevo Cliente' }}
+            </h5>
+            <button type="button" class="btn-close" @click="closeHorarioModal" aria-label="Cerrar"></button>
           </div>
-          <!-- Días de la semana en 4 columnas -->
-          <div class="row g-3">
-          <div class="col-md-3" v-for="day in dayNames" :key="day">
-            <div class="card p-3 h-100">
-            <h6 class="card-title text-center">{{ day }}</h6>
-            <div class="form-check form-switch mb-3">
-              <input class="form-check-input" type="checkbox" v-model="currentHorario.dias[day].active"
-              :id="`toggle-${day}`" />
-              <label class="form-check-label" :for="`toggle-${day}`">
-              {{ currentHorario.dias[day].active ? "Activo" : "Inactivo" }}
-              </label>
-            </div>
-            <!-- Selects para Horas solo si está activo -->
-            <div v-if="currentHorario.dias[day].active">
-              <div class="mb-2">
-              <label class="form-label" :for="`horaInicio-${day}`">Hora Inicio</label>
-              <select :id="`horaInicio-${day}`" v-model="currentHorario.dias[day].horaInicio"
-                class="form-select" required>
-                <option disabled value="">-- Selecciona Hora --</option>
-                <option v-for="time in availableTimes" :key="time" :value="time">
-                {{ time }}
-                </option>
-              </select>
+          <form @submit.prevent="saveHorario">
+            <div class="modal-body">
+              <!-- Selector de cliente -->
+              <div class="mb-4">
+                <label for="clienteSelect" class="form-label fw-bold">Seleccionar Cliente</label>
+                <select id="clienteSelect" v-model="currentHorario.clienteId" class="form-select" required>
+                  <option disabled value="">-- Selecciona un Cliente --</option>
+                  <option v-for="cliente in clientes" :key="cliente.id" :value="cliente.id">
+                    {{ cliente.nombre }}
+                  </option>
+                </select>
               </div>
-              <div>
-              <label class="form-label" :for="`horaFin-${day}`">Hora Fin</label>
-              <select :id="`horaFin-${day}`" v-model="currentHorario.dias[day].horaFin" class="form-select"
-                required>
-                <option disabled value="">-- Selecciona Hora --</option>
-                <option v-for="time in availableTimes" :key="time" :value="time">
-                {{ time }}
-                </option>
-              </select>
+              <!-- Días de la semana en 4 columnas -->
+              <div class="row g-3">
+                <div class="col-md-3" v-for="day in dayNames" :key="day">
+                  <div class="card p-3 h-100">
+                    <h6 class="card-title text-center">{{ day }}</h6>
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" v-model="currentHorario.dias[day].active"
+                        :id="`toggle-${day}`" />
+                      <label class="form-check-label" :for="`toggle-${day}`">
+                        {{ currentHorario.dias[day].active ? "Activo" : "Inactivo" }}
+                      </label>
+                    </div>
+                    <!-- Selects para Horas solo si está activo -->
+                    <div v-if="currentHorario.dias[day].active">
+                      <div class="mb-2">
+                        <label class="form-label" :for="`horaInicio-${day}`">Hora Inicio</label>
+                        <select :id="`horaInicio-${day}`" v-model="currentHorario.dias[day].horaInicio"
+                          class="form-select" required>
+                          <option disabled value="">-- Selecciona Hora --</option>
+                          <option v-for="time in availableTimes" :key="time" :value="time">
+                            {{ time }}
+                          </option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="form-label" :for="`horaFin-${day}`">Hora Fin</label>
+                        <select :id="`horaFin-${day}`" v-model="currentHorario.dias[day].horaFin" class="form-select"
+                          required>
+                          <option disabled value="">-- Selecciona Hora --</option>
+                          <option v-for="time in availableTimes" :key="time" :value="time">
+                            {{ time }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div> <!-- Fin de cada columna de día -->
               </div>
             </div>
+            <!-- Footer del Modal -->
+            <div class="modal-footer d-flex justify-content-between">
+              <button type="button" @click="closeHorarioModal" class="btn btn-secondary">
+                <i class="bx bx-x-circle"></i> Cerrar
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="bx bx-save"></i> Guardar
+              </button>
             </div>
-          </div> <!-- Fin de cada columna de día -->
-          </div>
+          </form>
         </div>
-        <!-- Footer del Modal -->
-        <div class="modal-footer d-flex justify-content-between">
-          <button type="button" @click="closeHorarioModal" class="btn btn-secondary">
-          <i class="bx bx-x-circle"></i> Cerrar
-          </button>
-          <button type="submit" class="btn btn-primary">
-          <i class="bx bx-save"></i> Guardar
-          </button>
-        </div>
-        </form>
-      </div>
       </div>
     </div>
+    
+    <!-- Se incluye otro modal duplicado, si es necesario revisa su existencia -->
     <div ref="horarioModal" class="modal fade" tabindex="-1" aria-hidden="true" aria-labelledby="horarioModalLabel">
       <div class="modal-dialog modal-lg">
         <div class="modal-content" v-if="currentHorario" style="width: 120%;">
@@ -206,6 +231,7 @@
         </div>
       </div>
     </div>
+    
   </div>
 </template>
 
@@ -276,8 +302,8 @@ export default {
       const q = this.searchQuery.toLowerCase();
       return q
         ? this.horarios.filter(h =>
-          h.clienteNombre?.toLowerCase().includes(q)
-        )
+            h.clienteNombre?.toLowerCase().includes(q)
+          )
         : this.horarios;
     }
   },
@@ -299,8 +325,7 @@ export default {
         trigger: 'focus hover',
         placement: 'top',
         html: true,
-        content: `<strong>Hora inicio:</strong> ${h.dias[day].horaInicio || '??'
-          }<br><strong>Hora fin:</strong> ${h.dias[day].horaFin || '??'}`
+        content: `<strong>Hora inicio:</strong> ${h.dias[day].horaInicio || '??'}<br><strong>Hora fin:</strong> ${h.dias[day].horaFin || '??'}`
       };
     },
     async loadHorarios() {
@@ -339,8 +364,7 @@ export default {
           const info = h.dias[day];
           if (info) {
             this.currentHorario.dias[day].active = info.active;
-            this.currentHorario.dias[day].horaInicio =
-              info.horaInicio || '';
+            this.currentHorario.dias[day].horaInicio = info.horaInicio || '';
             this.currentHorario.dias[day].horaFin = info.horaFin || '';
           }
         }
@@ -351,7 +375,6 @@ export default {
       try {
         const payload = { ...this.currentHorario };
         await apiClient.post('/api/horarios', payload);
-        // Se recomienda usar un sistema de notificaciones en lugar de alert()
         console.log('Guardado con éxito');
         this.loadHorarios();
         this.closeHorarioModal();
@@ -391,7 +414,7 @@ export default {
   background-color: #f8f9fa;
 }
 
-.table> :not(caption)>*>* {
+.table > :not(caption) > * > * {
   vertical-align: middle;
 }
 
@@ -406,7 +429,7 @@ export default {
 }
 
 /* Ajusta el espaciado entre columnas y filas en el modal */
-.row.g-3>[class^="col-"] {
+.row.g-3 > [class^="col-"] {
   margin-bottom: 1rem;
 }
 </style>

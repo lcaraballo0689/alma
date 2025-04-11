@@ -10,7 +10,7 @@ const {
   createBodega,
   updateBodega,
   deleteBodega
-} = require('../controllers/bodegaController');
+} = require('../controllers/bodegaController.j');
 const { authMiddleware } = require("../middlewares/authMiddleware");
 
 const router = Router();

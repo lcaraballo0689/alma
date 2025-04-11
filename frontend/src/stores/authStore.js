@@ -1,41 +1,13 @@
 // src/stores/authStore.js
 import { defineStore } from 'pinia';
 
-/**
- * Pinia store for managing authentication state.
- *
- * This store handles the authentication data by maintaining properties such as:
- *
- * @property {(string|null)} token - The access token used for authentication.
- *   Se obtiene mediante el getter getToken y se verifica la autenticación con isAuthenticated.
- *
- * @property {(string|null)} refreshToken - The refresh token used to obtain a new access token.
- *
- * @property {Object} user - The user information object.
- *   Contiene datos del usuario autenticado, incluyendo por ejemplo 'clienteNombre'.
- *
- * Getters:
- * @property {function(): boolean} isAuthenticated - Devuelve true si existe un token, false de lo contrario.
- * @property {function(): (string|null)} getToken - Retorna el token actual.
- * @property {function(): string} clienteNombre - Retorna el nombre del cliente (clienteNombre) extraído del objeto user.
- * @property {function(): Object} clienteData - Retorna el objeto completo con la información del usuario.
- *
- * Actions:
- * @property {function(string): void} setToken - Establece un nuevo token y lo guarda en localStorage.
- * @property {function(): void} removeToken - Elimina el token del estado y de localStorage.
- * @property {function(string): void} setRefreshToken - Establece un nuevo refresh token y lo guarda en localStorage.
- * @property {function(): void} removeRefreshToken - Elimina el refresh token del estado y de localStorage.
- * @property {function(Object): void} setUser - Establece la información del usuario y la guarda en localStorage.
- * @property {function(): void} removeUser - Elimina la información del usuario del estado y de localStorage.
- * @property {function(): void} resetAuth - Realiza un reseteo completo de la autenticación, eliminando token, refreshToken y user del estado y de localStorage.
- *
- * Además, el estado se inicializa tomando valores persistidos en localStorage para mantener la sesión a través de recargas de página.
- */
 export const useAuthStore = defineStore('auth', {
+  // Inicializamos el estado tomando valores de localStorage, lo que garantiza la compatibilidad con el código legacy.
   state: () => ({
     token: localStorage.getItem('token') || null,
     refreshToken: localStorage.getItem('refreshToken') || null,
     user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : {},
+    permissions: localStorage.getItem('permissions') ? JSON.parse(localStorage.getItem('permissions')) : []
   }),
   getters: {
     isAuthenticated: (state) => !!state.token,
@@ -44,7 +16,7 @@ export const useAuthStore = defineStore('auth', {
     clienteId: (state) => state.user.clienteId || null,
     clienteData: (state) => state.user,
     tipoUsuarioId: (state) => state.user.tipoUsuarioId || null,
-
+    userPermissions: (state) => state.permissions
   },
   actions: {
     setToken(token) {
@@ -66,19 +38,42 @@ export const useAuthStore = defineStore('auth', {
     setUser(user) {
       this.user = user;
       localStorage.setItem('user', JSON.stringify(user));
+      // Si el usuario trae permisos, se guardan; si no, se limpian.
+      if (user.permisos) {
+        this.permissions = user.permisos;
+        localStorage.setItem('permissions', JSON.stringify(user.permisos));
+      } else {
+        this.permissions = [];
+        localStorage.removeItem('permissions');
+      }
     },
     removeUser() {
       this.user = {};
       localStorage.removeItem('user');
+      this.permissions = [];
+      localStorage.removeItem('permissions');
     },
     // Reset completo de autenticación
     resetAuth() {
       this.token = null;
       this.refreshToken = null;
       this.user = {};
+      this.permissions = [];
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
-    },
+      localStorage.removeItem('permissions');
+    }
   },
+  // Se utiliza el plugin de persistencia para mantener el estado en localStorage
+  persist: {
+    enabled: true,
+    strategies: [
+      {
+        key: 'auth',
+        storage: localStorage,
+        paths: ['token', 'refreshToken', 'user', 'permissions']
+      }
+    ]
+  }
 });
