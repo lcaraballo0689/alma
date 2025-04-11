@@ -1,5 +1,4 @@
 <template>
-<<<<<<< HEAD
     <div class="container-fluid py-2">
       <!-- Sección de Búsqueda y Filtros -->
       <div class="row g-2 align-items-center mb-3">
@@ -296,103 +295,10 @@
           </div>
         </div>
       </div>
-=======
-    <div class="delivery-form container">
-      <h2 class="title">Registro de Entrega de Cajas</h2>
-      <form @submit.prevent="generatePDF" novalidate>
-        <!-- Formulario de Información del Receptor -->
-        <div class="form-section">
-          <div class="form-group">
-            <label for="receiverName">Nombre del Receptor</label>
-            <input
-              type="text"
-              id="receiverName"
-              v-model="form.receiverName"
-              class="form-control"
-              placeholder="Ingrese el nombre"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="receiverId">Documento del Receptor</label>
-            <input
-              type="text"
-              id="receiverId"
-              v-model="form.receiverId"
-              class="form-control"
-              placeholder="Ingrese documento de identidad"
-              required
-            />
-          </div>
-          <div class="form-group">
-            <label for="observations">Observaciones</label>
-            <textarea
-              id="observations"
-              v-model="form.observations"
-              class="form-control"
-              rows="2"
-              placeholder="Notas adicionales"
-            ></textarea>
-          </div>
-        </div>
-  
-        <hr />
-  
-        <!-- Sección de Captura de Foto -->
-        <div class="photo-section">
-          <h3>Foto de Entrega</h3>
-          <div class="video-wrapper">
-            <video ref="video" autoplay playsinline class="video-camera"></video>
-          </div>
-          <button type="button" class="btn btn-primary" @click="capturePhoto">
-            Capturar Foto
-          </button>
-          <div v-if="photoData" class="photo-preview">
-            <img :src="photoData" alt="Foto de entrega" />
-          </div>
-        </div>
-  
-        <hr />
-  
-        <!-- Sección de Firma del Receptor -->
-        <div class="signature-section">
-          <h3>Firma del Receptor</h3>
-          <div class="canvas-wrapper">
-            <canvas ref="signatureCanvasReceiver" class="signature-canvas"></canvas>
-          </div>
-          <button type="button" class="btn btn-secondary" @click="clearSignatureReceiver">
-            Limpiar Firma del Receptor
-          </button>
-        </div>
-  
-        <hr />
-  
-        <!-- Sección de Firma del Entregador -->
-        <div class="signature-section">
-          <h3>Firma del Entregador</h3>
-          <div class="canvas-wrapper">
-            <canvas ref="signatureCanvasDeliverer" class="signature-canvas"></canvas>
-          </div>
-          <button type="button" class="btn btn-secondary" @click="clearSignatureDeliverer">
-            Limpiar Firma del Entregador
-          </button>
-        </div>
-  
-        <hr />
-  
-        <!-- Botón para generar PDF -->
-        <div class="mt-4 text-center">
-          <button type="submit" class="btn btn-success">
-            Generar PDF de Acuse
-          </button>
-        </div>
-      </form>
->>>>>>> ce27066a8e5a7feddf7df0b3f2ee67d4cfaf9159
     </div>
   </template>
   
   <script>
-<<<<<<< HEAD
   import apiClient from "@/services/api";
   import { Modal } from "bootstrap";
   import { useAuthStore } from "@/stores/authStore";
@@ -633,7 +539,159 @@
     mounted() {
       this.fetchTransferencias();
     },
-=======
+  };
+  </script>
+  
+  <style scoped>
+  /* Espacios y márgenes generales */
+  .container-fluid {
+    padding: 1rem;
+  }
+  
+  /* Separa las cards entre sí */
+  .row.g-3 > [class*='col-'] {
+    display: flex;
+  }
+  
+  /* Ajustes para los cards del listado */
+  .card {
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+  
+  .card .card-body {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Estilo para la animación del icono de recarga */
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Clases auxiliares para color de estado (ejemplo) */
+  .text-warning {
+    color: #ffc107 !important;
+  }
+  .text-success {
+    color: #198754 !important;
+  }
+  .fw-bold {
+    font-weight: 600 !important;
+  }
+  
+  /* Ajustes de la tabla de detalles en el modal */
+  .table-responsive {
+    margin-top: 0.75rem;
+  }
+  
+ 
+  /* Ajustes del modal en general */
+  .modal-header {
+    background-color: #f8f9fa;
+  }
+  </style>
+  
+<template>
+    <div class="delivery-form container">
+      <h2 class="title">Registro de Entrega de Cajas</h2>
+      <form @submit.prevent="generatePDF" novalidate>
+        <!-- Formulario de Información del Receptor -->
+        <div class="form-section">
+          <div class="form-group">
+            <label for="receiverName">Nombre del Receptor</label>
+            <input
+              type="text"
+              id="receiverName"
+              v-model="form.receiverName"
+              class="form-control"
+              placeholder="Ingrese el nombre"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="receiverId">Documento del Receptor</label>
+            <input
+              type="text"
+              id="receiverId"
+              v-model="form.receiverId"
+              class="form-control"
+              placeholder="Ingrese documento de identidad"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="observations">Observaciones</label>
+            <textarea
+              id="observations"
+              v-model="form.observations"
+              class="form-control"
+              rows="2"
+              placeholder="Notas adicionales"
+            ></textarea>
+          </div>
+        </div>
+  
+        <hr />
+  
+        <!-- Sección de Captura de Foto -->
+        <div class="photo-section">
+          <h3>Foto de Entrega</h3>
+          <div class="video-wrapper">
+            <video ref="video" autoplay playsinline class="video-camera"></video>
+          </div>
+          <button type="button" class="btn btn-primary" @click="capturePhoto">
+            Capturar Foto
+          </button>
+          <div v-if="photoData" class="photo-preview">
+            <img :src="photoData" alt="Foto de entrega" />
+          </div>
+        </div>
+  
+        <hr />
+  
+        <!-- Sección de Firma del Receptor -->
+        <div class="signature-section">
+          <h3>Firma del Receptor</h3>
+          <div class="canvas-wrapper">
+            <canvas ref="signatureCanvasReceiver" class="signature-canvas"></canvas>
+          </div>
+          <button type="button" class="btn btn-secondary" @click="clearSignatureReceiver">
+            Limpiar Firma del Receptor
+          </button>
+        </div>
+  
+        <hr />
+  
+        <!-- Sección de Firma del Entregador -->
+        <div class="signature-section">
+          <h3>Firma del Entregador</h3>
+          <div class="canvas-wrapper">
+            <canvas ref="signatureCanvasDeliverer" class="signature-canvas"></canvas>
+          </div>
+          <button type="button" class="btn btn-secondary" @click="clearSignatureDeliverer">
+            Limpiar Firma del Entregador
+          </button>
+        </div>
+  
+        <hr />
+  
+        <!-- Botón para generar PDF -->
+        <div class="mt-4 text-center">
+          <button type="submit" class="btn btn-success">
+            Generar PDF de Acuse
+          </button>
+        </div>
+      </form>
+    </div>
+  </template>
+  
+  <script>
   import SignaturePad from "signature_pad";
   import { jsPDF } from "jspdf";
   
@@ -797,64 +855,10 @@
         doc.save(`AcuseEntrega_${this.form.receiverName}.pdf`);
       }
     }
->>>>>>> ce27066a8e5a7feddf7df0b3f2ee67d4cfaf9159
   };
   </script>
   
   <style scoped>
-<<<<<<< HEAD
-  /* Espacios y márgenes generales */
-  .container-fluid {
-    padding: 1rem;
-  }
-  
-  /* Separa las cards entre sí */
-  .row.g-3 > [class*='col-'] {
-    display: flex;
-  }
-  
-  /* Ajustes para los cards del listado */
-  .card {
-    margin-bottom: 1rem;
-    width: 100%;
-  }
-  
-  .card .card-body {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  /* Estilo para la animación del icono de recarga */
-  .spin {
-    animation: spin 1s linear infinite;
-  }
-  
-  @keyframes spin {
-    0%   { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  
-  /* Clases auxiliares para color de estado (ejemplo) */
-  .text-warning {
-    color: #ffc107 !important;
-  }
-  .text-success {
-    color: #198754 !important;
-  }
-  .fw-bold {
-    font-weight: 600 !important;
-  }
-  
-  /* Ajustes de la tabla de detalles en el modal */
-  .table-responsive {
-    margin-top: 0.75rem;
-  }
-  
- 
-  /* Ajustes del modal en general */
-  .modal-header {
-    background-color: #f8f9fa;
-=======
   .delivery-form {
     padding: 20px;
     max-width: 600px;
@@ -952,7 +956,6 @@
   }
   .btn-secondary:hover {
     background-color: #d5d5d5;
->>>>>>> ce27066a8e5a7feddf7df0b3f2ee67d4cfaf9159
   }
   </style>
   
