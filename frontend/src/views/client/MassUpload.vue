@@ -415,6 +415,10 @@ export default {
       formData.append("file", this.selectedFile);
       formData.append("usuarioId", this.idUsuario);
       formData.append("observacion", this.observacion);
+console.log(formData.get("file"));
+      console.log(formData.get("usuarioId")); 
+      console.log(formData.get("observacion"));
+console.log(this.endpointUpload);
 
       try {
         const response = await apiClient.post(this.endpointUpload, formData, {

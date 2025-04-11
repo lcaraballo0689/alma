@@ -12,7 +12,7 @@ const sql = require('mssql');
 
 // Métodos CRUD para la tabla dbo.Custodia
 module.exports = {
- 
+
   /**
   * Obtener todos los registros de la tabla Custodia.
   * Realiza una consulta SQL para obtener todos los registros, incluyendo un LEFT JOIN con la tabla Bodega para obtener el nombre de la bodega.
@@ -27,12 +27,12 @@ module.exports = {
   getAll: async (req, res) => {
     try {
       const pool = await sql.connect(process.env.DB_CONNECTION);
-  
+
       // Se obtienen los parámetros de paginación desde el body
       const page = parseInt(req.body.page) || 1;
       const pageSize = parseInt(req.body.pageSize) || 100;
       const offset = (page - 1) * pageSize;
-  
+
       // Consulta para obtener los registros paginados
       const result = await pool.request()
         .input('Offset', sql.Int, offset)
@@ -55,14 +55,14 @@ module.exports = {
           ORDER BY c.id DESC
           OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;
         `);
-  
+
       // Consulta para obtener el total de registros
-      const countResult = await pool.request()
-        .query(`SELECT COUNT(*) AS TotalCount FROM dbo.Custodia;`);
-  
+      // const countResult = await pool.request()
+      //   .query(`SELECT COUNT(*) AS TotalCount FROM dbo.Custodia;`);
+
       return res.json({
         data: result.recordset,
-        totalCount: countResult.recordset[0].TotalCount,
+        // totalCount: countResult.recordset[0].TotalCount,
         page,
         pageSize
       });
@@ -71,21 +71,21 @@ module.exports = {
       return res.status(500).json({ error: 'Error interno del servidor.' });
     }
   },
-  
-  
 
-  
-    /**
-   * Obtener un registro de Custodia por su ID.
-   * Realiza una consulta SQL para obtener un registro específico, incluyendo un LEFT JOIN con la tabla Bodega para obtener el nombre de la bodega.
-   * 
-   * @async
-   * @function getOne
-   * @param {Object} req - Objeto de solicitud HTTP.
-   * @param {Object} res - Objeto de respuesta HTTP.
-   * @returns {Promise<void>} Devuelve una respuesta JSON con el registro de Custodia encontrado.
-   * @throws {Error} Devuelve un error 404 si no se encuentra el registro, o un error 500 si ocurre un error en la consulta SQL.
-   */
+
+
+
+  /**
+ * Obtener un registro de Custodia por su ID.
+ * Realiza una consulta SQL para obtener un registro específico, incluyendo un LEFT JOIN con la tabla Bodega para obtener el nombre de la bodega.
+ * 
+ * @async
+ * @function getOne
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Promise<void>} Devuelve una respuesta JSON con el registro de Custodia encontrado.
+ * @throws {Error} Devuelve un error 404 si no se encuentra el registro, o un error 500 si ocurre un error en la consulta SQL.
+ */
   getOne: async (req, res) => {
     const { id } = req.params;
     try {
@@ -143,7 +143,7 @@ module.exports = {
       estado,
       baja
     } = req.body;
-    
+
     // Validaciones mínimas (ajusta según tu lógica)
     if (!bodega_id || !item) {
       return res.status(400).json({ error: 'Faltan campos obligatorios (bodega_id, item).' });
@@ -175,17 +175,17 @@ module.exports = {
   },
 
 
-    /**
-   * Actualizar un registro existente en la tabla Custodia.
-   * Realiza una actualización SQL con los datos proporcionados en el cuerpo de la solicitud.
-   * 
-   * @async
-   * @function update
-   * @param {Object} req - Objeto de solicitud HTTP.
-   * @param {Object} res - Objeto de respuesta HTTP.
-   * @returns {Promise<void>} Devuelve una respuesta JSON indicando que el registro fue actualizado exitosamente.
-   * @throws {Error} Devuelve un error 404 si no se encuentra el registro, o un error 500 si ocurre un error en la consulta SQL.
-   */
+  /**
+ * Actualizar un registro existente en la tabla Custodia.
+ * Realiza una actualización SQL con los datos proporcionados en el cuerpo de la solicitud.
+ * 
+ * @async
+ * @function update
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Promise<void>} Devuelve una respuesta JSON indicando que el registro fue actualizado exitosamente.
+ * @throws {Error} Devuelve un error 404 si no se encuentra el registro, o un error 500 si ocurre un error en la consulta SQL.
+ */
   update: async (req, res) => {
     const { id } = req.params;
     const {
@@ -252,18 +252,36 @@ module.exports = {
  * @returns {Promise<void>} Devuelve una respuesta JSON con los registros filtrados por clienteId.
  * @throws {Error} Devuelve un error 400 si no se proporciona clienteId, un error 404 si no hay registros, o un error 500 si ocurre un error en la consulta SQL.
  */
-getByClienteId: async (req, res) => {
-  const { clienteId } = req.body; // Se espera recibir el clienteId en el cuerpo de la solicitud
+  getByClienteId: async (req, res) => {
+    const { clienteId, tipo, page, pageSize } = req.body; // Se espera clienteId, tipo (filtro), page y pageSize
 
-  if (!clienteId) {
-    return res.status(400).json({ error: 'El clienteId es obligatorio.' });
-  }
+    if (!clienteId) {
+      return res.status(400).json({ error: 'El clienteId es obligatorio.' });
+    }
 
-  try {
-    const pool = await sql.connect(process.env.DB_CONNECTION);
-    const result = await pool.request()
-      .input('clienteId', sql.Int, clienteId)
-      .query(`
+    // Valores por defecto para la paginación
+    const pageNumber = parseInt(page, 10) || 1;
+    const size = parseInt(pageSize, 10) || 100;
+    const offset = (pageNumber - 1) * size;
+
+    try {
+      const pool = await sql.connect(process.env.DB_CONNECTION);
+
+      // Construir la cláusula WHERE.
+      // Si se recibe el parámetro 'tipo', se filtra por estado:
+      // - "Disponible para Prestar" => estado = 'disponible'
+      // - "Disponible para Devolver" => estado = 'entregado'
+      // Si no se pasa 'tipo' o es "Inventario", se muestra todo.
+      let whereClause = 'WHERE c.clienteId = @clienteId';
+      if (tipo === 'disponible') {
+        whereClause += " AND c.estado = 'DISPONIBLE'";
+      } else if (tipo === 'entregado') {
+        whereClause += " AND c.estado = 'ENTREGADO'";
+      }
+
+
+      // Consulta para obtener los registros paginados
+      const query = `
         SELECT 
           c.[id],
           c.[bodega_id],
@@ -278,20 +296,43 @@ getByClienteId: async (req, res) => {
           c.[baja]
         FROM dbo.Custodia c
         LEFT JOIN dbo.Bodega b ON c.bodega_id = b.id
-        WHERE c.clienteId = @clienteId
+        ${whereClause}
         ORDER BY c.id DESC
-      `);
+        OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;
+      `;
+      const result = await pool.request()
+        .input('clienteId', sql.Int, clienteId)
+        .input('offset', sql.Int, offset)
+        .input('pageSize', sql.Int, size)
+        .query(query);
 
-    if (result.recordset.length === 0) {
-      return res.status(404).json({ error: 'No se encontraron registros de Custodia para este cliente.' });
+      // Consulta para obtener el total de registros con el filtro aplicado.
+      const countQuery = `
+        SELECT COUNT(*) AS TotalCount 
+        FROM dbo.Custodia c 
+        ${whereClause};
+      `;
+      const countResult = await pool.request()
+        .input('clienteId', sql.Int, clienteId)
+        .query(countQuery);
+
+      if (result.recordset.length === 0) {
+        return res.status(404).json({ error: 'No se encontraron registros de Custodia para este cliente.' });
+      }
+
+      return res.json({
+        totalCount: countResult.recordset[0].TotalCount,
+        data: result.recordset,
+        page: pageNumber,
+        pageSize: size
+      });
+    } catch (error) {
+      console.error('Error en getByClienteId Custodia:', error);
+      return res.status(500).json({ error: 'Error interno del servidor.' });
     }
+  },
 
-    return res.json(result.recordset);
-  } catch (error) {
-    console.error('Error en getByClienteId Custodia:', error);
-    return res.status(500).json({ error: 'Error interno del servidor.' });
-  }
-},
+
 
   /**
    * Eliminar un registro de la tabla Custodia.

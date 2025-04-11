@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 
 export const useTabStore = defineStore('tabStore', {
   state: () => ({
-    globalCurrentTab: 'Dashboard', // Valor por defecto
+    globalCurrentTab: 'Inventario', // Valor por defecto
     globalOldTab: null, // Aquí se almacena el tab anterior
   }),
   actions: {

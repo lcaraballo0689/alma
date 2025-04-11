@@ -1,86 +1,66 @@
 <template>
   <div class="inventario-container m-0 mx-3 p-0">
     <!-- Encabezado: pestañas, botón "Carga Masiva", DataDownload y búsqueda -->
-
-    <!-- Tabla con scroll y encabezado fijo -->
     <div class="card shadow">
       <div class="card-header px-0 py-0 m-0">
-        <div
-          class="row align-items-center m-0 p-0 d-flex justify-content-between"
-        >
+        <div class="row align-items-center m-0 p-0 d-flex justify-content-between">
           <!-- Columna Izquierda: Pestañas -->
           <div class="col-auto d-flex flex-wrap gap-2">
-            <!-- Botón de Inventario -->
             <div class="tab-container">
+              <!-- Pestaña Inventario: muestra el total de registros -->
               <button
                 class="tab-button"
                 :class="{ active: currentTab === 'inventario' }"
                 @click="changeTab('inventario')"
               >
                 <i class="bi bi-box"></i> Inventario
-                <span class="tab-badge"
-                  ><span>{{ totalCount }}</span></span
-                >
+                <span class="tab-badge">
+                  <span>{{ totalCount }}</span>
+                </span>
               </button>
-
+              <!-- Pestaña Disponible para Prestar -->
               <button
                 class="tab-button"
                 :class="{ active: currentTab === 'Disponible para prestar' }"
                 @click="changeTab('Disponible para prestar')"
               >
                 <i class="bi bi-check-circle"></i> Disponible para Prestar
-                <span class="tab-badge"
-                  ><span>{{ availableCount }}</span></span
-                >
+                <span class="tab-badge">
+                  <span>{{ totalCount }}</span>
+                </span>
               </button>
-
+              <!-- Pestaña Disponible para Devolver -->
               <button
                 class="tab-button"
                 :class="{ active: currentTab === 'Disponible para devolver' }"
                 @click="changeTab('Disponible para devolver')"
               >
                 <i class="bi bi-building-check"></i> Disponible para Devolver
-                <span class="tab-badge"
-                  ><span>{{ confirmedDeliveryCount }}</span></span
-                >
+                <span class="tab-badge">
+                  <span>{{ totalCount }}</span>
+                </span>
               </button>
             </div>
           </div>
           <!-- Columna Derecha: Acciones -->
           <div class="col-auto d-flex align-items-center gap-3">
-            
             <button
               v-if="selectedItems.length > 0"
               class="tab-button text-capitalize"
-              style="
-                background-color: #f99022 !important;
-                color: white !important;
-                font-size: 12px !important;
-              "
+              style="background-color: #f99022 !important; color: white !important; font-size: 12px !important;"
               @click="openModal(actionText)"
             >
               <i class="bi bi-building-check"></i> {{ actionText }}
-              <span class="tab-badge2"
-                ><span>{{ selectedItems.length }}</span></span
-              >
+              <span class="tab-badge2">
+                <span>{{ selectedItems.length }}</span>
+              </span>
             </button>
-
             <!-- Botón Carga Masiva -->
             <button
-              v-if="currentTab !== 'inventario' &&  selectedItems.length === 0"
+              v-if="currentTab !== 'inventario' && selectedItems.length === 0"
               class="btn btn-sm buttons-actions d-flex align-items-center"
-              style="
-                width: 160px !important;
-                color: white !important;
-                background-color: black !important;
-                font-weight: 700 !important;
-              "
-              @click="
-                () => {
-                  setMassUploadTab();
-                  setMassAction();
-                }
-              "
+              style="width: 160px !important; color: white !important; background-color: black !important; font-weight: 700 !important;"
+              @click="() => { setMassUploadTab(); setMassAction(); }"
             >
               <i class="bi bi-file-earmark-arrow-up me-2"></i>
               {{
@@ -91,24 +71,15 @@
                   : "Inventario"
               }}
             </button>
-
             <!-- Botón de Exportar -->
             <div>
               <DataDownload
                 :dataToDownload="filteredInventarios"
                 :currentTab="currentTab"
-                :headers="[
-                  'objeto',
-                  'bodega',
-                  'referencia1',
-                  'referencia2',
-                  'referencia3',
-                  'estado',
-                ]"
+                :headers="['objeto','bodega','referencia1','referencia2','referencia3','estado']"
                 class="mt-3"
               />
             </div>
-
             <!-- Campo de Búsqueda Mejorado -->
             <div class="custom-search">
               <i class="bi bi-search search-icon"></i>
@@ -119,7 +90,6 @@
                 v-model="searchTerm"
               />
             </div>
-
             <button class="btn btn-small" @click="toggleMenu">
               <i class="bi bi-question-circle fs-4"></i>
             </button>
@@ -141,9 +111,7 @@
             </colgroup>
             <thead class="sticky-header">
               <tr class="text-start">
-                <th
-                  v-if="selectedItems.length > 0 && currentTab !== 'inventario'"
-                >
+                <th v-if="selectedItems.length > 0 && currentTab !== 'inventario'">
                   <input
                     type="checkbox"
                     :checked="allSelected"
@@ -179,48 +147,29 @@
                     <i class="bi bi-circle text-secondary"></i>
                   </template>
                 </td>
-                <td
-                  :class="{ 'selected-row': selectedItems.includes(item.id) }"
-                >
+                <td :class="{ 'selected-row': selectedItems.includes(item.id) }">
                   {{ item.id }}
                 </td>
-                <td
-                  :class="{ 'selected-row': selectedItems.includes(item.id) }"
-                >
+                <td :class="{ 'selected-row': selectedItems.includes(item.id) }">
                   {{ item.objeto }}
                 </td>
-                <td
-                  :class="{ 'selected-row': selectedItems.includes(item.id) }"
-                >
+                <td :class="{ 'selected-row': selectedItems.includes(item.id) }">
                   {{ item.bodega }}
                 </td>
-                <td
-                  :class="{ 'selected-row': selectedItems.includes(item.id) }"
-                >
+                <td :class="{ 'selected-row': selectedItems.includes(item.id) }">
                   {{ item.referencia1 }}
                 </td>
-                <td
-                  :class="{ 'selected-row': selectedItems.includes(item.id) }"
-                >
+                <td :class="{ 'selected-row': selectedItems.includes(item.id) }">
                   {{ item.referencia2 }}
                 </td>
-                <td
-                  :class="{ 'selected-row': selectedItems.includes(item.id) }"
-                >
+                <td :class="{ 'selected-row': selectedItems.includes(item.id) }">
                   {{ item.referencia3 }}
                 </td>
-                <td
-                  class="rows text-uppercase"
-                  :class="{ 'selected-row': selectedItems.includes(item.id) }"
-                >
-                  <template v-if="item.estado.toLowerCase() === 'disponible'">
+                <td class="rows text-uppercase" :class="{ 'selected-row': selectedItems.includes(item.id) }">
+                  <template v-if="item.estado.toUpperCase() === 'DISPONIBLE'">
                     <i class="bi bi-check-circle-fill text-success"></i>
                   </template>
-                  <template
-                    v-else-if="
-                      item.estado.toLowerCase() === 'entrega confirmada'
-                    "
-                  >
+                  <template v-else-if="item.estado.toUpperCase() === 'ENTREGADO'">
                     <i class="bi bi-building-check"></i>
                   </template>
                   <template v-else>
@@ -233,92 +182,38 @@
           </table>
         </div>
       </div>
-      <div class="side-menu" :class="{ 'menu-visible': menuVisible }">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2><i class="bi bi-question-circle me-2"></i>Ayuda</h2>
-          <button @click="toggleMenu" class="btn btn-circle btn-outline-light">
-            X
-          </button>
-        </div>
-        <hr />
-        <ol class="help-content">
-          <li class="state-item" @click="toggleState('disponible')">
-            <strong>Disponible</strong>
-            <div v-if="stateVisible.disponible" class="state-description">
-              Este estado indica que la caja de archivos se encuentra almacenada
-              y lista para ser solicitada. Significa que la caja está disponible
-              para su consulta o préstamo.
-            </div>
-          </li>
-          <li class="state-item" @click="toggleState('solicitada')">
-            <strong>Solicitada</strong>
-            <div v-if="stateVisible.solicitada" class="state-description">
-              Este estado señala que se ha realizado una petición para acceder a
-              la caja de archivos. Implica que alguien ha solicitado la caja y
-              está a la espera de su entrega.
-            </div>
-          </li>
-          <li class="state-item" @click="toggleState('entregaConfirmada')">
-            <strong>Entrega Confirmada</strong>
-            <div
-              v-if="stateVisible.entregaConfirmada"
-              class="state-description"
-            >
-              Este estado confirma que la caja de archivos ha sido entregada a
-              la persona que la solicitó. Implica que el usuario actualmente
-              tiene la caja en su poder.
-            </div>
-          </li>
-          <li class="state-item" @click="toggleState('devolucion')">
-            <strong>En Devolución</strong>
-            <div v-if="stateVisible.devolucion" class="state-description">
-              Este estado indica que la caja de archivos ha sido devuelta
-              físicamente, pero aún se encuentra en proceso de verificación.
-              Significa que la caja está siendo revisada para asegurar que esté
-              completa y en buenas condiciones antes de ser re-almacenada.
-            </div>
-          </li>
-          <li class="state-item" @click="toggleState('almacenada')">
-            <strong>Disponible/Almacenada</strong>
-            <div v-if="stateVisible.almacenada" class="state-description">
-              Una vez que se ha confirmado que la caja de archivos ha sido
-              devuelta en perfectas condiciones, esta, vuelve a estar
-              disponible. Significa que la caja está nuevamente almacenada y
-              lista para ser solicitada.
-            </div>
-          </li>
-        </ol>
-      </div>
-    </div>
-    <div class="d-flex justify-content-center align-items-center  mt-3">
-              <button
-                class="btn btn-sm  btn-outline-primary me-2"
-                :disabled="currentPage === 1"
-                @click="prevPage"
-              >
-                Anterior
-              </button>
-              <span> Página {{ currentPage }} de {{ totalPages }} </span>
-              <button
-                class="btn btn-sm  btn-outline-primary ms-2"
-                :disabled="currentPage === totalPages"
-                @click="nextPage"
-              >
-                Siguiente
-              </button>
-            </div>
 
-    <!-- Componente Modal para Solicitud -->
-    <SolicitudModal
-      :visible="showModal"
-      :selectedItems="selectedItemsData"
-      :actionType="actionText"
-      :modalTitle="modalTitle"
-      @close="closeModal"
-      @confirm="confirmAction"
-    />
-    <!-- Fondo para el modal -->
-    <div class="modal-backdrop" v-if="showModal"></div>
+      <!-- Paginación -->
+      <div class="d-flex justify-content-center align-items-center mt-3">
+        <button
+          class="btn btn-sm btn-outline-primary me-2"
+          :disabled="currentPage === 1"
+          @click="prevPage"
+        >
+          Anterior
+        </button>
+        <span> Página {{ currentPage }} de {{ totalPages }} </span>
+        <button
+          class="btn btn-sm btn-outline-primary ms-2"
+          :disabled="currentPage === totalPages"
+          @click="nextPage"
+        >
+          Siguiente
+        </button>
+      </div>
+
+      <!-- Componente Modal para Solicitud -->
+      <SolicitudModal
+        :visible="showModal"
+        :selectedItems="selectedItemsData"
+        :actionType="actionText"
+        :modalTitle="modalTitle"
+        @close="closeModal"
+        @confirm="confirmAction"
+      />
+      <!-- Fondo para el modal -->
+      <div class="modal-backdrop" v-if="showModal"></div>
+    </div>
   </div>
 </template>
 
@@ -331,42 +226,29 @@ import { useLoaderStore } from "../../stores/loaderStore";
 import DataDownload from "@/components/DataDownload.vue";
 import SolicitudModal from "@/components/SolicitudModal.vue";
 
-// Definición de la máquina de estados con las transiciones permitidas
 const stateMachine = {
   Transferencia: {
     "solicitud creada": { next: "asignado a transportador", tipoUsuarioId: 1 },
-    "asignado a transportador": {
-      next: "en proceso de recolección",
-      tipoUsuarioId: 1,
-    },
+    "asignado a transportador": { next: "en proceso de recolección", tipoUsuarioId: 1 },
     "en proceso de recolección": { next: "recogido", tipoUsuarioId: 1 },
     recogido: { next: "en bodega", tipoUsuarioId: 1 },
     "en bodega": { next: "completado", tipoUsuarioId: null },
   },
   Prestamo: {
     "solicitud creada": { next: "asignado a transportador", tipoUsuarioId: 1 },
-    "asignado a transportador": {
-      next: "en proceso de entrega",
-      tipoUsuarioId: 1,
-    },
+    "asignado a transportador": { next: "en proceso de entrega", tipoUsuarioId: 1 },
     "en proceso de entrega": { next: "entregado", tipoUsuarioId: 1 },
     entregado: { next: "completado", tipoUsuarioId: null },
   },
   Devolucion: {
     "solicitud creada": { next: "asignado a transportador", tipoUsuarioId: 1 },
-    "asignado a transportador": {
-      next: "en proceso de recolección",
-      tipoUsuarioId: 1,
-    },
+    "asignado a transportador": { next: "en proceso de recolección", tipoUsuarioId: 1 },
     "en proceso de recolección": { next: "recogido", tipoUsuarioId: 1 },
     recogido: { next: "completado", tipoUsuarioId: null },
   },
   Desarchive: {
     "solicitud creada": { next: "asignado a transportador", tipoUsuarioId: 1 },
-    "asignado a transportador": {
-      next: "en proceso de entrega",
-      tipoUsuarioId: 1,
-    },
+    "asignado a transportador": { next: "en proceso de entrega", tipoUsuarioId: 1 },
     "en proceso de entrega": { next: "entregado", tipoUsuarioId: 1 },
     entregado: { next: "completado", tipoUsuarioId: null },
   },
@@ -387,12 +269,15 @@ export default {
   },
   data() {
     return {
-      currentPage: 1, // Página actual
-      totalCount: 0, // Total de registros (desde el servidor)
+      currentPage: 1,
+      // Estos totales se obtendrán de llamadas separadas a la API
+      totalCountAll: 0,
+      totalCountDisponible: 0,
+      totalCountEntregado: 0,
       authStore: useAuthStore(),
-      currentTab: "inventario", // "inventario", "Disponible para prestar", "Disponible para devolver"
+      currentTab: "inventario", // Valores posibles: "inventario", "Disponible para prestar", "Disponible para devolver"
       searchTerm: "",
-      recordsPerPage: 1000,
+      recordsPerPage: 100,
       recordsOptions: [25, 50, 100, 250, 500],
       inventarios: [],
       selectedItems: [],
@@ -411,55 +296,33 @@ export default {
     };
   },
   async mounted() {
+    await this.fetchCounts(); // Obtener los totales para cada filtro
     await this.fetchCustodias();
-  },
-  watch: {
-    searchTerm(newTerm) {
-      if (newTerm.trim() !== "" && this.filteredInventarios.length === 0) {
-        this.$swal({
-          icon: "info",
-          title: "Sin coincidencias",
-          text: `No se encontraron coincidencias para "${newTerm}"`,
-          timer: 50000,
-          timerProgressBar: true,
-          showConfirmButton: true,
-          confirmButtonText: "Cerrar",
-          customClass: {
-            confirmButton: "my-confirm-button",
-          },
-        }).then(() => {
-          this.searchTerm = "";
-        });
-      }
-    },
   },
   computed: {
     totalPages() {
       return Math.ceil(this.totalCount / this.recordsPerPage);
     },
-    paginatedInventarios() {
-      // Si hay un término de búsqueda, se muestran todos los registros filtrados.
-      if (this.searchTerm.trim() !== "") {
-        return this.sortedInventarios;
+    // Retorna el total según la pestaña actual
+    totalCount() {
+      if (this.currentTab === "inventario") {
+        return this.totalCountAll;
+      } else if (this.currentTab === "Disponible para prestar") {
+        return this.totalCountDisponible;
+      } else if (this.currentTab === "Disponible para devolver") {
+        return this.totalCountEntregado;
       }
-      // Si no hay búsqueda, se aplica la paginación normal.
-      const startIndex = (this.currentPage - 1) * this.recordsPerPage;
-      const endIndex = this.currentPage * this.recordsPerPage;
-      return this.sortedInventarios.slice(startIndex, endIndex);
+      return 0;
     },
-
+    // Los datos paginados se reciben desde el servidor y se asignan a "inventarios"
+    paginatedInventarios() {
+      return this.inventarios;
+    },
     availableCount() {
-      return this.inventarios.filter(
-        (item) => item.estado.toLowerCase() === "disponible"
-      ).length;
+      return this.totalCountDisponible;
     },
     confirmedDeliveryCount() {
-      return this.inventarios.filter(
-        (item) => item.estado.toLowerCase() === "entregado"
-      ).length;
-    },
-    totalCount() {
-      return this.inventarios.length;
+      return this.totalCountEntregado;
     },
     selectedItemsData() {
       return this.selectedItems.map((id) => this.getItemById(id));
@@ -484,21 +347,9 @@ export default {
     filteredInventarios() {
       let filtered = this.inventarios.filter(
         (item) =>
-          (item.referencia1 || "")
-            .toLowerCase()
-            .includes(this.searchTerm.toLowerCase()) ||
-          (item.referencia2 || "")
-            .toLowerCase()
-            .includes(this.searchTerm.toLowerCase())
+          (item.referencia1 || "").toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+          (item.referencia2 || "").toLowerCase().includes(this.searchTerm.toLowerCase())
       );
-      if (this.currentTab == "Disponible para prestar") {
-        filtered = filtered.filter(
-          (item) => item.estado.toLowerCase() === "disponible"
-        );
-      } else if (this.currentTab == "Disponible para devolver") {
-        console.log(`output->filtered`, filtered);
-        filtered = filtered.filter((item) => item.estado.toLowerCase() === "entregado" );
-      }
       return filtered;
     },
     sortedInventarios() {
@@ -515,17 +366,6 @@ export default {
         return 0;
       });
     },
-    paginatedInventarios() {
-      // Si hay un término de búsqueda, se muestran todos los registros filtrados.
-      if (this.searchTerm.trim() !== "") {
-        return this.sortedInventarios;
-      }
-      // Si no hay búsqueda, se aplica la paginación normal.
-      const startIndex = (this.currentPage - 1) * this.recordsPerPage;
-      const endIndex = this.currentPage * this.recordsPerPage;
-      return this.sortedInventarios.slice(startIndex, endIndex);
-    },
-
     allSelected() {
       const visibleIds = this.paginatedInventarios.map((item) => item.id);
       if (visibleIds.length === 0) return false;
@@ -570,29 +410,77 @@ export default {
     },
     toggleRow(id) {
       if (this.selectedItems.includes(id)) {
-        this.selectedItems = this.selectedItems.filter(
-          (itemId) => itemId !== id
-        );
+        this.selectedItems = this.selectedItems.filter((itemId) => itemId !== id);
       } else {
         this.selectedItems.push(id);
+      }
+    },
+    // Obtiene los totales para cada categoría haciendo llamadas a la API (solo se solicita una fila para obtener totalCount)
+    async fetchCounts() {
+      try {
+        const clienteId = this.authStore.clienteId;
+        // Para Inventario (todos)
+        const responseAll = await apiClient.post(`/api/custodias/cliente`, {
+          clienteId,
+          page: 1,
+          pageSize: 1,
+          tipo: ""
+        });
+        this.totalCountAll = responseAll.data.totalCount || 0;
+
+        // Para Disponible para Prestar (estado DISPONIBLE)
+        const responseDisponible = await apiClient.post(`/api/custodias/cliente`, {
+          clienteId,
+          page: 1,
+          pageSize: 1,
+          tipo: "disponible"
+        });
+        this.totalCountDisponible = responseDisponible.data.totalCount || 0;
+
+        // Para Disponible para Devolver (estado ENTREGADO)
+        const responseEntregado = await apiClient.post(`/api/custodias/cliente`, {
+          clienteId,
+          page: 1,
+          pageSize: 1,
+          tipo: "entregado"
+        });
+        this.totalCountEntregado = responseEntregado.data.totalCount || 0;
+      } catch (error) {
+        console.error("Error al obtener los totales:", error);
       }
     },
     async fetchCustodias() {
       try {
         const clienteId = this.authStore.clienteId;
+        let tipo = "";
+        switch (this.currentTab) {
+          case "inventario":
+            tipo = "";
+            break;
+          case "Disponible para prestar":
+            tipo = "disponible";
+            break;
+          case "Disponible para devolver":
+            tipo = "entregado";
+            break;
+          default:
+            tipo = "";
+            break;
+        }
+
         const body = {
           clienteId,
           page: this.currentPage,
           pageSize: this.recordsPerPage,
+          tipo: tipo
         };
 
         if (import.meta.env.DEV === true) {
           console.log("Request body:", body);
         }
 
-        //this.loaderStore.showLoader();
+        // Opcional: this.loaderStore.showLoader();
         const response = await apiClient.post(`/api/custodias/cliente`, body);
-        // Si la API devuelve { data: [...], totalCount: ... }:
         const datos = response.data.data ? response.data.data : response.data;
         this.inventarios = datos.map((custodia) => ({
           id: custodia.id,
@@ -606,10 +494,17 @@ export default {
           estado: custodia.estado,
           baja: custodia.baja,
         }));
-        console.log("datos paginados: ", datos);
+        console.log("Datos paginados:", datos);
 
-        // Actualiza el total de registros usando la propiedad que devuelve el API.
-        this.totalCount = response.data.totalCount || this.inventarios.length;
+        // Se asigna el total de registros filtrados recibido desde la API (para la pestaña activa)
+        // Este valor se actualizará al cambiar de pestaña
+        if (tipo === "disponible") {
+          this.totalCountDisponible = response.data.totalCount || this.inventarios.length;
+        } else if (tipo === "entregado") {
+          this.totalCountEntregado = response.data.totalCount || this.inventarios.length;
+        } else {
+          this.totalCountAll = response.data.totalCount || this.inventarios.length;
+        }
         this.loaderStore.hideLoader();
       } catch (error) {
         console.error("Error al obtener datos de Custodia:", error);
@@ -617,6 +512,7 @@ export default {
     },
     loadMoreRecords() {
       this.currentPage++;
+      this.fetchCustodias();
     },
     resetPagination() {
       this.currentPage = 1;
@@ -624,19 +520,16 @@ export default {
     changeTab(tabName) {
       this.currentTab = tabName;
       this.resetPagination();
-      //this.fetchCustodias();
+      // Al cambiar de pestaña se actualizan tanto los datos paginados como los totales (si fuera necesario)
+      this.fetchCustodias();
       this.selectedItems = [];
     },
     toggleSelectAll() {
       const visibleIds = this.paginatedInventarios.map((item) => item.id);
       if (this.allSelected) {
-        this.selectedItems = this.selectedItems.filter(
-          (id) => !visibleIds.includes(id)
-        );
+        this.selectedItems = this.selectedItems.filter((id) => !visibleIds.includes(id));
       } else {
-        this.selectedItems = [
-          ...new Set([...this.selectedItems, ...visibleIds]),
-        ];
+        this.selectedItems = [...new Set([...this.selectedItems, ...visibleIds])];
       }
     },
     getItemById(id) {
@@ -650,21 +543,17 @@ export default {
       this.showModal = false;
       await this.fetchCustodias();
     },
-    // Método que utiliza la máquina de estados para obtener el siguiente estado permitido
     getNextState(modulo, currentState) {
       const transitions = stateMachine[modulo];
       if (!transitions) return null;
       const transition = transitions[currentState.toLowerCase()];
       return transition ? transition.next : null;
     },
-    // Al confirmar la acción, se actualiza el estado de cada ítem seleccionado
     confirmAction(payload) {
       if (!payload.selectedItems || !Array.isArray(payload.selectedItems)) {
         console.error("No se recibió la data completa de los ítems:", payload);
         return;
       }
-      // Determinar el módulo según la pestaña actual: para este ejemplo,
-      // "Disponible para prestar" usa el módulo "Prestamo" y "Disponible para devolver" el módulo "Devolucion"
       const modulo =
         this.currentTab === "Disponible para prestar"
           ? "Prestamo"
@@ -702,26 +591,22 @@ export default {
   border: none !important;
   color: #000000 !important;
 }
-
 .blink {
   animation: blink-animation 1s steps(5, start) infinite;
   -webkit-animation: blink-animation 1s steps(5, start) infinite;
   color: white;
   background-color: black;
 }
-
 @keyframes blink-animation {
   to {
     visibility: hidden;
   }
 }
-
 @-webkit-keyframes blink-animation {
   to {
     visibility: hidden;
   }
 }
-
 .inventario-container {
   padding: 1rem;
 }
@@ -743,7 +628,6 @@ export default {
   right: 30px;
   z-index: 2;
 }
-
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -789,14 +673,10 @@ export default {
 .rows {
   cursor: pointer;
 }
-
-/* Contenedor de los botones */
 .tab-container {
   display: flex;
   gap: 10px;
 }
-
-/* Botón con apariencia moderna */
 .tab-button {
   display: flex;
   align-items: center;
@@ -816,23 +696,18 @@ export default {
   transition: background 0.3s ease-in-out, transform 0.2s ease-in-out;
   box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
 }
-
 .tab-button:hover {
   background: #d4d4d4;
   transform: translateY(-1px);
 }
-
-/* Estado activo */
 .tab-button.active {
   background: #c9c9c9 !important;
   box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
-
 .tab-button i {
   margin-right: 8px;
   font-size: 16px;
 }
-
 .tab-badge {
   background: #1e1e1e;
   color: white;
@@ -853,7 +728,6 @@ export default {
   margin-left: 8px;
   opacity: 0.8;
 }
-
 .tab-button:active .tab-badge,
 .tab-button.active .tab-badge {
   width: auto;
@@ -862,17 +736,14 @@ export default {
   padding: 4px 10px;
   opacity: 1;
 }
-
 .tab-badge span {
   display: none;
 }
-
 .tab-button:active .tab-badge span,
 .tab-button.active .tab-badge span {
   display: inline;
   animation: fade-in 0.2s ease-in-out;
 }
-
 .tab-badge2 {
   background: #1e1e1e;
   color: white;
@@ -893,7 +764,6 @@ export default {
   margin-left: 8px;
   opacity: 0.8;
 }
-
 .tab-button:hover .tab-badge2,
 .tab-button.hover .tab-badge2 {
   width: auto;
@@ -902,17 +772,14 @@ export default {
   padding: 4px 10px;
   opacity: 1;
 }
-
 .tab-badge2 span {
   display: none;
 }
-
 .tab-button:hover .tab-badge2 span,
 .tab-button.hover .tab-badge2 span {
   display: inline;
   animation: fade-in 0.2s ease-in-out;
 }
-
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -939,59 +806,49 @@ export default {
   transition: transform 0.5s ease-in-out;
   transform: translateX(100%);
 }
-
 .side-menu.menu-visible {
   transform: translateX(0);
 }
 .close-menu {
   font-size: 1em;
 }
-
 .state-item {
   cursor: pointer;
   padding: 10px;
   border-bottom: 1px solid #ddd;
 }
-
 .state-description {
   padding: 10px;
   margin: 5px;
-
   text-justify: inter-word;
   transition: max-height 0.3s ease-out;
   max-height: 500px;
   overflow: hidden;
 }
-
 .state-description:not(v-if) {
   max-height: auto;
 }
-
 ol {
   padding-left: 0px;
 }
-
 li {
   list-style-type: none;
 }
 .btn-circle {
-  width: 40px; /* Ajusta el tamaño del botón según tus necesidades */
+  width: 40px;
   height: 40px;
-  border-radius: 50%; /* Hace que el botón sea un círculo */
-  display: flex; /* Centra el contenido vertical y horizontalmente */
+  border-radius: 50%;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0; /* Elimina el padding predeterminado del botón */
+  padding: 0;
   margin-top: -5px;
 }
-
-/* Opcional: Ajustes para diferentes tamaños de botón */
 .btn-circle.btn-sm {
   width: 30px;
   height: 30px;
   font-size: 0.8rem;
 }
-
 .btn-circle.btn-lg {
   width: 50px;
   height: 50px;
