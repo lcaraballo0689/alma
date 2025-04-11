@@ -7,142 +7,128 @@
       </div>
     </div>
 
-    <!-- Mensaje de error -->
-    <div v-else-if="error" class="alert alert-danger">
-      {{ error }}
-    </div>
-
-    <!-- Contenido del Dashboard -->
     <div v-else>
-      <div v-if="dashboardData && Object.keys(dashboardData).length">
-        <!-- Cuadrícula de Cards -->
-        <div class="row g-3">
-          <!-- Card: Usuarios -->
-          <div class="col-12 col-md-6 col-lg-4">
-            <div class="dashboard-card1 type1" :style="cardStyle">
-              <div class="card-content">
-                <div class="card-text">
-                  <h1 class="card-value1">{{ dashboardData.totals.totalUsers }}</h1>
-                  <h6 class="card-title">Usuarios</h6>
-                </div>
-                <div class="card-icon1">
-                  <i class="bi bi-people"></i>
-                </div>
+      <!-- Cuadrícula de Cards -->
+      <div class="row g-3">
+        <!-- Card Total Usuarios -->
+        <div class="col-12 col-md-6 col-lg-4" v-if="dashboardData.totals">
+          <div class="dashboard-card1 type1" :style="cardStyle">
+            <div class="card-content">
+              <div class="card-text">
+                <h1 class="card-value1">{{ dashboardData.totals.totalUsers }}</h1>
+                <h6 class="card-title">Usuarios</h6>
               </div>
-            </div>
-          </div>
-          <!-- Card: Clientes -->
-          <div class="col-12 col-md-6 col-lg-4">
-            <div class="dashboard-card1 type1" :style="cardStyle">
-              <div class="card-content">
-                <div class="card-text">
-                  <h1 class="card-value1">{{ dashboardData.totals.totalClients }}</h1>
-                  <h6 class="card-title">Clientes</h6>
-                </div>
-                <div class="card-icon1">
-                  <i class="bi bi-building"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Card: Solicitudes -->
-          <div class="col-12 col-md-6 col-lg-4">
-            <div class="dashboard-card1 type1" :style="cardStyle">
-              <div class="card-content">
-                <div class="card-text">
-                  <h1 class="card-value1">{{ dashboardData.totals.totalSolicitudes }}</h1>
-                  <h6 class="card-title">Solicitudes</h6>
-                </div>
-                <div class="card-icon1">
-                  <i class="bi bi-inbox"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Card: Tiempo Promedio -->
-          <div class="col-12 col-md-6 col-lg-4" v-if="dashboardData.avgProcessingTime !== null">
-            <div class="dashboard-card2 type2" :style="cardStyle">
-              <div class="card-content">
-                <div class="card-text">
-                  <h1 class="card-value2">{{ dashboardData.avgProcessingTime }} min</h1>
-                  <h6 class="card-title">Tiempo Promedio</h6>
-                </div>
-                <div class="card-icon2">
-                  <i class="bi bi-clock"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Card: Inventario Utilizado -->
-          <div class="col-12 col-md-6 col-lg-4" v-if="dashboardData.inventoryUsage">
-            <div class="dashboard-card2 type2" :style="cardStyle">
-              <div class="card-content">
-                <div class="card-text">
-                  <h1 class="card-value2">
-                    {{ dashboardData.inventoryUsage.percentageUsed ? dashboardData.inventoryUsage.percentageUsed.toFixed(1) : 0 }}%
-                  </h1>
-                  <h6 class="card-title">Inventario Utilizado</h6>
-                </div>
-                <div class="card-icon2">
-                  <i class="bi bi-bar-chart-line"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!-- Card: Notificaciones No Leídas -->
-          <div class="col-12 col-md-6 col-lg-4" v-if="dashboardData.unreadNotifications !== null">
-            <div class="dashboard-card2 type2" :style="cardStyle">
-              <div class="card-content">
-                <div class="card-text">
-                  <h1 class="card-value2">{{ dashboardData.unreadNotifications }}</h1>
-                  <h6 class="card-title">Notificaciones sin Leer</h6>
-                </div>
-                <div class="card-icon2">
-                  <i class="bi bi-bell"></i>
-                </div>
+              <div class="card-icon1">
+                <i class="bi bi-people"></i>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Eventos Recientes (Audit) -->
-        <div class="row mt-4 mb-6 pb-4">
-          <div class="col-12">
-            <h5>Eventos Recientes</h5>
-            <div class="table-responsive">
-              <table class="table table-bordered">
-                <thead>
-                  <tr>
-                    <th class="col">Solicitud</th>
-                    <th class="col">Estado Anterior</th>
-                    <th class="col">Nuevo Estado</th>
-                    <th class="col">Fecha</th>
-                    <th class="col">Hora</th>
-                    <!-- <th class="col">Usuario</th> -->
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="audit in dashboardData.recentAudits" :key="audit.SolicitudID + audit.FechaEvento">
-                    <td>{{ audit.SolicitudID }}</td>
-                    <td>{{ audit.EstadoAnterior }}</td>
-                    <td>{{ audit.NuevoEstado }}</td>
-                    <td>{{ formatDate(audit.FechaEvento) }}</td>
-                    <td>{{ formatTime(audit.FechaEvento) }}</td>
-                    <!-- <td>{{ audit.Usuario }}</td> -->
-                  </tr>
-                </tbody>
-              </table>
+        <!-- Card Total Clientes -->
+        <div class="col-12 col-md-6 col-lg-4" v-if="dashboardData.totals">
+          <div class="dashboard-card1 type1" :style="cardStyle">
+            <div class="card-content">
+              <div class="card-text">
+                <h1 class="card-value1">{{ dashboardData.totals.totalClients }}</h1>
+                <h6 class="card-title">Clientes</h6>
+              </div>
+              <div class="card-icon1">
+                <i class="bi bi-building"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Card Total Solicitudes -->
+        <div class="col-12 col-md-6 col-lg-4" v-if="dashboardData.totals">
+          <div class="dashboard-card1 type1" :style="cardStyle">
+            <div class="card-content">
+              <div class="card-text">
+                <h1 class="card-value1">{{ dashboardData.totals.totalSolicitudes }}</h1>
+                <h6 class="card-title">Solicitudes</h6>
+              </div>
+              <div class="card-icon1">
+                <i class="bi bi-inbox"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Card Tiempo Promedio Procesamiento -->
+        <div class="col-12 col-md-6 col-lg-4" v-if="dashboardData.avgProcessingTime">
+          <div class="dashboard-card2 type2" :style="cardStyle">
+            <div class="card-content">
+              <div class="card-text">
+                <h1 class="card-value2">{{ dashboardData.avgProcessingTime }} min</h1>
+                <h6 class="card-title">Tiempo Promedio</h6>
+              </div>
+              <div class="card-icon2">
+                <i class="bi bi-clock"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Card Inventario: Utilización -->
+        <div class="col-12 col-md-6 col-lg-4" v-if="dashboardData.inventoryUsage">
+          <div class="dashboard-card2 type2" :style="cardStyle">
+            <div class="card-content">
+              <div class="card-text">
+                <h1 class="card-value2">
+                  {{ dashboardData.inventoryUsage.percentageUsed.toFixed(1) }}%
+                </h1>
+                <h6 class="card-title">Inventario Utilizado</h6>
+              </div>
+              <div class="card-icon2">
+                <i class="bi bi-bar-chart-line"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Card Notificaciones No Leídas -->
+        <div class="col-12 col-md-6 col-lg-4" v-if="dashboardData.unreadNotifications !== null">
+          <div class="dashboard-card2 type2" :style="cardStyle">
+            <div class="card-content">
+              <div class="card-text">
+                <h1 class="card-value2">{{ dashboardData.unreadNotifications }}</h1>
+                <h6 class="card-title">Notificaciones sin Leer</h6>
+              </div>
+              <div class="card-icon2">
+                <i class="bi bi-bell"></i>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div v-else class="text-center mt-5">
-        <p>No hay datos disponibles en este momento.</p>
+      <!-- Eventos Recientes (Audit) -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <h5>Eventos Recientes</h5>
+          <div class="table-responsive">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Solicitud</th>
+                  <th>Estado Anterior</th>
+                  <th>Nuevo Estado</th>
+                  <th>Fecha</th>
+                  <th>Usuario</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="audit in dashboardData.recentAudits" :key="audit.SolicitudID + audit.FechaEvento">
+                  <td>{{ audit.SolicitudID }}</td>
+                  <td>{{ audit.EstadoAnterior }}</td>
+                  <td>{{ audit.NuevoEstado }}</td>
+                  <td>{{ formatDate(audit.FechaEvento) }}<br />{{ formatTime(audit.FechaEvento) }}</td>
+                  <td>{{ audit.Usuario }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Mensaje de error -->
+    <!-- Mensaje de error si existe -->
     <div v-if="error" class="alert alert-danger mt-3">
       {{ error }}
     </div>
@@ -166,7 +152,7 @@ export default {
     cardStyle() {
       return {
         background: "linear-gradient(135deg, #235ca4, #041e40)",
-        minWidth: "250px"
+        minWidth: "250px",
       };
     }
   },
@@ -174,12 +160,7 @@ export default {
     async fetchDashboardData() {
       try {
         const response = await apiClient.get("/api/dashboard");
-        console.log("Respuesta del dashboard:", response.data);
-        if (response.data && response.data.dashboardData) {
-          this.dashboardData = response.data.dashboardData;
-        } else {
-          this.error = "La respuesta del servidor no tiene el formato esperado.";
-        }
+        this.dashboardData = response.data.dashboardData;
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         this.error = err.message || "Error al obtener la información del dashboard.";
@@ -243,6 +224,7 @@ export default {
   margin: 0;
   font-weight: bold;
 }
+
 .card-value2 {
   font-size: clamp(24px, 2.5rem, 90px);
   margin: 0;
@@ -277,20 +259,5 @@ export default {
   top: -20px;
   right: 0;
   z-index: 10;
-}
-
-/* Ajustes Responsivos */
-@media screen and (max-width: 768px) {
-  .dashboard-card1,
-  .dashboard-card2 {
-    padding: 15px;
-    min-width: 200px;
-  }
-  .card-value1 {
-    font-size: 60px;
-  }
-  .card-value2 {
-    font-size: 20px;
-  }
 }
 </style>

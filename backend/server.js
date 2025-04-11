@@ -35,6 +35,7 @@ const estadoTransicionesRoutes = require('./routes/estadoTransicionesRoutes');
 const obtenerDetalleSolicitud  = require("./routes/obtenerDetalleSolicitudRoutes");
 const cargarFirma = require("./routes/firmaRoutes");
 const horariosRouter = require('./routes/horariosRoutes');
+const dashboardRouter = require('./routes/dashboard');
 //const Bodega  = require("./routes/bodegaRoutes");  
 
 const roleRoutes = require("./routes/roleRoutes");
@@ -75,6 +76,7 @@ app.use('/api/horarios', horariosRouter);
 app.use("/api/roles", roleRoutes);
 app.use("/api/permissions", permissionRoutes);
 app.use("/api/role-permissions", rolePermissionRoutes);
+app.use('/api', dashboardRouter);
 //app.use("/api/bodega", Bodega); // Rutas de bodegas
 
 
