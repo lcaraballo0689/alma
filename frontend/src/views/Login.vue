@@ -1,11 +1,6 @@
 <template>
   <div class="container-fluid vh-100" :class="{ 'bg-dark text-light': themeStore.theme === 'dark' }">
-  <div class="container-fluid vh-100" :class="{ 'bg-dark text-light': themeStore.theme === 'dark' }">
     <div class="row g-0 h-100">
-      <!-- Columna del formulario -->
-      <div class="col-12 col-lg-4 d-flex flex-column justify-content-center align-items-center">
-        <div class="w-100" style="max-width: 400px" :class="{ 'bg-dark text-light p-4 rounded': themeStore.theme === 'dark' }">
-          <form class="needs-validation" @submit.prevent="handleLogin" novalidate>
       <!-- Columna del formulario -->
       <div class="col-12 col-lg-4 d-flex flex-column justify-content-center align-items-center">
         <div class="w-100" style="max-width: 400px" :class="{ 'bg-dark text-light p-4 rounded': themeStore.theme === 'dark' }">
@@ -15,29 +10,23 @@
               <img :src="Logo" alt="Logo" style="max-width: 200px" />
             </div>
             <!-- Campo de correo -->
-            <!-- Campo de correo -->
             <div class="mb-3 fw-bold fs-4">
               <label for="input-1" class="form-label">Correo</label>
-              <input type="email" id="input-1" v-model="email" class="form-control" placeholder="Correo" required />
               <input type="email" id="input-1" v-model="email" class="form-control" placeholder="Correo" required />
               <div class="invalid-feedback">
                 Por favor, ingresa un correo válido.
               </div>
             </div>
             <!-- Campo de contraseña -->
-            <!-- Campo de contraseña -->
             <div class="mb-3 fw-bold fs-4">
               <label for="input-2" class="form-label">Contraseña</label>
-              <input type="password" id="input-2" v-model="password" class="form-control" placeholder="Contraseña" required />
               <input type="password" id="input-2" v-model="password" class="form-control" placeholder="Contraseña" required />
               <div class="invalid-feedback">
                 Por favor, ingresa tu contraseña.
               </div>
             </div>
             <!-- Botón de envío -->
-            <!-- Botón de envío -->
             <div class="form-footer">
-              <button type="submit" class="btn btn-dark w-100" :disabled="loading">
               <button type="submit" class="btn btn-dark w-100" :disabled="loading">
                 <div v-if="loading">
                   <i class="fa fa-spinner fa-spin fa-fw me-1"></i>
@@ -53,9 +42,7 @@
         </div>
       </div>
       <!-- Columna de imagen (solo en pantallas grandes) -->
-      <!-- Columna de imagen (solo en pantallas grandes) -->
       <div class="col-12 col-lg-8 d-none d-lg-block">
-        <img :src="loginBg" class="w-100 h-100" style="object-fit: cover" alt="Imagen de fondo para el login" />
         <img :src="loginBg" class="w-100 h-100" style="object-fit: cover" alt="Imagen de fondo para el login" />
       </div>
     </div>
@@ -67,10 +54,8 @@ import Swal from "sweetalert2";
 import apiClient from "@/services/api";
 import loginBg from "@/assets/img/01.jpg";
 import Logo from "@/assets/img/siglo.png";
-import Logo from "@/assets/img/siglo.png";
 import { useAuthStore } from "@/stores/authStore";
 import { useThemeStore } from "@/stores/themeStore";
-import socket from "@/socket";
 import socket from "@/socket";
 import { useNotificationStore } from "@/stores/notificationStore";
 
@@ -85,7 +70,6 @@ export default {
       error: "",
       loading: false,
       themeStore: useThemeStore(),
-      themeStore: useThemeStore(),
     };
   },
   methods: {
@@ -95,13 +79,11 @@ export default {
 
       if (!this.email || !this.password) {
         this.error = "Debes ingresar el correo y la contraseña.";
-        this.error = "Debes ingresar el correo y la contraseña.";
         this.loading = false;
         return;
       }
 
       try {
-        // Se realiza la petición al endpoint de login
         // Se realiza la petición al endpoint de login
         const response = await apiClient.post("/api/auth/login", {
           email: this.email,
@@ -109,17 +91,13 @@ export default {
         });
 
         // Extraer token, refreshToken y permisos desde la respuesta
-        // Extraer token, refreshToken y permisos desde la respuesta
         const token = response.data.token;
         const refreshToken = response.data.refreshToken;
         const permisos = response.data.permisos; // Ejemplo: [{ nombre: "ADMIN_DASHBOARD_ACCESS", ... }, ...]
-        const permisos = response.data.permisos; // Ejemplo: [{ nombre: "ADMIN_DASHBOARD_ACCESS", ... }, ...]
 
-        // Inicializar authStore
         // Inicializar authStore
         const authStore = useAuthStore();
 
-        // Decodificar el token para obtener datos del usuario
         // Decodificar el token para obtener datos del usuario
         const base64Url = token.split(".")[1];
         const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
@@ -134,18 +112,7 @@ export default {
         // Almacenar datos en authStore
         authStore.setToken(token);
         authStore.setRefreshToken(refreshToken);
-        console.log("Decoded token:", decoded);
-
-        // Agregar los permisos al objeto del usuario
-        if (permisos) {
-          decoded.permisos = permisos;
-        }
-
-        // Almacenar datos en authStore
-        authStore.setToken(token);
-        authStore.setRefreshToken(refreshToken);
         authStore.setUser(decoded);
-        localStorage.setItem("refreshToken", refreshToken);
         localStorage.setItem("refreshToken", refreshToken);
 
         // Mostrar mensaje de éxito
@@ -160,12 +127,8 @@ export default {
         });
 
         // Recuperar notificaciones
-        // Recuperar notificaciones
         const notificationStore = useNotificationStore();
         try {
-          const notifResponse = await apiClient.get("/api/notificaciones/historico", {
-            headers: { Authorization: token },
-          });
           const notifResponse = await apiClient.get("/api/notificaciones/historico", {
             headers: { Authorization: token },
           });
@@ -174,7 +137,6 @@ export default {
           console.error("Error al obtener notificaciones:", error);
         }
 
-        // Unirse a la sala vía socket
         // Unirse a la sala vía socket
         socket.emit("Notificaciones", {
           clienteId: decoded.clienteId,
@@ -187,14 +149,14 @@ export default {
           this.$router.push({ name: 'AdminDashboard' });
         } else if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'Acceso Panel Cliente')) {
           this.$router.push({ name: 'ClientHome' });
+        } else {
+          // Otra ruta por defecto
+          this.$router.push({ name: 'mobileApp' });
         }
-
 
       } catch (err) {
         console.error("Error en login:", err.response ? err.response.data : err);
-        console.error("Error en login:", err.response ? err.response.data : err);
         const errorMsg =
-          err.response?.data?.error || "Error al iniciar sesión. Verifica tus credenciales.";
           err.response?.data?.error || "Error al iniciar sesión. Verifica tus credenciales.";
         this.error = errorMsg;
         Swal.fire({
