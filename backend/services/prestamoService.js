@@ -96,34 +96,39 @@ async function createPrestamoCabecera(transaction, data) {
 }
 
 /**
- * Crea un detalle del préstamo por custodia.
+ * Crea un detalle del préstamo y retorna el ID insertado.
+ * Se utiliza SCOPE_IDENTITY() para obtener el valor generado.
+ * Nota: Asegúrate de que la tabla de detalles sea la correcta. En este ejemplo se usa "dbo.Prestamos"
+ * pero si la estructura de tu BD separa cabecera y detalle (por ejemplo, "DetallePrestamo") deberás ajustarlo.
  * @param {import('mssql').Transaction} transaction
- * @param {Object} data - Datos del detalle del préstamo
+ * @param {Object} data - Datos del detalle del préstamo.
+ * @returns {Promise<number>} El ID insertado.
  */
 async function createPrestamoDetalle(transaction, data) {
   logger.debug("createPrestamoDetalle - Datos recibidos", { data });
+  // Parsear la fecha estimada de entrega (asegúrate de que data.fechaEstimadaEntrega tenga un formato válido)
   const fechaEstimadaEntrega = parseDate(data.fechaEstimadaEntrega);
   logger.info("createPrestamoDetalle - Fecha estimada parseada", { fechaEstimadaEntrega });
 
   const request = transaction.request();
   request
-    .input('prestamoId', sql.Int, data.prestamoId)
-    .input('clienteId', sql.Int, data.clienteId)
-    .input('usuarioId', sql.Int, data.usuarioId)
-    .input('custodiaId', sql.Int, data.custodiaId)
-    .input('consecutivo', sql.Int, data.consecutivo)
-    .input('fechaSolicitud', sql.DateTime, data.fechaSolicitud)
-    .input('referencia1', sql.NVarChar, data.referencia1 || '')
-    .input('referencia2', sql.NVarChar, data.referencia2 || '')
-    .input('referencia3', sql.NVarChar, data.referencia3 || '')
-    .input('direccion_entrega', sql.NVarChar, data.direccion_entrega)
-    .input('modalidad', sql.NVarChar, data.modalidad)
-    .input('observaciones', sql.NVarChar, data.observaciones || '')
-    .input('estado', sql.NVarChar, 'SOLICITUD DE PRESTAMO CREADA')
-    .input('fechaEstimadaEntrega', sql.DateTime, fechaEstimadaEntrega);
+    .input("prestamoId", sql.Int, data.prestamoId)
+    .input("clienteId", sql.Int, data.clienteId)
+    .input("usuarioId", sql.Int, data.usuarioId)
+    .input("custodiaId", sql.Int, data.custodiaId)
+    .input("consecutivo", sql.Int, data.consecutivo)
+    .input("fechaSolicitud", sql.DateTime, data.fechaSolicitud)
+    .input("referencia1", sql.NVarChar, data.referencia1 || "")
+    .input("referencia2", sql.NVarChar, data.referencia2 || "")
+    .input("referencia3", sql.NVarChar, data.referencia3 || "")
+    .input("direccion_entrega", sql.NVarChar, data.direccion_entrega)
+    .input("modalidad", sql.NVarChar, data.modalidad)
+    .input("observaciones", sql.NVarChar, data.observaciones || "")
+    .input("estado", sql.NVarChar, "SOLICITUD DE PRESTAMO CREADA")
+    .input("fechaEstimadaEntrega", sql.DateTime, fechaEstimadaEntrega);
 
   logger.info("createPrestamoDetalle - Ejecutando query de inserción");
-  await request.query(`
+  const result = await request.query(`
     INSERT INTO dbo.Prestamos
       (prestamoId, clienteId, usuarioId, custodiaId, consecutivo, fechaSolicitud, 
        referencia1, referencia2, referencia3, direccion_entrega, modalidad, 
@@ -132,7 +137,14 @@ async function createPrestamoDetalle(transaction, data) {
       (@prestamoId, @clienteId, @usuarioId, @custodiaId, @consecutivo, @fechaSolicitud,
        @referencia1, @referencia2, @referencia3, @direccion_entrega, @modalidad,
        @observaciones, @estado, @fechaEstimadaEntrega);
+    SELECT SCOPE_IDENTITY() as insertedId;
   `);
+
+  const insertedId = result.recordset[0]?.insertedId;
+  if (!insertedId) {
+    logger.error("createPrestamoDetalle - No se obtuvo el ID insertado.", { result });
+  }
+  return insertedId;
 }
 
 module.exports = {
