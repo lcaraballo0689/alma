@@ -104,7 +104,6 @@ export default {
         const base64Url = token.split(".")[1];
         const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
         const decoded = JSON.parse(atob(base64));
-        console.log("Decoded token:", decoded);
 
         // Agregar los permisos al objeto del usuario
         if (permisos) {
@@ -146,11 +145,7 @@ export default {
         });
         console.log("Usuario se ha unido a la sala: usuario_" + decoded.clienteId);
 
-        // Detectar si el usuario está en un dispositivo móvil (en este caso, Android)
-        if (/Android/i.test(navigator.userAgent) && decoded.permisos && decoded.permisos.some(p => p.nombre === 'AppMovil')) {
-          // Redirigir a la PWA para dispositivos Android
-          this.$router.push({ name: 'pwa' });
-        } else if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'Acceso Panel Administrativo')) {
+        if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'Acceso Panel Administrativo')) {
           this.$router.push({ name: 'AdminDashboard' });
         } else if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'Acceso Panel Cliente')) {
           this.$router.push({ name: 'ClientHome' });
