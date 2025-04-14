@@ -5,12 +5,13 @@
         <div class="row align-items-center">
           <!-- Input de búsqueda en la parte izquierda del header -->
           <div class="col-2">
-            <input
-              type="text"
-              class="form-control"
-              placeholder="Buscar..."
-              v-model="searchQuery"
-            />
+            <div class="input-group search-pill">
+              <span class="input-group-text">
+                <i class="bx bx-search"></i>
+              </span>
+              <input type="text" class="form-control" placeholder="Buscar por nombre o email" v-model="searchQuery"
+                aria-label="Buscar usuario" autofocus />
+            </div>
           </div>
           <!-- Botón u otros elementos en la parte derecha del header -->
           <div class="col text-md-end">
@@ -54,14 +55,9 @@
                 <td class="text-start fw-bold">{{ h.clienteNombre }}</td>
                 <!-- Iteramos por cada día y mostramos un badge -->
                 <td v-for="day in dayNames" :key="day" class="text-center" style="white-space: nowrap;">
-                  <span
-                    v-if="h.dias[day] && h.dias[day].active"
-                    class="badge bg-success"
-                    tabindex="0"
-                    role="button"
+                  <span v-if="h.dias[day] && h.dias[day].active" class="badge bg-success" tabindex="0" role="button"
                     :aria-label="`Horario activo para ${day}: Hora inicio ${h.dias[day].horaInicio || 'desconocida'}, Hora fin ${h.dias[day].horaFin || 'desconocida'}`"
-                    v-popover="popoverOptions(day, h)"
-                  >
+                    v-popover="popoverOptions(day, h)">
                     Activo
                   </span>
                   <span v-else class="badge bg-danger">
@@ -154,7 +150,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Se incluye otro modal duplicado, si es necesario revisa su existencia -->
     <div ref="horarioModal" class="modal fade" tabindex="-1" aria-hidden="true" aria-labelledby="horarioModalLabel">
       <div class="modal-dialog modal-lg">
@@ -231,7 +227,7 @@
         </div>
       </div>
     </div>
-    
+
   </div>
 </template>
 
@@ -302,8 +298,8 @@ export default {
       const q = this.searchQuery.toLowerCase();
       return q
         ? this.horarios.filter(h =>
-            h.clienteNombre?.toLowerCase().includes(q)
-          )
+          h.clienteNombre?.toLowerCase().includes(q)
+        )
         : this.horarios;
     }
   },
@@ -414,7 +410,7 @@ export default {
   background-color: #f8f9fa;
 }
 
-.table > :not(caption) > * > * {
+.table> :not(caption)>*>* {
   vertical-align: middle;
 }
 
@@ -429,7 +425,7 @@ export default {
 }
 
 /* Ajusta el espaciado entre columnas y filas en el modal */
-.row.g-3 > [class^="col-"] {
+.row.g-3>[class^="col-"] {
   margin-bottom: 1rem;
 }
 </style>

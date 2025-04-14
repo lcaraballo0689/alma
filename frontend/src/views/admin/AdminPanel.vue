@@ -1,30 +1,38 @@
 <template>
   <div class="dashboard-layout">
     <!-- Sidebar -->
-    <aside class="" :class="['sidebar', { close: isCollapsed }]">
+    <aside :class="['sidebar', { close: isCollapsed }]">
       <!-- Menú principal -->
       <div class="menu-bar">
         <ul class="menu-links">
           <li v-for="(item, index) in filteredMenu" :key="index">
             <!-- Ítem simple sin submenús -->
             <div v-if="!item.children">
-              <a :href="item.link" :class="{ active: activeItem === item.name }" @click="setActive(item.name)">
+              <a :href="item.link"
+                 :class="{ active: activeItem === item.name }"
+                 @click="setActive(item.name)">
                 <i :class="item.icon"></i>
                 <span class="nav-text" v-if="!isCollapsed">{{ item.name }}</span>
               </a>
             </div>
             <!-- Ítem con submenús -->
             <div v-else class="dropdown">
-              <div class="menu-link" @click="toggleDropdown(index)">
+              <div class="menu-link"
+                   @click="toggleDropdown(index)"
+                   :class="{ active: isActiveParent(item) }">
                 <div class="d-flex align-items-center">
                   <i :class="item.icon"></i>
                   <span class="nav-text" v-if="!isCollapsed">{{ item.name }}</span>
                 </div>
-                <i class="bx bx-chevron-down arrow" v-if="!isCollapsed" :class="{ open: item.open }"></i>
+                <i class="bx bx-chevron-down arrow"
+                   v-if="!isCollapsed"
+                   :class="{ open: item.open }"></i>
               </div>
               <ul class="sub-menu" v-show="item.open && !isCollapsed">
-                <li v-for="(child, idx) in item.children" :key="idx" :class="{ active: activeItem === child.name }"
-                  @click.stop="setActive(child.name)">
+                <li v-for="(child, idx) in item.children"
+                    :key="idx"
+                    :class="{ active: activeItem === child.name }"
+                    @click.stop="setActive(child.name)">
                   <a :href="child.link">{{ child.name }}</a>
                 </li>
               </ul>
@@ -47,7 +55,6 @@
       <h2>
         <i :class="activeIcon + ' me-2'"></i> {{ activeItem }}
       </h2>
-      <!-- Se pasan los permisos a los componentes hijos a través de la prop "permissions" -->
       <clientes v-if="activeItem === 'Clientes'" :permissions="userPermissions" />
       <TransferenciaManager v-else-if="activeItem === 'Transferencias'" :permissions="userPermissions" />
       <Dashboard v-else-if="activeItem === 'Dashboard'" :permissions="userPermissions" />
@@ -61,7 +68,6 @@
       <Traccker v-else-if="activeItem === 'Flotas'" :permissions="userPermissions" />
       <RealTimeRouteMap v-else-if="activeItem === 'Ver Flotas en Ruta'" :permissions="userPermissions" />
       <CaptureMedia v-else-if="activeItem === 'CaptureMedia'"  />
-
       <!-- Agrega otros componentes según sea necesario -->
     </main>
   </div>
@@ -100,22 +106,14 @@ export default {
     RolesManagement,
     RolePermissionsAssignment,
     CaptureMedia
-
   },
   data() {
     return {
       isCollapsed: false,
       activeItem: "Dashboard",
-      // Definir el menú con posibles permisos requeridos (campo requiredPermission)
       menu: [
         {
           name: "Dashboard",
-          icon: "bx bxs-dashboard",
-          link: "#",
-          requiredPermission: "Acceso Panel Administrativo"
-        },
-        {
-          name: "CaptureMedia",
           icon: "bx bxs-dashboard",
           link: "#",
           requiredPermission: "Acceso Panel Administrativo"
@@ -243,23 +241,18 @@ export default {
     authStore() {
       return useAuthStore();
     },
-    // Devuelve los permisos del usuario guardados en el store
     userPermissions() {
       return this.authStore.userPermissions;
     },
-    // Función para comprobar si el usuario tiene un permiso particular
     canAccess() {
       return (permissionName) =>
         this.userPermissions.some((p) => p.nombre === permissionName);
     },
-    // Filtra el menú según los permisos del usuario
     filteredMenu() {
       return this.menu.filter(item => {
-        // Si el item tiene asignado un permiso y el usuario no lo tiene, se omite.
         if (item.requiredPermission && !this.canAccess(item.requiredPermission)) {
           return false;
         }
-        // Si el item tiene hijos, se filtran estos hijos también:
         if (item.children && Array.isArray(item.children)) {
           item.children = item.children.filter(child => {
             if (child.requiredPermission) {
@@ -267,14 +260,12 @@ export default {
             }
             return true;
           });
-          // Si no quedan hijos, se descarta el item padre.
           return item.children.length > 0;
         }
         return true;
       });
     },
     activeIcon() {
-      // Buscar en el menú (filtrado) el ícono correspondiente a activeItem.
       for (const item of this.filteredMenu) {
         if (item.name === this.activeItem) {
           return item.icon;
@@ -295,7 +286,6 @@ export default {
       this.isCollapsed = !this.isCollapsed;
     },
     toggleDropdown(index) {
-      // Cerrar todos los dropdowns excepto el que se hizo clic
       this.filteredMenu.forEach((item, idx) => {
         if (item.children && idx !== index) {
           item.open = false;
@@ -312,6 +302,12 @@ export default {
       this.authStore.resetAuth();
       localStorage.clear();
       this.$router.replace({ name: "Login" });
+    },
+    isActiveParent(item) {
+      if (item.children) {
+        return item.children.some(child => child.name === this.activeItem);
+      }
+      return false;
     }
   }
 };
@@ -334,9 +330,7 @@ export default {
   transition: width 0.3s ease;
   overflow: hidden;
   border-right: 1px solid #dee2e6;
-  
 }
-
 .sidebar.close {
   width: 80px;
 }
@@ -367,18 +361,18 @@ export default {
   padding: 10px 10px;
   transition: background 0.3s;
   cursor: pointer;
+  border-radius: 4px;
 }
 
 .menu-links a:hover,
 .menu-link:hover {
   background: #353535;
-  border-radius: 4px;
 }
 
-.nav-text {
-  font-size: 16px;
-  font-weight: 500;
-  margin-left: 10px;
+.menu-links a.active,
+.menu-link.active {
+  background: #5c5c5c;
+  color: #fff;
 }
 
 /* Dropdown */
@@ -386,7 +380,6 @@ export default {
   margin-left: auto;
   transition: transform 0.3s;
 }
-
 .dropdown .arrow.open {
   transform: rotate(180deg);
 }
@@ -407,7 +400,6 @@ export default {
 
 .sub-menu li a:hover {
   background: #353535;
-  border-radius: 4px;
 }
 
 /* Footer del sidebar */
@@ -445,7 +437,7 @@ export default {
   transition: margin-left 0.3s, width 0.3s;
 }
 
-.sidebar.close~.main-content {
+.sidebar.close ~ .main-content {
   margin-left: 80px;
   width: calc(100% - 80px);
 }

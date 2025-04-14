@@ -24,11 +24,11 @@
           <div class="col-md-4">
             <ul class="nav nav-pills justify-content-center">
               <li class="nav-item" v-for="mod in modules" :key="mod">
-                <button class="btn btn-sm me-2"  :class="{
+                <button class="btn btn-sm me-2" :class="{
                   'btn-outline-secondary': activeModule !== mod,
                   'btn-secondary': activeModule === mod
                 }" @click="activeModule = mod">
-                    {{ mod }}
+                  {{ mod }}
                 </button>
               </li>
             </ul>
@@ -37,14 +37,14 @@
             <ul class="nav nav-tabs justify-content-end">
               <li class="nav-item">
                 <button class="nav-link" :class="{ active: activeTab === 'pendientes' }"
-                  @click="activeTab = 'pendientes'"  >
-                  
+                  @click="activeTab = 'pendientes'">
+
                   Pendientes
                 </button>
               </li>
               <li class="nav-item">
                 <button class="nav-link" :class="{ active: activeTab === 'completadas' }"
-                  @click="activeTab = 'completadas'"  >
+                  @click="activeTab = 'completadas'">
                   Completadas
                 </button>
               </li>
@@ -158,7 +158,7 @@
                   </tbody>
                 </table>
               </div>
-
+<h1>{{ estadoPermitido }} </h1>
               <div v-if="estadoPermitido === 'asignado a transportador'">
                 <div class="mb-3">
                   <label for="transportista" class="form-label">Transportador:</label>
@@ -178,7 +178,7 @@
                 <div class="mb-3">
                   <label for="sticker" class="form-label">Sticker Seguridad:</label>
                   <input type="text" id="sticker" class="form-control" v-model="sticker"
-                    placeholder="Ingrese el codigo del sticker"  />
+                    placeholder="Ingrese el codigo del sticker" />
                 </div>
               </div>
 
@@ -235,6 +235,7 @@ import apiClient from "@/services/api";
 import { Modal } from "bootstrap";
 import { useAuthStore } from "@/stores/authStore";
 import { DateTime } from "luxon";
+import es from "dayjs/locale/es";
 
 
 
@@ -439,7 +440,7 @@ export default {
                 ubicacionId: d.nuevaUbicacionId,
               }))
             : [];
-            const idUsuario = this.authStore.user?.id;
+        const idUsuario = this.authStore.user?.id;
         const body = {
           qrToken: `solicitud_${this.selectedTransferencia.id}`,
           accion,

@@ -333,6 +333,85 @@ module.exports = {
   },
 
 
+  /**
+ * Obtener los conteos de Custodia por clienteId y estado (con estados en mayúsculas).
+ * Se agrupa directamente en el query convirtiendo el valor de "estado" a mayúsculas,
+ * lo que permite que el front-end reciba ya los datos consolidados sin hacer procesamiento adicional.
+ *
+ * @async
+ * @function getCountsByCliente
+ * @param {Object} req - Objeto de solicitud HTTP, espera que en el body se incluya el clienteId.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Promise<void>} Devuelve un JSON con el total de custodias y los conteos por cada estado.
+ * @throws {Error} Devuelve un error 400 si no se proporciona el clienteId o un error 500 en caso de fallo interno.
+ */
+getCountsByCliente: async (req, res) => {
+  try {
+    const { clienteId } = req.body;
+
+    // Validamos que se envíe el clienteId
+    if (!clienteId) {
+      return res.status(400).json({ error: 'El clienteId es obligatorio.' });
+    }
+
+    const pool = await sql.connect(process.env.DB_CONNECTION);
+
+    // La consulta convierte el campo estado a mayúsculas y lo agrupa para obtener el conteo.
+    const result = await pool.request()
+      .input('clienteId', sql.Int, clienteId)
+      .query(`
+        SELECT 
+          UPPER(c.estado) AS estado,
+          COUNT(*) AS count
+        FROM dbo.Custodia c
+        WHERE c.clienteId = @clienteId
+        GROUP BY UPPER(c.estado);
+      `);
+
+    // Variables para almacenar los conteos según estado.
+    let CUSTODIAS = 0;
+    let DISPONIBLE = 0;
+    let DEVOLUCIONES = 0;
+    let SOLICITADA = 0;
+    let ENTREGADO = 0;
+
+    // Recorremos los resultados y asignamos los valores.
+    result.recordset.forEach((row) => {
+      CUSTODIAS += row.count;
+      switch (row.estado) {
+        case 'DISPONIBLE':
+          DISPONIBLE = row.count;
+          break;
+        case 'DEVOLUCION EN PROCESO':
+          DEVOLUCIONES = row.count;
+          break;
+        case 'SOLICITADA':
+          SOLICITADA = row.count;
+          break;
+        case 'ENTREGADO':
+          ENTREGADO = row.count;
+          break;
+        default:
+          // Si hay algún estado no contemplado, se ignora o puedes agregar un manejo especial.
+          break;
+      }
+    });
+
+    // Se retorna un objeto JSON con la información procesada.
+    return res.json({
+      CUSTODIAS,
+      DISPONIBLE,
+      DEVOLUCIONES,
+      SOLICITADA,
+      ENTREGADO,
+    });
+  } catch (error) {
+    console.error('Error en getCountsByCliente Custodia:', error);
+    return res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+},
+
+
 
   /**
    * Eliminar un registro de la tabla Custodia.

@@ -28,8 +28,8 @@ if (window.location.hostname === "localhost") {
 } else if (window.location.hostname === "bodegapp.siglo21.com.co") {
   baseURL = "https://api.siglo21.com.co"; // URL para el dominio específico
 }
-else if (window.location.hostname === "https://outline.melenasco.com") {
-  baseURL = "https://vn9mmqm7-3001.use2.devtunnels.ms/"; // URL para el dominio específico
+else if (window.location.hostname === "outline.melenasco.com") {
+  baseURL = "https://vn9mmqm7-3001.use2.devtunnels.ms"; // URL para el dominio específico
 } else {
   baseURL = import.meta.env.VITE_API_BASE_URL; // URL por defecto (puedes ajustarla)
 }

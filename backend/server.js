@@ -1,4 +1,4 @@
-/**
+{/**
  * @fileoverview Archivo principal del servidor, donde se configuran middlewares, conexión a la base de datos y rutas.
  */
 
@@ -55,7 +55,7 @@ const { initSocket, emitirNotificacion } = require("./services/socket");
 initSocket(server);
 
 // Middlewares globales
-app.use(express.json());
+app.use(express.json({limit: "900mb"}));
 app.use(morgan("dev"));
 app.use(cors());
 
@@ -111,3 +111,4 @@ connectDB()
 
 // Exportar la aplicación, el servidor y la función de notificaciones
 module.exports = { app, server, emitirNotificacion };
+}

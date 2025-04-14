@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid my-4" >
+  <div class="container-fluid my-4">
     <!-- Spinner mientras carga la información -->
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status">
@@ -66,66 +66,45 @@
             </div>
           </div>
         </div>
-        <!-- Card Inventario: Utilización -->
-        <div class="col-12 col-md-6 col-lg-4" v-if="dashboardData.inventoryUsage">
-          <div class="dashboard-card2 type2" :style="cardStyle">
-            <div class="card-content">
-              <div class="card-text">
-                <h1 class="card-value2">
-                  {{ dashboardData.inventoryUsage.percentageUsed.toFixed(1) }}%
-                </h1>
-                <h6 class="card-title">Inventario Utilizado</h6>
-              </div>
-              <div class="card-icon2">
-                <i class="bi bi-bar-chart-line"></i>
-              </div>
-            </div>
+       
+      </div>
+
+
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="card m-0 p-0" style="max-height: calc(100vh - 450px); overflow-y: auto;">
+        <div class="card-header">
+          <h5>Eventos Recientes</h5>
+        </div>
+        <div class="card-body m-0 p-0">
+          <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+            <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th style="position: sticky; top: 0; background: #fff;">Solicitud</th>
+              <th style="position: sticky; top: 0; background: #fff;">Estado Anterior</th>
+              <th style="position: sticky; top: 0; background: #fff;">Nuevo Estado</th>
+              <th style="position: sticky; top: 0; background: #fff;">Fecha</th>
+              <th style="position: sticky; top: 0; background: #fff;">Hora</th>
+
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="audit in dashboardData.recentAudits" :key="audit.SolicitudID + audit.FechaEvento">
+              <td>{{ audit.SolicitudID }}</td>
+              <td>{{ audit.EstadoAnterior }}</td>
+              <td>{{ audit.NuevoEstado }}</td>
+              <td>{{ formatDate(audit.FechaEvento) }}</td>
+              <td>{{ formatTime(audit.FechaEvento) }}</td>
+            </tr>
+          </tbody>
+            </table>
           </div>
         </div>
-        <!-- Card Notificaciones No Leídas -->
-        <div class="col-12 col-md-6 col-lg-4" v-if="dashboardData.unreadNotifications !== null">
-          <div class="dashboard-card2 type2" :style="cardStyle">
-            <div class="card-content">
-              <div class="card-text">
-                <h1 class="card-value2">{{ dashboardData.unreadNotifications }}</h1>
-                <h6 class="card-title">Notificaciones sin Leer</h6>
-              </div>
-              <div class="card-icon2">
-                <i class="bi bi-bell"></i>
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
-      <!-- Eventos Recientes (Audit) -->
-      <div class="row mt-4">
-        <div class="col-12">
-          <h5>Eventos Recientes</h5>
-          <div class="table-responsive">
-            <table class="table table-bordered">
-              <thead>
-                <tr>
-                  <th>Solicitud</th>
-                  <th>Estado Anterior</th>
-                  <th>Nuevo Estado</th>
-                  <th>Fecha</th>
-                  <th>Usuario</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="audit in dashboardData.recentAudits" :key="audit.SolicitudID + audit.FechaEvento">
-                  <td>{{ audit.SolicitudID }}</td>
-                  <td>{{ audit.EstadoAnterior }}</td>
-                  <td>{{ audit.NuevoEstado }}</td>
-                  <td>{{ formatDate(audit.FechaEvento) }}<br />{{ formatTime(audit.FechaEvento) }}</td>
-                  <td>{{ audit.Usuario }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Mensaje de error si existe -->

@@ -1,16 +1,35 @@
 <template>
   <div class="container-fluid m-0 p-0">
-    <!-- Encabezado: Buscador y Botón Nuevo -->
+    <!-- Encabezado: Buscador, Filtro por Cliente y Botón Nuevo -->
     <div class="row m-0 p-0 mt-2">
       <div class="col-md-12 m-0 p-0">
         <div class="card m-0 p-0 shadow-sm">
           <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="input-group search-pill">
-              <span class="input-group-text">
-                <i class="bx bx-search"></i>
-              </span>
-              <input type="text" class="form-control" placeholder="Buscar por nombre o email" v-model="searchQuery"
-                aria-label="Buscar usuario" autofocus />
+            <div class="d-flex align-items-center">
+              <div class="input-group search-pill">
+                <span class="input-group-text">
+                  <i class="bx bx-search"></i>
+                </span>
+                <input type="text" class="form-control" placeholder="Buscar por nombre o email" v-model="searchQuery"
+                  aria-label="Buscar usuario" autofocus />
+              </div>
+
+              <div class="input-group filter-select-container ms-2">
+                <span class="input-group-text bg-white border-0">
+                  <i class="bx bx-filter-alt"></i>
+                </span>
+                <select class="form-select form-select-filter" v-model="selectedClient">
+                  <option value="">Todos los clientes</option>
+                  <option v-for="cli in clientes" :key="cli.id" :value="cli.id">
+                    {{ cli.nombre }}
+                  </option>
+                </select>
+              </div>
+
+
+
+
+
             </div>
             <button class="buttons-actions my-custom-height" @click="openNewUserModal" aria-label="Crear nuevo usuario">
               <i class="bx bx-plus-circle me-1"></i> Nuevo Usuario
@@ -23,21 +42,23 @@
                   <tr>
                     <th>ID</th>
                     <th>Nombre</th>
+                    <th>Tipo Usuario</th>
                     <th>Email</th>
                     <th>Cliente</th>
+                    <th>Estado</th>
                     <th class="text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-if="loading">
-                    <td colspan="5" class="text-center py-5">
+                    <td colspan="7" class="text-center py-5">
                       <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Cargando...</span>
                       </div>
                     </td>
                   </tr>
                   <tr v-else-if="filteredUsers.length === 0">
-                    <td colspan="5" class="text-center text-muted py-5">
+                    <td colspan="7" class="text-center text-muted py-5">
                       <i class="bx bx-user-x fs-1 d-block mb-2 text-secondary"></i>
                       No hay usuarios registrados aún.
                     </td>
@@ -45,15 +66,20 @@
                   <tr v-else v-for="user in filteredUsers" :key="user.id">
                     <td>{{ user.id }}</td>
                     <td>{{ user.nombre }}</td>
+                    <td>{{ getUserType(user.tipoUsuarioId) }}</td>
                     <td>{{ user.email }}</td>
                     <td>{{ getClientName(user.clienteId) }}</td>
+                    <td>
+                      <span v-if="user.activo" class="badge bg-success blink">ACTIVO</span>
+                      <span v-else class="badge bg-danger">INACTIVO</span>
+                    </td>
                     <td class="text-center">
                       <button class="btn btn-sm btn-warning me-1" @click="editUser(user)" title="Editar usuario">
                         <i class="bx bx-edit"></i>
                       </button>
-                      <button class="btn btn-sm btn-danger" @click="deleteUser(user.id)" title="Eliminar usuario">
+                      <!-- <button class="btn btn-sm btn-danger" @click="deleteUser(user.id)" title="Eliminar usuario">
                         <i class="bx bx-trash"></i>
-                      </button>
+                      </button> -->
                     </td>
                   </tr>
                 </tbody>
@@ -101,8 +127,8 @@
                 </div>
               </div>
 
-               <!-- Sección: Firma -->
-               <h6 class="mb-2 fw-bold">Firma</h6>
+              <!-- Sección: Firma -->
+              <h6 class="mb-2 fw-bold">Firma</h6>
               <div class="row row-cols-1 row-cols-md-2 g-3 mb-3">
                 <div class="col">
                   <label class="form-label">Cargar Firma (PNG)</label>
@@ -121,8 +147,8 @@
                   </div>
                 </div>
               </div>
-               <!-- Sección: Contraseña -->
-               <h6 class="mb-2 fw-bold">Contraseña</h6>
+              <!-- Sección: Contraseña -->
+              <h6 class="mb-2 fw-bold">Contraseña</h6>
               <div class="row row-cols-1 row-cols-md-2 g-3">
                 <div class="col">
                   <label class="form-label">Contraseña</label>
@@ -165,7 +191,7 @@
                   </div>
                 </div>
               </div>
- 
+
               <!-- Sección: Datos del Cliente -->
               <h6 class="mb-2 fw-bold">Datos del Cliente</h6>
               <div class="row row-cols-1 row-cols-md-3 g-3 mb-3">
@@ -196,11 +222,7 @@
                     </label>
                   </div>
                 </div>
-
               </div>
-
-             
-             
               <!-- Fin Sección Contraseña -->
             </div>
             <div class="modal-footer">
@@ -234,6 +256,7 @@ export default {
       clientes: [],
       tiposUsuario: [],
       searchQuery: '',
+      selectedClient: '',
       loading: true,
       isLoading: false,
       isEditing: false,
@@ -247,15 +270,28 @@ export default {
     };
   },
   computed: {
+    getUserType() {
+      return (id) => {
+        const tipo = this.tiposUsuario.find(item => item.id === id);
+        return tipo ? tipo.tipo : 'Desconocido';
+      };
+    },
     filteredUsers() {
+      let filtered = this.users;
+      // Filtro por cliente
+      if (this.selectedClient) {
+        filtered = filtered.filter(user => user.clienteId == this.selectedClient);
+      }
+      // Filtro por búsqueda
       const query = this.searchQuery.toLowerCase();
-      return query
-        ? this.users.filter(
+      if (query) {
+        filtered = filtered.filter(
           u =>
             (u.nombre && u.nombre.toLowerCase().includes(query)) ||
             (u.email && u.email.toLowerCase().includes(query))
-        )
-        : this.users;
+        );
+      }
+      return filtered;
     },
     // Validación dinámica de requisitos de contraseña
     passwordChecks() {
@@ -319,7 +355,6 @@ export default {
         const res = await apiClient.get("/api/roles");
         this.tiposUsuario = res.data;
         console.log("Tipos de usuario:", this.tiposUsuario);
-        
       } catch (err) {
         Swal.fire("Error", "No se pudieron cargar los roles", "error");
       }
@@ -519,5 +554,69 @@ export default {
   height: 36px;
   padding: 6px 12px;
   font-size: 0.9rem;
+}
+
+
+
+/* Contenedor del select con estilo redondeado */
+.filter-select-container {
+  border-radius: 2rem;
+  /* esquinas redondeadas */
+  overflow: hidden;
+  /* oculta bordes internos */
+  border: 1px solid #ced4da;
+  /* borde exterior */
+  background-color: #fff;
+  /* fondo */
+  transition: all 0.2s ease-in-out;
+  width: 300px;
+  /* Ajusta el ancho a tu gusto */
+}
+
+/* El ícono y su fondo */
+.input-group-text {
+  background-color: transparent !important;
+  /* para que no choque con .bg-white si aplicaste otra clase */
+  border: none;
+  border-right: 1px solid #ced4da;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+
+}
+
+/* El select con fondo transparente */
+.form-select-filter {
+  border: none;
+  outline: none;
+  box-shadow: none !important;
+  background-color: transparent;
+  border-radius: 0;
+  /* quita esquinas del select interno */
+
+}
+
+/* Quita outline al enfocar */
+.form-select-filter:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.buttons-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 41px;
+  width: 150px;
+  padding: 0 1rem;
+  margin-top: 0;
+  /* quita -10px */
+  gap: 0.25rem;
+  /* espacio entre icono y texto */
+  font-weight: 500;
+  font-size: 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease-in-out;
 }
 </style>

@@ -15,6 +15,15 @@ const { authMiddleware } = require("../middlewares/authMiddleware");
  */
 router.get('/', authMiddleware, custodiaController.getAll);
 
+
+/**
+ * @route POST /custodias/countsByCliente
+ * @description Obtiene la cantidad de registros de Custodia por clienteId.
+ * @param {number} req.body.clienteId - ID del cliente.
+ * @returns {Object} Objeto JSON con la cantidad de registros por clienteId.
+ */
+router.post('/countsByCliente', authMiddleware, custodiaController.getCountsByCliente);
+
 /**
  * @route GET /custodias/:id
  * @description Obtiene un registro de Custodia por su ID.

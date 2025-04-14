@@ -46,7 +46,7 @@ async function getTransicionesPermitidas(req, res) {
         FROM EstadoTransiciones
         WHERE modulo = @modulo
           AND estadoActual = @estadoActual
-          AND tipoUsuarioId = @tipoUsuarioId
+          // AND tipoUsuarioId = @tipoUsuarioId
       `);
 
     // Si la consulta encuentra al menos una transición,

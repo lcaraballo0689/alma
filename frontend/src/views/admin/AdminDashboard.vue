@@ -57,7 +57,7 @@ const movimientosreg = defineAsyncComponent(() =>
   import("./TransferenciasManager.vue")
 );
 const adminPanel = defineAsyncComponent(() =>
-  import("./adminPanel.vue")
+  import("./AdminPanel.vue")
 );
 const usuarios = defineAsyncComponent(() =>
   import("./usuarios.vue")

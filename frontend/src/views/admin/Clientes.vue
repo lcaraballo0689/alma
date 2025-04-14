@@ -7,26 +7,17 @@
           <div class="card-header d-flex align-items-center justify-content-between">
             <!-- Grupo de búsqueda -->
             <div class="input-group search-pill">
-  <span class="input-group-text">
-    <i class="bx bx-search"></i>
-  </span>
-  <input
-    type="text"
-    class="form-control"
-    placeholder="Buscar por nombre o NIT"
-    v-model="searchQuery"
-    aria-label="Buscar cliente por nombre o NIT"
-    autofocus
-  />
-</div>
+              <span class="input-group-text">
+                <i class="bx bx-search"></i>
+              </span>
+              <input type="text" class="form-control" placeholder="Buscar por nombre o NIT" v-model="searchQuery"
+                aria-label="Buscar cliente por nombre o NIT" autofocus />
+            </div>
 
 
             <!-- Botón nuevo cliente -->
-            <button
-              class="buttons-actions my-custom-height"
-              @click="openNewClientModal"
-              aria-label="Crear nuevo cliente"
-            >
+            <button class="buttons-actions my-custom-height" @click="openNewClientModal"
+              aria-label="Crear nuevo cliente">
               <i class="bx bx-plus-circle me-1"></i> Nuevo Cliente
             </button>
           </div>
@@ -75,18 +66,10 @@
                     <td><span class="badge bg-warning text-dark">{{ cliente.ansNormal }} h</span></td>
                     <td><span class="badge bg-danger">{{ cliente.ansUrgente }} h</span></td>
                     <td class="text-center">
-                      <button
-                        class="btn btn-sm btn-warning me-1"
-                        @click="editCliente(cliente)"
-                        title="Editar cliente"
-                      >
+                      <button class="btn btn-sm btn-warning me-1" @click="editCliente(cliente)" title="Editar cliente">
                         <i class="bx bx-edit"></i>
                       </button>
-                      <button
-                        class="btn btn-sm btn-danger"
-                        @click="deleteCliente(cliente.id)"
-                        title="Eliminar cliente"
-                      >
+                      <button class="btn btn-sm btn-danger" @click="deleteCliente(cliente.id)" title="Eliminar cliente">
                         <i class="bx bx-trash"></i>
                       </button>
                     </td>
@@ -101,13 +84,7 @@
     </div>
 
     <!-- Modal para crear/editar Cliente -->
-    <div
-      ref="clientModal"
-      class="modal fade"
-      tabindex="-1"
-      aria-labelledby="clienteModalLabel"
-      aria-hidden="true"
-    >
+    <div ref="clientModal" class="modal fade" tabindex="-1" aria-labelledby="clienteModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content modal-custom">
           <form @submit.prevent="saveCliente">
@@ -115,79 +92,38 @@
               <h5 class="modal-title" id="clienteModalLabel">
                 {{ isEditing ? 'Editar Cliente' : 'Nuevo Cliente' }}
               </h5>
-              <button
-                type="button"
-                class="btn-close"
-                @click="closeClientModal"
-                aria-label="Cerrar"
-              ></button>
+              <button type="button" class="btn-close" @click="closeClientModal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label">Nombre</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    v-model="currentCliente.nombre"
-                    required
-                    autocomplete="name"
-                  />
+                  <input type="text" class="form-control" v-model="currentCliente.nombre" required
+                    autocomplete="name" />
 
                   <label class="form-label mt-3">Teléfono</label>
-                  <input
-                    type="tel"
-                    class="form-control"
-                    v-model="currentCliente.telefono"
-                    required
-                    autocomplete="tel"
-                  />
+                  <input type="tel" class="form-control" v-model="currentCliente.telefono" required
+                    autocomplete="tel" />
 
                   <label class="form-label mt-3">NIT</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    v-model="currentCliente.nit"
-                    required
-                    autocomplete="off"
-                  />
+                  <input type="text" class="form-control" v-model="currentCliente.nit" required autocomplete="off" />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">ANS Devolución (h)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    class="form-control"
-                    v-model.number="currentCliente.ansDevolucion"
-                    required
-                  />
+                  <input type="number" min="0" class="form-control" v-model.number="currentCliente.ansDevolucion"
+                    required />
 
                   <label class="form-label mt-3">ANS Especial (h)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    class="form-control"
-                    v-model.number="currentCliente.ansEspecial"
-                    required
-                  />
+                  <input type="number" min="0" class="form-control" v-model.number="currentCliente.ansEspecial"
+                    required />
 
                   <label class="form-label mt-3">ANS Normal (h)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    class="form-control"
-                    v-model.number="currentCliente.ansNormal"
-                    required
-                  />
+                  <input type="number" min="0" class="form-control" v-model.number="currentCliente.ansNormal"
+                    required />
 
                   <label class="form-label mt-3">ANS Urgente (h)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    class="form-control"
-                    v-model.number="currentCliente.ansUrgente"
-                    required
-                  />
+                  <input type="number" min="0" class="form-control" v-model.number="currentCliente.ansUrgente"
+                    required />
                 </div>
               </div>
             </div>
@@ -198,12 +134,7 @@
               <button type="submit" class="btn btn-success" :disabled="isLoading">
                 <i :class="isEditing ? 'bx bx-edit-alt me-1' : 'bx bx-save me-1'"></i>
                 <span v-if="!isLoading">{{ isEditing ? 'Actualizar' : 'Crear' }}</span>
-                <span
-                  v-else
-                  class="spinner-border spinner-border-sm"
-                  role="status"
-                  aria-hidden="true"
-                ></span>
+                <span v-else class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
               </button>
             </div>
           </form>
@@ -446,6 +377,7 @@ export default {
   border-radius: 0.375rem;
   transition: all 0.3s ease-in-out;
 }
+
 /* Agrupa el input y el icono dentro de una "píldora" */
 .search-pill {
   border-radius: 2rem;
@@ -465,7 +397,7 @@ export default {
   display: flex;
   align-items: center;
   color: #6c757d;
-  
+
 }
 
 /* Estilo del input */
@@ -481,5 +413,4 @@ export default {
 .search-pill .form-control:focus {
   box-shadow: none;
 }
-
 </style>

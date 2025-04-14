@@ -30,6 +30,7 @@ import 'boxicons/css/boxicons.min.css';
 
 import './style.css';
 
+
 const app = createApp(App);
 app.use(VueSweetalert2);
 app.use(VueGridLayout)

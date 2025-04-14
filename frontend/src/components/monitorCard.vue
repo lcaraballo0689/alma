@@ -42,7 +42,7 @@ export default {
       required: true,
     },
     total: {
-      type: Number,
+      type: String,
       required: true,
     },
     color: {

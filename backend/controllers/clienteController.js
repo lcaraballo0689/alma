@@ -120,14 +120,14 @@ module.exports = {
       ansNormal,
       ansUrgente,
     } = req.body;
-    
+
     try {
       const pool = await sql.connect(process.env.DB_CONNECTION);
       // Verificar existencia
       const check = await pool.request()
         .input("id", sql.Int, id)
         .query(`SELECT id FROM dbo.Cliente WHERE id = @id`);
-      
+
       if (check.recordset.length === 0) {
         return res.status(404).json({ error: "Cliente no encontrado." });
       }
@@ -158,7 +158,7 @@ module.exports = {
             ansUrgente = @ansUrgente
           WHERE id = @id
         `);
-      
+
       return res.json({ message: "Cliente actualizado exitosamente." });
     } catch (error) {
       console.error("Error en update Cliente:", error);
@@ -166,27 +166,40 @@ module.exports = {
     }
   },
 
-  // Eliminar un registro de Cliente
+  // Eliminar un registro de Cliente junto con sus relaciones dependientes
   delete: async (req, res) => {
     const { id } = req.params;
     try {
       const pool = await sql.connect(process.env.DB_CONNECTION);
-      // Verificar existencia
+
+      // 1. Verificar existencia del cliente
       const check = await pool.request()
         .input("id", sql.Int, id)
         .query(`SELECT id FROM dbo.Cliente WHERE id = @id`);
+
       if (check.recordset.length === 0) {
         return res.status(404).json({ error: "Cliente no encontrado." });
       }
-      
+
+      // 2. Eliminar registros relacionados
+      await pool.request()
+        .input("clienteId", sql.Int, id)
+        .query(`
+        DELETE FROM dbo.Consecutivos WHERE clienteId = @clienteId;
+        DELETE FROM dbo.HorasLaborales WHERE clienteId = @clienteId;
+      `);
+
+      // 3. Eliminar el cliente
       await pool.request()
         .input("id", sql.Int, id)
         .query(`DELETE FROM dbo.Cliente WHERE id = @id`);
-      
+
       return res.json({ message: "Cliente eliminado exitosamente." });
+
     } catch (error) {
       console.error("Error en delete Cliente:", error);
       return res.status(500).json({ error: "Error interno del servidor." });
     }
   }
+
 };
