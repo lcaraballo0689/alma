@@ -18,7 +18,7 @@
             <!-- Ítem con submenús -->
             <div v-else class="dropdown">
               <div class="menu-link"
-                   @click="toggleDropdown(index)"
+                   @click="toggleDropdown(item.name)"
                    :class="{ active: isActiveParent(item) }">
                 <div class="d-flex align-items-center">
                   <i :class="item.icon"></i>
@@ -111,6 +111,7 @@ export default {
     return {
       isCollapsed: false,
       activeItem: "Dashboard",
+      openDropdowns: {}, // Estado independiente para cada menú con submenús
       menu: [
         {
           name: "Dashboard",
@@ -147,8 +148,7 @@ export default {
               link: "#",
               requiredPermission: "Visualizar Horas Laborables de Clientes"
             }
-          ],
-          open: false
+          ]
         },
         {
           name: "Administrar Usuarios",
@@ -179,8 +179,7 @@ export default {
               link: "#",
               requiredPermission: "Asignar Permisos a Roles"
             }
-          ],
-          open: false
+          ]
         },
         {
           name: "Administrar Bodegas",
@@ -199,8 +198,7 @@ export default {
               link: "#",
               requiredPermission: "Visualizar Ubicaciones en Bodegas"
             }
-          ],
-          open: false
+          ]
         },
         {
           name: "Administrar Flotas",
@@ -231,8 +229,7 @@ export default {
               link: "#",
               requiredPermission: "Visualizar Rutas de Flotas"
             }
-          ],
-          open: false
+          ]
         }
       ]
     };
@@ -249,21 +246,29 @@ export default {
         this.userPermissions.some((p) => p.nombre === permissionName);
     },
     filteredMenu() {
-      return this.menu.filter(item => {
-        if (item.requiredPermission && !this.canAccess(item.requiredPermission)) {
-          return false;
-        }
-        if (item.children && Array.isArray(item.children)) {
-          item.children = item.children.filter(child => {
-            if (child.requiredPermission) {
-              return this.canAccess(child.requiredPermission);
+      // Se crea una copia del menú filtrado sin modificar el original y se
+      // agrega la propiedad "open" tomando el valor desde openDropdowns.
+      return this.menu
+        .map((item) => {
+          if (item.requiredPermission && !this.canAccess(item.requiredPermission)) {
+            return null;
+          }
+          const newItem = { ...item };
+          if (newItem.children && Array.isArray(newItem.children)) {
+            newItem.children = newItem.children.filter((child) => {
+              if (child.requiredPermission) {
+                return this.canAccess(child.requiredPermission);
+              }
+              return true;
+            });
+            if (newItem.children.length === 0) {
+              return null;
             }
-            return true;
-          });
-          return item.children.length > 0;
-        }
-        return true;
-      });
+          }
+          newItem.open = this.openDropdowns[newItem.name] || false;
+          return newItem;
+        })
+        .filter((item) => item !== null);
     },
     activeIcon() {
       for (const item of this.filteredMenu) {
@@ -285,15 +290,12 @@ export default {
     toggleSidebar() {
       this.isCollapsed = !this.isCollapsed;
     },
-    toggleDropdown(index) {
-      this.filteredMenu.forEach((item, idx) => {
-        if (item.children && idx !== index) {
-          item.open = false;
-        }
-      });
-      if (this.menu[index].children) {
-        this.menu[index].open = !this.menu[index].open;
-      }
+    toggleDropdown(menuName) {
+      // Alterna el estado abierto del menú identificado por su nombre
+      this.openDropdowns = {
+        ...this.openDropdowns,
+        [menuName]: !this.openDropdowns[menuName]
+      };
     },
     setActive(name) {
       this.activeItem = name;
