@@ -326,8 +326,11 @@ export default {
       }
     },
     async fetchEstadoPermitido() {
+      
       try {
         const tipoUsuarioId = this.authStore.user?.tipoUsuarioId;
+        console.log("Tipo Usuario ID:", tipoUsuarioId);
+        
         if (!this.selectedTransferencia) return;
         const body = {
           clienteId: this.selectedTransferencia.clienteId,
@@ -335,6 +338,7 @@ export default {
           modulo: this.selectedTransferencia.modulo,
           estadoActual: this.selectedTransferencia.estado,
         };
+        console.log("Body para estado permitido:", body);
         const response = await apiClient.post(
           "/api/estados/transiciones",
           body

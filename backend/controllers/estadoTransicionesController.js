@@ -1,5 +1,6 @@
 // controllers/estadoTransicionesController.js
 const { connectDB, sql } = require('../config/db');
+const logger = require('../logger');
 
 /**
  * Devuelve un objeto que indica si hay un estadoPermitido y si el botón está habilitado.
@@ -16,17 +17,23 @@ const { connectDB, sql } = require('../config/db');
  */
 async function getTransicionesPermitidas(req, res) {
   const { modulo, estadoActual, clienteId, tipoUsuarioId } = req.body;
+  logger.info('getTransicionesPermitidas - Request body:', req.body);
+  logger.info('getTransicionesPermitidas - Request headers:', req.headers);
 
   if (!modulo) {
+    logger.error('Falta parámetro "modulo".');
     return res.status(400).json({ error: 'Falta parámetro "modulo".' });
   }
   if (!estadoActual) {
+    logger.error('Falta parámetro "estadoActual".');
     return res.status(400).json({ error: 'Falta parámetro "estadoActual".' });
   }
   if (!clienteId) {
+    logger.error('Falta parámetro "clienteId".');
     return res.status(400).json({ error: 'Falta parámetro "clienteId".' });
   }
   if (!tipoUsuarioId) {
+    logger.error('Falta parámetro "tipoUsuarioId".');
     return res.status(400).json({ error: 'Falta parámetro "tipoUsuarioId".' });
   }
 
@@ -46,7 +53,7 @@ async function getTransicionesPermitidas(req, res) {
         FROM EstadoTransiciones
         WHERE modulo = @modulo
           AND estadoActual = @estadoActual
-          // AND tipoUsuarioId = @tipoUsuarioId
+          -- AND tipoUsuarioId = @tipoUsuarioId
       `);
 
     // Si la consulta encuentra al menos una transición,
