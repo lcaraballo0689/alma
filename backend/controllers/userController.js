@@ -241,6 +241,48 @@ async function deleteUser(req, res) {
     return res.status(500).json({ error: 'Error interno del servidor.' });
   }
 }
+/**
+ * Actualiza únicamente la contraseña de un usuario.
+ * @async
+ * @param {Object} req - Objeto de solicitud, con req.params.id y req.body.password.
+ * @param {Object} res - Objeto de respuesta.
+ */
+async function updatePassword(req, res) {
+  const { id } = req.params;
+  const { password } = req.body;
+
+  if (!password || password.trim() === '') {
+    return res.status(400).json({ error: 'La nueva contraseña es obligatoria.' });
+  }
+
+  try {
+    const pool = await connectDB();
+
+    // Verificar existencia del usuario
+    const check = await pool.request()
+      .input('id', sql.Int, id)
+      .query('SELECT id FROM dbo.Usuario WHERE id = @id');
+    if (!check.recordset.length) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    // Hashear y actualizar
+    const hashed = await bcrypt.hash(password, 10);
+    await pool.request()
+      .input('id', sql.Int, id)
+      .input('password', sql.NVarChar, hashed)
+      .query(`
+        UPDATE dbo.Usuario
+        SET password = @password
+        WHERE id = @id
+      `);
+
+    return res.json({ message: 'Contraseña actualizada correctamente.' });
+  } catch (error) {
+    console.error('Error en updatePassword:', error);
+    return res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+}
 
 module.exports = {
   getAllUsers,
@@ -248,4 +290,5 @@ module.exports = {
   createUser,
   updateUser,
   deleteUser,
+  updatePassword
 };

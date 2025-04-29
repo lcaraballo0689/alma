@@ -9,7 +9,8 @@ const {
   getUserById,
   createUser,
   updateUser,
-  deleteUser
+  deleteUser,
+  updatePassword
 } = require('../controllers/userController');
 const { authMiddleware } = require("../middlewares/authMiddleware");
 
@@ -54,5 +55,14 @@ router.put('/:id', authMiddleware, updateUser);
  * @returns {Object} Objeto JSON con mensaje de confirmación o error.
  */
 router.delete('/:id', authMiddleware, deleteUser);
+
+/**
+ * @route POST /usuarios/firmar
+ * @description Actualiza la contraseña de un usuario.
+ * @param {number} req.params.id - ID del usuario.
+ * @param {Object} req.body - Objeto que contiene la nueva contraseña.
+ * @returns {Object} Objeto JSON con mensaje de confirmación o error.
+ */
+router.post('/updatepass/:id', authMiddleware, updatePassword);
 
 module.exports = router;
