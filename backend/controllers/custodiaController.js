@@ -253,7 +253,7 @@ module.exports = {
  * @throws {Error} Devuelve un error 400 si no se proporciona clienteId, un error 404 si no hay registros, o un error 500 si ocurre un error en la consulta SQL.
  */
   getByClienteId: async (req, res) => {
-    const { clienteId, tipo, page, pageSize } = req.body; // Se espera clienteId, tipo (filtro), page y pageSize
+    const { clienteId, tipo, page, pageSize, searchTerm } = req.body; // Incluye searchTerm para filtrar
 
     if (!clienteId) {
       return res.status(400).json({ error: 'El clienteId es obligatorio.' });
@@ -268,17 +268,16 @@ module.exports = {
       const pool = await sql.connect(process.env.DB_CONNECTION);
 
       // Construir la cláusula WHERE.
-      // Si se recibe el parámetro 'tipo', se filtra por estado:
-      // - "Disponible para Prestar" => estado = 'disponible'
-      // - "Disponible para Devolver" => estado = 'entregado'
-      // Si no se pasa 'tipo' o es "Inventario", se muestra todo.
       let whereClause = 'WHERE c.clienteId = @clienteId';
       if (tipo === 'disponible') {
         whereClause += " AND c.estado = 'DISPONIBLE'";
       } else if (tipo === 'entregado') {
         whereClause += " AND c.estado = 'ENTREGADO'";
       }
-
+      // Agregar filtro por searchTerm si se proporciona
+      if (searchTerm) {
+        whereClause += " AND (c.item LIKE @searchTerm OR c.referencia1 LIKE @searchTerm OR c.referencia2 LIKE @searchTerm OR c.referencia3 LIKE @searchTerm)";
+      }
 
       // Consulta para obtener los registros paginados
       const query = `
@@ -304,6 +303,7 @@ module.exports = {
         .input('clienteId', sql.Int, clienteId)
         .input('offset', sql.Int, offset)
         .input('pageSize', sql.Int, size)
+        .input(searchTerm ? 'searchTerm' : '', sql.VarChar, searchTerm ? `%${searchTerm}%` : '')
         .query(query);
 
       // Consulta para obtener el total de registros con el filtro aplicado.
@@ -314,6 +314,7 @@ module.exports = {
       `;
       const countResult = await pool.request()
         .input('clienteId', sql.Int, clienteId)
+        .input(searchTerm ? 'searchTerm' : '', sql.VarChar, searchTerm ? `%${searchTerm}%` : '')
         .query(countQuery);
 
       if (result.recordset.length === 0) {
