@@ -2,8 +2,6 @@
   <v-app>
     <v-main>
       <v-container>
-        <h1>Configuración de Usuario</h1>
-
         <!-- Mostrar información del perfil -->
         <v-card class="mb-6">
           <v-card-title>Perfil</v-card-title>
@@ -22,7 +20,7 @@
         </v-card>
 
         <!-- Sección: Contraseña -->
-        
+        <v-card class="">
           <v-card-title>Actualizar Contraseña</v-card-title>
           <v-card-text>
             <v-form ref="form" v-model="valid" lazy-validation>
@@ -31,57 +29,45 @@
                 :type="showPassword ? 'text' : 'password'"
                 label="Nueva Contraseña"
                 @input="validatePassword"
-              /><button
-                type="button"
-                class="btn btn-outline-secondary"
-                @click="showPassword = !showPassword"
-              >
-                <i :class="showPassword ? 'bx bx-show' : 'bx bx-hide'"></i>
-              </button>
+              />
 
               <!-- Lista dinámica de validación de requisitos -->
-            <ul class="list-unstyled mt-2" v-if="password" style="list-style: none;">
-              <li v-for="check in passwordChecks" :key="check.text">
-                <i
-                  :class="
-                    check.valid
-                      ? 'bx bx-check text-success'
-                      : 'bx bx-x text-danger'
-                  "
-                ></i>
-                <small class="ms-1">{{ check.text }}</small>
-              </li>
-            </ul>
-            <div v-if="passwordError" class="text-danger small">
-              {{ passwordError }}
-            </div>
-              <v-text-field class="mt-6"
+              <ul
+                class="list-unstyled mt-2"
+                v-if="password"
+                style="list-style: none"
+              >
+                <li v-for="check in passwordChecks" :key="check.text">
+                  <i
+                    :class="
+                      check.valid
+                        ? 'bx bx-check text-success'
+                        : 'bx bx-x text-danger'
+                    "
+                  ></i>
+                  <small class="ms-1">{{ check.text }}</small>
+                </li>
+              </ul>
+              <div v-if="passwordError" class="text-danger small">
+                {{ passwordError }}
+              </div>
+              <v-text-field
+                class="mt-2"
                 v-model="confirmPassword"
                 :type="showConfirmPassword ? 'text' : 'password'"
                 label="Confirmar Contraseña"
                 @input="validateConfirmPassword"
               />
-              <button
-                type="button"
-                class="btn btn-outline-secondary"
-                @click="showConfirmPassword = !showConfirmPassword"
-              >
-                <i
-                  :class="showConfirmPassword ? 'bx bx-show' : 'bx bx-hide'"
-                ></i>
-              </button>
             </v-form>
-          </v-card-text>
-        
 
-        <div class="mt-4">
-          <v-btn
-            color="success"
-            :disabled="!isFormValid"
-            @click="updatePassword"
-            >Actualizar</v-btn
-          >
-        </div>
+            <v-btn
+              color="success"
+              :disabled="!isFormValid"
+              @click="updatePassword"
+              >Actualizar</v-btn
+            >
+          </v-card-text>
+        </v-card>
       </v-container>
     </v-main>
   </v-app>

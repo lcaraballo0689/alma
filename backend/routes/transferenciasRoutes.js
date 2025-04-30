@@ -12,8 +12,8 @@ const {
   recepcionar,
   asignarTransportador,
   recoger,
-  listarUbicaciones
-  
+  listarUbicaciones,
+  detalleCompletoTransferencia
 } = require('../controllers/transferenciasController');
 const { authMiddleware } = require("../middlewares/authMiddleware");
 router.post('/crear', authMiddleware, createTransferencia);
@@ -27,5 +27,6 @@ router.delete('/eliminar', authMiddleware, eliminarTransferencia);
 router.put('/asignarTransportador', authMiddleware, asignarTransportador);
 router.put('/recoger', authMiddleware, recoger);
 router.get('/ubicaciones', authMiddleware, listarUbicaciones);
+router.post('/detalleCompleto', authMiddleware, detalleCompletoTransferencia);
 
 module.exports = router;

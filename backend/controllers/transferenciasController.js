@@ -17,6 +17,55 @@ const { formatDate } = require('../utils/dateUtils');
 
 const logger = require("../logger");
 
+
+/**
+ * GET /api/client/transferencias/:solicitudId/detalle-completo
+ * Devuelve header + detalle de la solicitud
+ */
+async function detalleCompletoTransferencia(req, res, next) {
+  try {
+    const { solicitudId } = req.body;
+    if (!solicitudId) {
+      return res.status(400).json({ error: "El parámetro solicitudId es obligatorio." });
+    }
+    const pool = await connectDB();
+
+    // Header
+    const headerResult = await pool
+      .request()
+      .input("solicitudId", sql.Int, solicitudId)
+      .query(`SELECT * FROM SolicitudTransporte WHERE id = @solicitudId`);
+    if (headerResult.recordset.length === 0) {
+      return res.status(404).json({ error: `No existe la solicitud ${solicitudId}` });
+    }
+    const solicitud = headerResult.recordset[0];
+
+    // Detalle
+    const detalleResult = await pool
+      .request()
+      .input("solicitudId", sql.Int, solicitudId)
+      .query(`
+        SELECT id, tipo, referencia1, referencia2, referencia3, descripcion, estado
+        FROM DetalleSolicitudTransporte
+        WHERE solicitudTransporteId = @solicitudId
+        ORDER BY id ASC
+      `);
+
+    return res.status(200).json({
+      solicitud,
+      detalle: detalleResult.recordset,
+    });
+  } catch (err) {
+    logger.error("detalleCompletoTransferencia - Error", { error: err.message });
+    return next(err);
+  }
+}
+
+
+
+
+
+
 /**
  * Función auxiliar para obtener el correo del usuario.
  * @param {Object} pool - Conexión a la base de datos.
@@ -1795,5 +1844,6 @@ module.exports = {
   asignarTransportador,
   recoger,
   listarUbicaciones,
-  procesarTransferenciaInterna
+  procesarTransferenciaInterna,
+  detalleCompletoTransferencia
 };
