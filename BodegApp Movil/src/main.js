@@ -23,3 +23,11 @@ const app = createApp(App)
   .use(vuetify)
   .component('Icon', Icon)
   .mount('#app');
+  if (/android/i.test(navigator.userAgent)) {
+    // Attempt to lock orientation to portrait mode in both browser and PWA contexts
+    if (screen.orientation && typeof screen.orientation.lock === 'function') {
+      screen.orientation.lock('portrait').catch(err => {
+        console.warn('Failed to lock screen orientation:', err);
+      });
+    }
+  }

@@ -47,14 +47,14 @@
           </v-col> -->
 
           <!-- Lista de tareas pendientes -->
-          <v-col cols="12" md="4" class="mt-4">
-            <v-card class="pa-0" outlined>
-              <v-card-title class="d-flex align-center pa-0 ma-0 elevation-6 mb-4"
-                style="background-color: #E0E0E0; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+          <v-col cols="12"  class="mt-4">
+            <v-card class="pa-0 ma-0" outlined style="border-radius: 8px; background-color: #FFFFFF;">
+              <v-card-title class="d-flex align-center pa-0 ma-0 elevation-6 mb-4 pt-0"
+                style="background-color: #E0E0E0; ">
                 <v-col cols="12">
                       <div class="d-flex align-center justify-space-between mb-4">
                         <span class="text-h6 font-weight-medium" style="color: #333;">Tareas Pendientes</span>
-                        <v-btn text small style="color: #235ca4; border-radius: 25px 25px 25px 25px;" @click="getTransfers">
+                        <v-btn text small style="color: #235ca4; " @click="getTransfers">
                           <Icon icon="line-md:rotate-270" width="24" height="24" />
                           Actualizar
                         </v-btn>
@@ -64,11 +64,11 @@
               <div class="py-2" style="height:calc(100vh - 42vh); overflow-y:auto;">
                 <v-container fluid class="py-0">
                   <v-row dense>
-                    <v-col v-for="task in pendingTasks" :key="task.id" cols="12" sm="6" md="4" lg="3" class="d-flex">
+                    <v-col v-for="task in pendingTasks" :key="task.id" cols="12" class="d-flex">
                       <v-hover v-slot="{ hover }">
-                        <v-card outlined class="d-flex flex-column justify-space-between" :elevation="hover ? 10 : 2" @click="navigateToTask(task)" style="">
-                          <v-card-text class="py-4 px-0">
-                          <v-row align="center" class="mb-2  px-2" style="background: #EEEEEE; border-radius: 25px 25px 0 0;">
+                        <v-card outlined class="d-flex flex-column w-100 elevation-4" >
+                          <v-card-text class="py-2 px-2">
+                          <v-row align="center" class="mb-2  px-0" style="background: #EEEEEE; ">
                             
                             <v-col cols="10" class="d-flex align-center">
                               
@@ -190,8 +190,13 @@ export default {
         this.loadTranfers = false;
 
         // Validar que la respuesta tenga el formato esperado
-        const transferencias = response.data?.data || [];
-
+        const allowedStates = ['en proceso de entrega', 'asignado a transportador', 'en proceso de recolección', 'recogido'];
+        const transferencias = (response.data?.data || []).filter(t => {
+          const userName = this.authStore.user?.nombre?.toLowerCase() || "";
+          return t.transportista?.toLowerCase() === userName && allowedStates.includes(t.estado);
+        });
+        console.log('Transferencias obtenidas:', transferencias);
+ 
         // Actualizar pendingTasks con las transferencias obtenidas
         this.pendingTasks = transferencias.map(t => ({
           cliente: t.clienteNombre || 'Sin cliente',

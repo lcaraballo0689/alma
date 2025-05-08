@@ -1,11 +1,17 @@
 {
   "name": "BodegApp Movil",
   "short_name": "BodegApp",
+  
   "description": "Aplicación móvil para gestión de bodegas",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#6200ea",
+  "theme_color": "#000000",
+  "maximumFileSizeToCacheInBytes": 5000000,
+  "orientation": "portrait",
+  "lang": "es-ES",
+  "categories": ["utilities", "business"],
+  "permissions": ["camera", "notifications", "geolocation"],
   "icons": [
     {
       "src": "/android-launchericon-192-192.png",

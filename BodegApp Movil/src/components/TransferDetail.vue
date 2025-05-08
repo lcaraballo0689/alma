@@ -6,13 +6,14 @@
 
 
         <!-- Loader mientras carga -->
-        <v-skeleton-loader v-if="loading" type="article, paragraph,paragraph" class="my-6 elevation-2" />
-        <v-skeleton-loader v-if="loading" type="article, paragraph" class="my-6 elevation-2" />
+       
+        <v-skeleton-loader v-if="loading" type="article, paragraph, article, article, article, article" class="my-6 elevation-2" />
+        
 
-        <!-- Mensaje de error -->
+        <!-- Mensaje de error
         <div v-else-if="error" class="text-center text-danger">
             {{ error }}
-        </div>
+        </div> -->
 
         <!-- Tarjeta con detalle -->
 

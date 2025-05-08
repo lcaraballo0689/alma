@@ -1,15 +1,50 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <style>
+      /* Estilos estándar */
+      body {
+        margin: 0;
+        font-family: sans-serif;
+      }
+      /* Cuando el dispositivo está en orientación horizontal */
+      @media screen and (orientation: landscape) {
+        #app {
+          display: none;
+        }
+        body::before {
+          content: "Por favor, gire su dispositivo verticalmente.";
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: #f0f0f0;
+          color: #333;
+          font-size: 2em;
+          text-align: center;
+          padding: 20px;
+        }
+      }
+    </style>
     <title>Bodegapp</title>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
+    <!-- Bloquear orientación a vertical en PWA -->
+    <script>
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('portrait').catch(err => console.warn('Bloqueo de orientación fallido:', err));
+      }
+    </script>
   </body>
 </html>

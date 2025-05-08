@@ -275,6 +275,10 @@ export default {
     this.getTransfers();
     this.checkOverflow();
     document.addEventListener('keydown', this.exitFullscreenOnEscape);
+    this.initializeMap('map', this.latitude, this.longitude, this.alias); // Inicializa el mapa al montar el componente
+    this.latitude = 0;
+    this.longitude = 0;
+    this.alias = '';
   },
   beforeUnmount() {
     document.removeEventListener('keydown', this.exitFullscreenOnEscape);
