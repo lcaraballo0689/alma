@@ -41,6 +41,8 @@ const dashboardRouter = require('./routes/dashboard');
 const roleRoutes = require("./routes/roleRoutes");
 const permissionRoutes = require("./routes/permissionRoutes");
 const rolePermissionRoutes = require("./routes/rolePermissionRoutes");
+const entregaRoutes = require('./routes/entregaRoute');
+
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -77,6 +79,8 @@ app.use("/api/roles", roleRoutes);
 app.use("/api/permissions", permissionRoutes);
 app.use("/api/role-permissions", rolePermissionRoutes);
 app.use('/api', dashboardRouter);
+app.use('/api/pwa/entregas', entregaRoutes);
+
 //app.use("/api/bodega", Bodega); // Rutas de bodegas
 
 

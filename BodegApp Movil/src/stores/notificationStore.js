@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
+import Swal from 'sweetalert2';
 
 export const useNotificationStore = defineStore('notification', {
   state: () => ({
@@ -22,6 +23,14 @@ export const useNotificationStore = defineStore('notification', {
       this.notifications.push({
         id: notification.id,
         ...notification
+      });
+
+      // Mostrar notificación con SweetAlert
+      Swal.fire({
+        title: notification.title || 'Nueva Notificación',
+        text: notification.message || 'Tienes una nueva notificación.',
+        icon: notification.type || 'info',
+        confirmButtonText: 'Aceptar'
       });
     },
     setNotifications(notifs) {

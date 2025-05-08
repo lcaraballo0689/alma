@@ -45,7 +45,7 @@ async function detalleCompletoTransferencia(req, res, next) {
       .request()
       .input("solicitudId", sql.Int, solicitudId)
       .query(`
-        SELECT id, tipo, referencia1, referencia2, referencia3, descripcion, estado
+        SELECT id, tipo, referencia1, referencia2, referencia3, descripcion, estado, entregaId, procesado
         FROM DetalleSolicitudTransporte
         WHERE solicitudTransporteId = @solicitudId
         ORDER BY id ASC
@@ -53,7 +53,11 @@ async function detalleCompletoTransferencia(req, res, next) {
 
     return res.status(200).json({
       solicitud,
-      detalle: detalleResult.recordset,
+      detalle: detalleResult.recordset.map(item => ({
+        ...item,
+        entregaId: item.entregaId || null,
+        selectable: item.procesado ? false : true
+      })),
     });
   } catch (err) {
     logger.error("detalleCompletoTransferencia - Error", { error: err.message });
@@ -1270,6 +1274,7 @@ async function consultarTransferencias(req, res, next) {
       SELECT
           st.id,
           st.clienteId,
+          cl.nombre AS clienteNombre,
           st.consecutivo,
           st.estado,
           st.fechaSolicitud,
@@ -1284,11 +1289,18 @@ async function consultarTransferencias(req, res, next) {
           st.fechaRecogida,
           st.qrToken,
           st.modulo,
+		  dir.alias,
           st.direccion,
+		  dir.lat,
+		  dir.lng,
           st.placa,
           st.transportista,
           st.documentoIdentidad
       FROM SolicitudTransporte st
+	  LEFT JOIN Direccion AS dir 
+        ON st.direccion = dir.direccion
+      LEFT JOIN Cliente AS cl 
+        ON st.clienteId = cl.id
       LEFT JOIN Usuario uv ON st.usuarioVerifica = uv.id
       LEFT JOIN Usuario uc ON st.usuarioCarga = uc.id
       WHERE 1 = 1

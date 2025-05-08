@@ -175,29 +175,30 @@ export default {
                 { title: 'Ajustes', value: 'Ajustes', icon: 'bx bx-cog', component: 'SettingsView' }
             ],
             notifications: {
-                detalle: [
-                    { id: 1, title: 'Nueva solicitud', message: 'Tienes una nueva solicitud de pedido.', time: 'Hace 5 minutos', avatar: 'https://via.placeholder.com/40' },
-                    { id: 2, title: 'Actualización de inventario', message: 'El inventario ha sido actualizado.', time: 'Hace 10 minutos', avatar: 'https://via.placeholder.com/40' },
-                    { id: 3, title: 'Nuevo mensaje', message: 'Tienes un nuevo mensaje de soporte.', time: 'Hace 15 minutos', avatar: 'https://via.placeholder.com/40' },
-                    { id: 4, title: 'Mantenimiento programado', message: 'El sistema estará en mantenimiento el sábado.', time: 'Hace 1 hora', avatar: 'https://via.placeholder.com/40' },
-                    { id: 5, title: 'Nueva función disponible', message: 'Una nueva función ha sido añadida.', time: 'Hace 2 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 6, title: 'Recordatorio de reunión', message: 'No olvides la reunión a las 3 PM.', time: 'Hace 3 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 7, title: 'Nueva actualización', message: 'Una nueva actualización está disponible.', time: 'Hace 4 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 8, title: 'Nuevo comentario', message: 'Tienes un nuevo comentario en tu publicación.', time: 'Hace 5 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 9, title: 'Nueva tarea asignada', message: 'Se te ha asignado una nueva tarea.', time: 'Hace 6 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 10, title: 'Nuevo pedido', message: 'Tienes un nuevo pedido pendiente.', time: 'Hace 7 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 11, title: 'Nuevo cliente', message: 'Un nuevo cliente se ha registrado.', time: 'Hace 8 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 12, title: 'Nueva revisión', message: 'Tienes una nueva revisión de producto.', time: 'Hace 9 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 13, title: 'Nuevo producto', message: 'Un nuevo producto ha sido añadido.', time: 'Hace 10 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 14, title: 'Nueva promoción', message: 'Una nueva promoción está disponible.', time: 'Hace 11 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 15, title: 'Nuevo informe', message: 'Un nuevo informe ha sido generado.', time: 'Hace 12 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 16, title: 'Nueva encuesta', message: 'Una nueva encuesta ha sido creada.', time: 'Hace 13 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 17, title: 'Nuevo evento', message: 'Un nuevo evento ha sido programado.', time: 'Hace 14 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 18, title: 'Nueva tarea completada', message: 'Una tarea ha sido completada.', time: 'Hace 15 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 19, title: 'Nuevo archivo compartido', message: 'Un nuevo archivo ha sido compartido contigo.', time: 'Hace 16 horas', avatar: 'https://via.placeholder.com/40' },
-                    { id: 20, title: 'Nueva alerta de seguridad', message: 'Se ha detectado una alerta de seguridad.', time: 'Hace 17 horas', avatar: 'https://via.placeholder.com/40' }
+                detalle:[]
+                // detalle: [
+                //     { id: 1, title: 'Nueva solicitud', message: 'Tienes una nueva solicitud de pedido.', time: 'Hace 5 minutos', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 2, title: 'Actualización de inventario', message: 'El inventario ha sido actualizado.', time: 'Hace 10 minutos', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 3, title: 'Nuevo mensaje', message: 'Tienes un nuevo mensaje de soporte.', time: 'Hace 15 minutos', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 4, title: 'Mantenimiento programado', message: 'El sistema estará en mantenimiento el sábado.', time: 'Hace 1 hora', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 5, title: 'Nueva función disponible', message: 'Una nueva función ha sido añadida.', time: 'Hace 2 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 6, title: 'Recordatorio de reunión', message: 'No olvides la reunión a las 3 PM.', time: 'Hace 3 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 7, title: 'Nueva actualización', message: 'Una nueva actualización está disponible.', time: 'Hace 4 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 8, title: 'Nuevo comentario', message: 'Tienes un nuevo comentario en tu publicación.', time: 'Hace 5 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 9, title: 'Nueva tarea asignada', message: 'Se te ha asignado una nueva tarea.', time: 'Hace 6 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 10, title: 'Nuevo pedido', message: 'Tienes un nuevo pedido pendiente.', time: 'Hace 7 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 11, title: 'Nuevo cliente', message: 'Un nuevo cliente se ha registrado.', time: 'Hace 8 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 12, title: 'Nueva revisión', message: 'Tienes una nueva revisión de producto.', time: 'Hace 9 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 13, title: 'Nuevo producto', message: 'Un nuevo producto ha sido añadido.', time: 'Hace 10 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 14, title: 'Nueva promoción', message: 'Una nueva promoción está disponible.', time: 'Hace 11 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 15, title: 'Nuevo informe', message: 'Un nuevo informe ha sido generado.', time: 'Hace 12 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 16, title: 'Nueva encuesta', message: 'Una nueva encuesta ha sido creada.', time: 'Hace 13 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 17, title: 'Nuevo evento', message: 'Un nuevo evento ha sido programado.', time: 'Hace 14 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 18, title: 'Nueva tarea completada', message: 'Una tarea ha sido completada.', time: 'Hace 15 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 19, title: 'Nuevo archivo compartido', message: 'Un nuevo archivo ha sido compartido contigo.', time: 'Hace 16 horas', avatar: 'https://via.placeholder.com/40' },
+                //     { id: 20, title: 'Nueva alerta de seguridad', message: 'Se ha detectado una alerta de seguridad.', time: 'Hace 17 horas', avatar: 'https://via.placeholder.com/40' }
 
-                ]
+                // ]
             },          // notificaciones
         }
     },

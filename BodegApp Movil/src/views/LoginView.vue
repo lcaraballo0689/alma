@@ -40,9 +40,9 @@
                             </v-btn>
                              
                             <v-divider class="my-4"></v-divider>
-                            <div class="text-center">
+                            <!-- <div class="text-center">
                                 <p class="text-sm"><router-link to="/reset-password" class="text-primary">Recuperar contraseña</router-link></p>
-                            </div>
+                            </div> -->
                         </v-form>
                     </v-card>
                 </v-col>
