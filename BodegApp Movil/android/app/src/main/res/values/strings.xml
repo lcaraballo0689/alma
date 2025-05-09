@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">bodegapp</string>
+    <string name="title_activity_main">bodegapp</string>
+    <string name="package_name">com.bodegapp.app</string>
+    <string name="custom_url_scheme">com.bodegapp.app</string>
+</resources>

@@ -369,8 +369,12 @@ export default {
       this.idDetalle = ids; // Almacena el ID del detalle en la variable idDetalle
     },
     handleSeeDetails() {
+      
       this.seeDetails = false; // Cambia el estado de seeDetails a falso
       this.solicitudQr = 'nada'; // Restablece la variable solicitudQr a su valor inicial
+      this.getTransfers(); // Llama a la función para obtener las transferencias nuevamente
+      
+
     },
     openInMaps(lat, lng) {
       const url = `https://www.google.com/maps?q=${lat},${lng}`;
