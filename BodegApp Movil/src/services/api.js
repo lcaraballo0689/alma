@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../stores/auth.js';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://vn9mmqm7-3001.use2.devtunnels.ms/',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://api.siglo21.com.co',
   headers: {
     'Content-Type': 'application/json'
   }
