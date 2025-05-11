@@ -26,7 +26,7 @@ exports.confirmEntrega = async (req, res) => {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  const { entregaId, estado, clienteId } = req.body;
+  const { entregaId, estado, clienteId, observacion } = req.body;
   
   if (!entregaId || !estado || !clienteId) {
     return res.status(400).json({ error: "Faltan campos obligatorios (entregaId, estado, clienteId)" });
@@ -41,9 +41,11 @@ exports.confirmEntrega = async (req, res) => {
       .input("entregaId", sql.Int, entregaId)
       .input("estado", sql.NVarChar, estado)
       .input("clienteId", sql.Int, clienteId)
+      .input("observacion", sql.NVarChar, observacion)
       .query(`
         UPDATE Entrega
         SET estado = @estado,
+            observacion = @observacion,
             timestamp = GETDATE()
         WHERE id = @entregaId
           AND clienteId = @clienteId
@@ -51,7 +53,8 @@ exports.confirmEntrega = async (req, res) => {
 
     return res.status(200).json({ 
       message: "Entrega confirmada exitosamente", 
-      result: result.recordset 
+      result: result.rowsAffected, 
+      observacion: req.body.observacion 
     });
   } catch (error) {
     console.error("Error en confirmEntrega:", error);

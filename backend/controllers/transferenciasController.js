@@ -16,6 +16,9 @@ const { formatDate } = require('../utils/dateUtils');
 
 
 const logger = require("../logger");
+const { log } = require("console");
+const fs = require("fs");
+const fsPromises = require("fs").promises;
 
 
 /**
@@ -495,7 +498,6 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
         consecutivo: nuevoConsecutivo,
         itemsTable: itemsTableHTML,
         observaciones: observaciones,
-        fechaSolicitud: new Date().toLocaleString(),
         direccionRecoleccion: direccion_recoleccion,
         year: new Date().getFullYear(),
       };
@@ -1340,6 +1342,155 @@ async function consultarTransferencias(req, res, next) {
 
 
 
+// ...existing code...
+async function getEntregaDetails(req, res, next) {
+  let pool;
+  try {
+    const { solicitudId, modulo } = req.body;
+    if (!solicitudId || !modulo) {
+      return res.status(400).json({ error: "Faltan parámetros: solicitudId y modulo." });
+    }
+
+    pool = await connectDB();
+
+    const query = `
+      SELECT
+          st.id AS solicitudId,
+          st.modulo,
+          (
+              SELECT COUNT(*) FROM Entregas e WHERE e.solicitudId = st.id
+          ) AS totalEntregas,
+          (
+              SELECT COUNT(*) FROM DetalleSolicitudTransporte dst WHERE dst.solicitudTransporteId = st.id
+          ) AS totalDetalles,
+          (
+              SELECT
+                  e.entregaId,
+                  e.fechaEntrega,
+                  FORMAT(e.fechaEntrega, 'dd/MM/yyyy') AS fechaEntregaFormato,
+                  CONVERT(varchar, e.fechaEntrega, 108) AS horaEntrega,
+                  e.receptorNombre,
+                  e.receptorIdentificacion,
+                  e.firmaPath AS firmaPath,
+                  (
+                      SELECT
+                          value AS value
+                      FROM OPENJSON(e.fotosPaths)
+                      FOR JSON PATH
+                  ) AS fotosPaths
+              FROM Entregas e
+              WHERE e.solicitudId = st.id
+              FOR JSON PATH
+          ) AS entregas,
+          (
+              SELECT
+                  dst.id,
+                  dst.tipo,
+                  dst.referencia1,
+                  dst.referencia2,
+                  dst.referencia3,
+                  dst.descripcion,
+                  dst.estado,
+                  dst.createdAt,
+                  dst.updatedAt,
+                  dst.cajaReferencia,
+                  dst.entregaId,
+                  dst.procesado
+              FROM DetalleSolicitudTransporte dst
+              WHERE dst.solicitudTransporteId = st.id
+              FOR JSON PATH
+          ) AS detalles
+      FROM SolicitudTransporte st
+      WHERE st.id = @solicitudId AND st.modulo = @modulo
+      FOR JSON PATH;
+    `;
+
+    const result = await pool.request()
+      .input("solicitudId", sql.Int, solicitudId)
+      .input("modulo", sql.VarChar, modulo)
+      .query(query);
+
+    if (!result.recordset || result.recordset.length === 0 || !result.recordset[0][Object.keys(result.recordset[0])[0]]) {
+      return res.status(404).json({ error: "No se encontraron detalles de entrega para la solicitud proporcionada." });
+    }
+
+    const jsonKey = Object.keys(result.recordset[0])[0];
+    let data = JSON.parse(result.recordset[0][jsonKey]);
+     console.log('dataAAAAAAAAaAAAAAaaaa', data);
+    const projectRoot = path.resolve(__dirname, '..', '..'); // Resuelve a c:\\apps\\alma
+
+    for (const solicitud of data) {
+      if (solicitud.entregas) {
+        solicitud.entregas = typeof solicitud.entregas === "string" ? JSON.parse(solicitud.entregas) : solicitud.entregas;
+        for (const entrega of solicitud.entregas) {
+          if (entrega.firmaPath) {
+            let absFirmaPath = '';
+            try {
+              const pathFromDb = entrega.firmaPath;
+              if (path.isAbsolute(pathFromDb)) {
+                absFirmaPath = path.normalize(pathFromDb);
+              } else {
+                const rel = pathFromDb.replace(/^[/\\]+/, '').replace(/[\\/]+/g, path.sep);
+                absFirmaPath = path.join(projectRoot, rel);
+              }
+
+              logger.info(`Verificando ruta calculada para firma: ${absFirmaPath}`);
+
+              const fileData = await fsPromises.readFile(absFirmaPath);
+              const ext = path.extname(absFirmaPath).toLowerCase();
+              const mime = ext === '.png' ? 'image/png' : (ext === '.jpg' || ext === '.jpeg') ? 'image/jpeg' : 'application/octet-stream';
+              entrega.firmaBase64 = `data:${mime};base64,${fileData.toString('base64')}`;
+            } catch (err) {
+              logger.error(`Error al leer firma (ruta calculada: ${absFirmaPath}, original DB: ${entrega.firmaPath}): ${err.message}`);
+              entrega.firmaBase64 = null;
+            }
+          }
+
+          if (entrega.fotosPaths) {
+            const fotosArray = typeof entrega.fotosPaths === "string"
+              ? JSON.parse(entrega.fotosPaths)
+              : entrega.fotosPaths;
+            if (Array.isArray(fotosArray)) {
+              entrega.fotosPaths = fotosArray;
+              for (const foto of fotosArray) {
+                if (foto.value) {
+                  const rawFotoPath = foto.value;
+                  let absFotoPath;
+                  const backendUploads = path.join(projectRoot, 'backend', 'uploads');
+                  const cibleUploads = path.join(projectRoot, 'backend', 'uploads');
+                  const relPath = path.relative(backendUploads, rawFotoPath.replace(/^\\+/, ''));
+                  absFotoPath = path.join(cibleUploads, relPath);
+
+                  logger.info(`Verificando ruta calculada para foto: ${absFotoPath}`);
+
+                  try {
+                    // Verificar si el archivo existe antes de intentar leerlo
+                    await fsPromises.access(absFotoPath, fs.constants.F_OK);
+                    const fileData = await fsPromises.readFile(absFotoPath);
+                    const ext = path.extname(absFotoPath).toLowerCase();
+                    const mime = ext === '.png' ? 'image/png' : (ext === '.jpg' || ext === '.jpeg') ? 'image/jpeg' : 'application/octet-stream';
+                    foto.base64 = `data:${mime};base64,${fileData.toString('base64')}`;
+                  } catch (err) {
+                    logger.error(`Error al leer foto (ruta calculada: ${absFotoPath}, original DB: ${foto.value}): ${err.message}`);
+                    foto.base64 = null;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return res.status(200).json({ data });
+  } catch (error) {
+    logger.error("Error en getEntregaDetails: " + error.message, { stack: error.stack });
+    return next(error);
+  }
+}
+// ...existing code...
+
+
 /**
  * Consulta el detalle de una transferencia (POST /api/client/transferencias/consultarDetalle)
  */
@@ -1857,5 +2008,6 @@ module.exports = {
   recoger,
   listarUbicaciones,
   procesarTransferenciaInterna,
-  detalleCompletoTransferencia
+  detalleCompletoTransferencia,
+  getEntregaDetails,
 };

@@ -191,7 +191,6 @@
                 <!-- Tab Acciones y Comentarios -->
                 <div v-if="activeTab === 'acciones'">
                   <div class="acciones-section">
-                    <button class="btn btn-sm btn-primary me-2" @click="reprogramarEntrega">Reprogramar Entrega</button>
                     <button class="btn btn-sm btn-success me-2" @click="confirmarRecepcion">Confirmar Recepción</button>
                     <button class="btn btn-sm btn-secondary" @click="generarReportePDF">Generar Reporte</button>
                   </div>

@@ -10,7 +10,10 @@
           <div class="col-auto d-flex align-items-center gap-2">
             <button class="custom-btn excel me-2" @click="exportToExcel" @mouseover="hoveredButton = 'excel'"
               @mouseleave="hoveredButton = ''">
-              <i :class="hoveredButton === 'excel' ? 'bi bi-arrow-down-circle-fill' : 'bi bi-file-excel-fill'"></i>
+              <i :class="hoveredButton === 'excel'
+                ? 'bi bi-arrow-down-circle-fill'
+                : 'bi bi-file-excel-fill'
+                "></i>
               <span v-if="hoveredButton !== 'excel'">Excel</span>
               <span v-else>Descargar</span>
             </button>
@@ -47,33 +50,75 @@
             </thead>
             <tbody>
               <tr v-for="(item, index) in registrosFiltrados" :key="item.id || index"
-                @click="showDetalle(item.id, item.transportista, item.documentoIdentidad, item.placa, item.consecutivo)"
-                style="cursor: pointer;">
-                <td>{{ item.consecutivo }}</td>
-                <td>{{ item.id }}</td>
-                <td>{{ item.estado }}</td>
-                <td>
-                  {{ item.updatedAt !== item.createdAt
-                    ? formatDate(item.updatedAt) + ' - ' + formatTime(item.updatedAt)
-                    : 'Sin Actualizacion' }}
-                </td>
-                <td>{{ formatDate(item.createdAt) }} - {{ formatTime(item.createdAt) }}</td>
-                <td>{{ item.transportista || 'Sin Asignar' }}</td>
-                <td>{{ item.documentoIdentidad }}</td>
-                <td>{{ item.placa }}</td>
-                <td>{{ item.fechaAsignacion ? formatDate(item.fechaAsignacion) : 'Pendiente' }}</td>
-                <td>{{ item.direccion }}</td>
-                <td>{{ item.fechaRecogida ? (formatDate(item.fechaRecogida) + ' - ' + formatTime(item.fechaRecogida)) : 'Pendiente' }}</td>
-                <td>{{ item.usuarioVerifica }}</td>
-                <td>{{ item.fechaVerificacion ? (formatDate(item.fechaVerificacion) + ' - ' + formatTime(item.fechaVerificacion)) : 'Pendiente' }}</td>
-                <td>{{ item.observaciones }}</td>
-                <td @click.stop>
-                  <!-- Se pasa el consecutivo para que el componente haga la petición y descargue el PDF -->
-                  <FormatoPrestamo style="margin-top: -2px; width: 100px; "  v-if="item.estado === 'entrega Confirmada'" :consecutivo="item.consecutivo" /> 
-                  <button class="btn buttons-actions text-white " style="margin-top: -5px; height: 20px !important; background-color:darkgrey !important;" v-else :consecutivo="item.consecutivo" disabled>
-                    <span>No Disponible</span>
-                  </button>
-                </td>
+              :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }"
+              @click="
+                showDetalle(
+                item.id,
+                item.transportista,
+                item.documentoIdentidad,
+                item.placa,
+                item.consecutivo
+                )
+              " style="cursor: pointer">
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.consecutivo }}</td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.id }}</td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.estado }}</td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">
+                {{
+                item.updatedAt !== item.createdAt
+                  ? formatDate(item.updatedAt) +
+                  ' - ' +
+                  formatTime(item.updatedAt)
+                  : 'Sin Actualizacion'
+                }}
+              </td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">
+                {{ formatDate(item.createdAt) }} -
+                {{ formatTime(item.createdAt) }}
+              </td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.transportista || 'Sin Asignar' }}</td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.documentoIdentidad }}</td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.placa }}</td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">
+                {{
+                item.fechaAsignacion
+                  ? formatDate(item.fechaAsignacion)
+                  : 'Pendiente'
+                }}
+              </td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.direccion }}</td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">
+                {{
+                item.fechaRecogida
+                  ? formatDate(item.fechaRecogida) +
+                  ' - ' +
+                  formatTime(item.fechaRecogida)
+                  : 'Pendiente'
+                }}
+              </td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.usuarioVerifica }}</td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">
+                {{
+                item.fechaVerificacion
+                  ? formatDate(item.fechaVerificacion) +
+                  ' - ' +
+                  formatTime(item.fechaVerificacion)
+                  : 'Pendiente'
+                }}
+              </td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.observaciones }}</td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }" @click.stop>
+                <!-- Se pasa el consecutivo para que el componente haga la petición y descargue el PDF -->
+                <FormatoPrestamo style="margin-top: -2px; width: 100px" v-if="item.estado === 'entrega Confirmada'"
+                :consecutivo="item.consecutivo" />
+                <button class="btn buttons-actions text-white" style="
+                  margin-top: -5px;
+                  height: 20px !important;
+                  background-color: darkgrey !important;
+                " v-else :consecutivo="item.consecutivo" disabled>
+                <span>No Disponible</span>
+                </button>
+              </td>
               </tr>
             </tbody>
           </table>
@@ -85,11 +130,9 @@
     <div v-if="detalleVisible" class="modal-wrapper">
       <div class="modal-content">
         <div class="modal-header card">
-          <div class=" w-100 d-flex justify-content-between">
-
+          <div class="w-100 d-flex justify-content-between">
             <h5 class="modal-title">
               <strong class="text-muted">Detalles de Solicitud</strong>
-              
             </h5>
             <button class="custom-btn me-2" @click="closeDetalleModal">
               <span>Cerrar</span>
@@ -104,29 +147,71 @@
             <!-- Información básica de la solicitud en dos columnas -->
             <div class="info-basica row my-1">
               <div class="col-md-6">
-                <p class="my-1"><strong>Prestamo N°:</strong> {{ detalle.solicitud.consecutivo || 'N/A' }}</p>
-              <p class="my-1"><strong>Traslado N°:</strong> {{ detalle.solicitud.id || 'N/A' }}</p>
-              <p class="my-1"><strong>Observaciones:</strong> {{ detalle.solicitud.observaciones || 'Sin observaciones' }}</p>
-            </div>
-            <div class="col-md-6">
-              <p class="my-1"><strong>Fecha Solicitud:</strong> {{ formatDate(detalle.solicitud.fechaSolicitud) || 'N/A' }}</p>
-              <p class="my-1"><strong>Última Actualización:</strong> {{ formatDate(detalle.solicitud.updatedAt) || 'N/A' }}</p>
-              <p class="my-1"><strong>Dirección:</strong> {{ detalle.solicitud.direccion || 'No disponible' }}</p>
+                <p class="my-1">
+                  <strong>Prestamo N°:</strong>
+                  {{ detalle.solicitud.consecutivo || "N/A" }}
+                </p>
+                <p>
+                  <template v-for="item in detalle.detalle" :key="item.id">
+                    <strong>Entregados:</strong>
+                    {{item.detalles.filter(det => det.procesado).length}} de {{ item.detalles.length }}
+                  </template>
+                </p>
+                <p class="my-1">
+                  <strong>Traslado N°:</strong>
+                  {{ detalle.solicitud.id || "N/A" }}
+                </p>
+                <p class="my-1">
+                  <strong>Observaciones:</strong>
+                  {{ detalle.solicitud.observaciones || "Sin observaciones" }}
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p class="my-1">
+                  <strong>Fecha Solicitud:</strong>
+                  {{ formatDate(detalle.solicitud.fechaSolicitud) || "N/A" }}
+                </p>
+                <p class="my-1">
+                  <strong>Última Actualización:</strong>
+                  {{ formatDate(detalle.solicitud.updatedAt) || "N/A" }}
+                </p>
+                <p class="my-1">
+                  <strong>Dirección:</strong>
+                  {{ detalle.solicitud.direccion || "No disponible" }}
+                </p>
+                <button 
+                  :disabled="detalle.solicitud.estado !== 'entregado por transportador'" 
+                  class="btn btn-sm me-2" 
+                  :class="{'btn-secondary': detalle.solicitud.estado !== 'entregado por transportador', 'btn-success': detalle.solicitud.estado === 'entregado por transportador'}" 
+                  @click="confirmarEntrega(detalle.solicitud.id)">
+                      Confirmar Recepción 
+                    </button>
+                    <button class="btn btn-sm btn-secondary" @click="generarReportePDF">
+                      Generar Reporte
+                    </button>
               </div>
             </div>
-     
-<hr class="my-0 ">
+
+            <hr class="my-0" />
 
             <!-- Tabs -->
             <div class="tabs-container mt-0">
               <ul class="tab-nav">
-                <li :class="{ active: activeTab === 'progreso' }" @click="activeTab = 'progreso'">Progreso</li>
-                <li :class="{ active: activeTab === 'detalle' }" @click="activeTab = 'detalle'">Detalle</li>
-                <li :class="{ active: activeTab === 'historial' }" @click="activeTab = 'historial'">Historial</li>
-                <li :class="{ active: activeTab === 'Transportista' }" @click="activeTab = 'Transportista'">
-                  Transportista</li>
-                <li :class="{ active: activeTab === 'acciones' }" @click="activeTab = 'acciones'">Acciones y Comentarios
+                <li :class="{ active: activeTab === 'progreso' }" @click="activeTab = 'progreso'">
+                  Progreso
                 </li>
+                <li :class="{ active: activeTab === 'detalle' }" @click="activeTab = 'detalle'">
+                  Detalle
+                </li>
+                <!-- <li :class="{ active: activeTab === 'historial' }" @click="activeTab = 'historial'">
+                  Historial
+                </li> -->
+                <li :class="{ active: activeTab === 'Transportista' }" @click="activeTab = 'Transportista'">
+                  Transportista
+                </li>
+                <!-- <li :class="{ active: activeTab === 'acciones' }" @click="activeTab = 'acciones'">
+                  Acciones y Comentarios
+                </li> -->
               </ul>
               <div class="tab-content">
                 <!-- Tab Detalle: Timeline y resumen de progreso -->
@@ -134,11 +219,12 @@
                   <div ref="timelineRef" class="timeline-container">
                     <div class="base-line"></div>
                     <div class="progress-line" :style="{ width: animatedProgress + '%' }"></div>
-                    <div class="progress-summary">
-                    </div>
+                    <div class="progress-summary"></div>
                     <div v-for="(step, index) in timelineSteps" :key="index" class="timeline-step">
-                      <div class="icon-wrapper" :class="{ active: animatedProgress >= circleRelativePosition(index) }"
-                        :title="step.label">
+                      <div class="icon-wrapper" :class="{
+                        active:
+                          animatedProgress >= circleRelativePosition(index),
+                      }" :title="step.label">
                         <i :class="step.icon"></i>
                       </div>
                       <div class="label">{{ step.label }}</div>
@@ -160,7 +246,10 @@
                       <tbody>
                         <tr v-for="(item, index) in detalle.historial" :key="index">
                           <td>{{ item.estado }}</td>
-                          <td>{{ formatDate(item.fecha) }} - {{ formatTime(item.fecha) }}</td>
+                          <td>
+                            {{ formatDate(item.fecha) }} -
+                            {{ formatTime(item.fecha) }}
+                          </td>
                           <td>{{ item.usuario }}</td>
                         </tr>
                       </tbody>
@@ -181,15 +270,26 @@
                       <tbody>
                         <tr>
                           <td><strong>Transportista</strong></td>
-                          <td>{{ detalle.solicitud.transportista || 'Sin asignar' }}</td>
+                          <td>
+                            {{
+                              detalle.solicitud.transportista || "Sin asignar"
+                            }}
+                          </td>
                         </tr>
                         <tr>
                           <td><strong>Documento de Identidad</strong></td>
-                          <td>{{ detalle.solicitud.documentoIdentidad || 'Sin asignar' }}</td>
+                          <td>
+                            {{
+                              detalle.solicitud.documentoIdentidad ||
+                              "Sin asignar"
+                            }}
+                          </td>
                         </tr>
                         <tr>
                           <td><strong>Placa Vehiculo</strong></td>
-                          <td>{{ detalle.solicitud.placa || 'Sin asignar' }}</td>
+                          <td>
+                            {{ detalle.solicitud.placa || "Sin asignar" }}
+                          </td>
                         </tr>
                         <!-- Puedes agregar más filas si hay más datos disponibles -->
                       </tbody>
@@ -197,46 +297,213 @@
                   </div>
                 </div>
                 <!-- Tab Acciones y Comentarios -->
-                <div v-if="activeTab === 'acciones'">
+                <!-- <div v-if="activeTab === 'acciones'">
                   <div class="acciones-section">
-                    <button class="btn btn-sm btn-primary me-2" @click="reprogramarEntrega">Reprogramar Entrega</button>
-                    <button class="btn btn-sm btn-success me-2" @click="confirmarRecepcion">Confirmar Recepción</button>
-                    <button class="btn btn-sm btn-secondary" @click="generarReportePDF">Generar Reporte</button>
+                    <button :disabled="detalle.solicitud.estado  !== 'entregado por transportador'" class="btn btn-sm btn-success me-2" @click="confirmarEntrega(detalle.solicitud.id )">
+                      Confirmar Recepción 
+                    </button>
+                    <button class="btn btn-sm btn-secondary" @click="generarReportePDF">
+                      Generar Reporte
+                    </button>
                   </div>
                   <div class="comentarios-section mt-3">
                     <h6>Comentarios / Notas</h6>
                     <textarea v-model="comentario" class="form-control" rows="3"
                       placeholder="Ingrese sus comentarios..."></textarea>
-                    <button class="btn btn-sm btn-info mt-2" @click="guardarComentario">Guardar Comentario</button>
+                    <button class="btn btn-sm btn-info mt-2" @click="guardarComentario">
+                      Guardar Comentario
+                    </button>
                   </div>
-                </div>
+                </div> -->
                 <div v-if="activeTab === 'detalle'">
                   <div class="scroll-container mt-3">
-                    <table class="table table-bordered table-sm m-0 p-0">
-                      <thead>
-                        <tr class="text-center">
-                          <th>Tipo</th>
-                          <th>Referencia 2</th>
-                          <th>Estado</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="item in detalle.detalle" :key="item.id" class="text-center">
-                          <td>{{ item.tipo }}</td>
-                          <td>{{ item.referencia2 }}</td>
-                          <td>{{ item.estado }}</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                    <div class="scroll-container mt-3">
+                      <table class="table table-bordered table-sm m-0 p-0">
+                        <thead>
+                          <tr class="text-center">
+                            <th>Detalle ID</th>
+                            <th>Referencia1</th>
+                            <th>Referencia2</th>
+                            <th>Referencia3</th>
+                            <th>Estado</th>
+                            <th>Entrega ID</th>
+                            <th>Fecha Entrega</th>
+                            <th>Hora Entrega</th>
+                            <th>Receptor Nombre</th>
+                            <th>Receptor Identificación</th>
+                            <th>Firma</th>
+                            <th>Foto</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <template v-for="item in detalle.detalle" :key="item.id">
+                            <tr v-for="(det, index) in item.detalles" :key="`detalles-${index}`">
+                              <td>{{ det.id }}</td>
+                              <td>{{ det.referencia1 }}</td>
+                              <td>{{ det.referencia2 }}</td>
+                              <td>{{ det.referencia3 }}</td>
+                              <td>{{ det.estado }}</td>
+                              <td>
+                                {{
+                                  (
+                                    item.entregas.find(
+                                      (e) => e.entregaId === det.entregaId
+                                    ) || {}
+                                  ).entregaId || "-"
+                                }}
+                              </td>
+                              <td>
+                                {{
+                                  (
+                                    item.entregas.find(
+                                      (e) => e.entregaId === det.entregaId
+                                    ) || {}
+                                  ).fechaEntregaFormato || "-"
+                                }}
+                              </td>
+                              <td>
+                                {{
+                                  (
+                                    item.entregas.find(
+                                      (e) => e.entregaId === det.entregaId
+                                    ) || {}
+                                  ).horaEntrega || "-"
+                                }}
+                              </td>
+                              <td>
+                                {{
+                                  (
+                                    item.entregas.find(
+                                      (e) => e.entregaId === det.entregaId
+                                    ) || {}
+                                  ).receptorNombre || "-"
+                                }}
+                              </td>
+                              <td>
+                                {{
+                                  (
+                                    item.entregas.find(
+                                      (e) => e.entregaId === det.entregaId
+                                    ) || {}
+                                  ).receptorIdentificacion || "-"
+                                }}
+                              </td>
+                              <td>
+                                <button
+                                  class="btn btn-outline-warning"
+                                  :disabled="!(item.entregas.find(e => e.entregaId === det.entregaId) || {}).firmaBase64"
+                                  @click="openFirmaModal(
+                                    (item.entregas.find(e => e.entregaId === det.entregaId) || {}).firmaBase64,
+                                    (item.entregas.find(e => e.entregaId === det.entregaId) || {}).receptorNombre || '-',
+                                    (item.entregas.find(e => e.entregaId === det.entregaId) || {}).receptorIdentificacion || '-',
+                                    (item.entregas.find(e => e.entregaId === det.entregaId) || {}).entregaId,
+                                    (item.entregas.find(e => e.entregaId === det.entregaId) || {}).fechaEntregaFormato,
+                                    (item.entregas.find(e => e.entregaId === det.entregaId) || {}).horaEntrega,
+                                  )"
+                                >
+                                  <i class="bi bi-eye-fill"></i>
+                                </button>
+                              </td>
+                              <td>
+                                <button class="btn btn-outline-warning" :disabled="!(
+                                  item.entregas.find(
+                                    (e) => e.entregaId === det.entregaId
+                                  ) || {}
+                                ).fotosPaths
+                                  " @click="
+                                    openFotoModal(
+                                      (
+                                        item.entregas.find(
+                                          (e) => e.entregaId === det.entregaId
+                                        ) || {}
+                                      ).fotosPaths
+                                    )
+                                    ">
+                                  <i class="bi bi-eye-fill"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          </template>
+                        </tbody>
+                      </table>
+
+                      <!-- Modal para mostrar la firma -->
+                      <div v-if="firmaModalVisible" class="modal-wrapper" @click.self="closeFirmaModal">
+                        <div class="modal-content" style="max-width: 500px">
+                          <div class="modal-header">
+                            <h5>Firma</h5>
+                            <button class="custom-btn" @click="closeFirmaModalFn">
+                              Cerrar
+                            </button>
+                          </div>
+                          <div class="modal-body">
+                            <table class="table table-bordered">
+                              <tbody>
+                                <tr>
+                                  <td><strong>Nombre</strong></td>
+                                  <td>{{ det.receptorNombre }}</td>
+                                </tr>
+                                <tr>
+                                  <td><strong>Identificación</strong></td>
+                                  <td>{{ det.receptorIdentificacion }}</td>
+                                </tr>
+                                <tr>
+                                  <td><strong>Entrega ID</strong></td>
+                                  <td>{{ det.entregaId }}</td>
+                                </tr>
+                                <tr>
+                                  <td><strong>Fecha Entrega</strong></td>
+                                  <td>{{ det.fechaEntregaFormato }}</td>
+                                </tr>
+                                <tr>
+                                  <td><strong>Hora Entrega</strong></td>
+                                  <td>{{ det.horaEntrega }}</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                            
+                            
+                           
+                            <img :src="firmaSrc" alt="Firma" style="width: 100%" @contextmenu.prevent
+                              draggable="false" />
+                              <p style="font-size: 10px;">Hash: {{ det.hashFirma }}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Modal para mostrar la foto -->
+                      <div v-if="fotoModalVisible" class="modal-wrapper" @click.self="closeFotoModal">
+                        <div class="modal-content" style="max-width: 500px">
+                          <div class="modal-header">
+                            <h5>Foto</h5>
+                            <button class="custom-btn" @click="closeFotoModalFn">
+                              Cerrar
+                            </button>
+                          </div>
+                          <div class="modal-body">
+                            <div v-for="(foto, index) in fotoSrc" :key="index">
+                              <!-- Se muestra la foto usando su valor base64 si está disponible -->
+
+                              <div v-if="foto.base64 && foto.base64 !== null" class="card shadow-sm"
+                                style="margin-bottom: 10px; border-radius: 10px 10px 10px 10px;aspect-ratio: 9 / 16;">
+
+                                <img :src="foto.base64" alt="Foto"
+                                  style="width: 100%; aspect-ratio: 9 / 16; object-fit: cover; border-radius: 10px;" />
+
+                              </div>
+                              <!-- Si no hay base64, se puede mostrar un mensaje o una imagen de placeholder -->
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
             <!-- Fin Tabs -->
-
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -262,7 +529,7 @@ const timelineMap = {
     { label: "asignado a transportador", icon: "bi bi-truck" },
     { label: "en proceso de entrega", icon: "bi bi-hourglass-split" },
     { label: "entregado por transportador", icon: "bi bi-check2-circle" },
-    { label: "entrega confirmada", icon: "bi bi-check-all" }
+    { label: "entrega confirmada", icon: "bi bi-check-all" },
   ],
   Transferencia: [
     { label: "solicitud creada", icon: "bi bi-file-earmark-plus" },
@@ -270,22 +537,22 @@ const timelineMap = {
     { label: "en proceso de recolección", icon: "bi bi-hourglass-split" },
     { label: "recogido", icon: "bi bi-check2-circle" },
     { label: "en bodega", icon: "bi bi-box-seam" },
-    { label: "completado", icon: "bi bi-check-all" }
+    { label: "completado", icon: "bi bi-check-all" },
   ],
   Devolucion: [
     { label: "solicitud creada", icon: "bi bi-file-earmark-plus" },
     { label: "asignado a transportador", icon: "bi bi-truck" },
     { label: "en proceso de recolección", icon: "bi bi-hourglass-split" },
     { label: "recogido", icon: "bi bi-check2-circle" },
-    { label: "devolucion completada", icon: "bi bi-check-all" }
+    { label: "devolucion completada", icon: "bi bi-check-all" },
   ],
   Desarchive: [
     { label: "solicitud creada", icon: "bi bi-file-earmark-plus" },
     { label: "asignado a transportador", icon: "bi bi-truck" },
     { label: "en proceso de entrega", icon: "bi bi-hourglass-split" },
     { label: "entregado", icon: "bi bi-check2-circle" },
-    { label: "desarchivado", icon: "bi bi-check-all" }
-  ]
+    { label: "desarchivado", icon: "bi bi-check-all" },
+  ],
 };
 
 export default {
@@ -294,6 +561,18 @@ export default {
   data() {
     const today = new Date().toISOString().split("T")[0];
     return {
+      firmaSrc: "",
+      fotoSrc: "",
+      firmaModalVisible: false,
+      det: {
+        receptorNombre: "",
+        receptorIdentificacion: "",
+        entregaId: "",
+        fechaEntregaFormato: "",
+        horaEntrega: "",
+        hashFirma: "",
+      },
+      fotoModalVisible: false,
       Logo,
       animatedProgress: 0,
       activeTab: "progreso", // Tab activo por defecto
@@ -312,8 +591,8 @@ export default {
       detalle: {
         solicitud: {},
         detalle: [],
-        historial: []
-      }
+        historial: [],
+      },
     };
   },
   computed: {
@@ -334,7 +613,7 @@ export default {
       if (!this.detalle.solicitud.estado) return 0;
       const estadoActual = this.detalle.solicitud.estado.toLowerCase();
       const index = this.timelineSteps.findIndex(
-        step => step.label.toLowerCase() === estadoActual
+        (step) => step.label.toLowerCase() === estadoActual
       );
       return index !== -1 ? index : 0;
     },
@@ -347,39 +626,45 @@ export default {
     registrosFiltrados() {
       if (!this.searchTerm) return this.transferencias;
       const termino = this.searchTerm.toLowerCase();
-      return this.transferencias.filter(registro => {
+      return this.transferencias.filter((registro) => {
         return (
           String(registro.id).toLowerCase().includes(termino) ||
           (registro.referencia1 || "").toLowerCase().includes(termino) ||
-          (this.formatDate(registro.fechaSolicitud) || "").toLowerCase().includes(termino)
+          (this.formatDate(registro.fechaSolicitud) || "")
+            .toLowerCase()
+            .includes(termino)
         );
       });
     },
     formatDate() {
-      return dateString => {
+      return (dateString) => {
         if (!dateString) return "N/A";
         const dt = DateTime.fromISO(dateString, { zone: "utc" });
         return dt.setLocale("es").toFormat("dd/MM/yyyy");
       };
     },
     formatTime() {
-      return dateString => {
+      return (dateString) => {
         if (!dateString) return "N/A";
         const dt = DateTime.fromISO(dateString, { zone: "utc" });
         return dt.setLocale("es").toFormat("hh:mm a");
       };
-    }
+    },
   },
   mounted() {
     //this.fetchEstados();
     this.fetchtransferencias();
+    this.showEntregas(this.detalle.solicitud.id, this.detalle.solicitud.modulo);
   },
   methods: {
     async generarFormatoPrestamo(consecutivo) {
       try {
-        const response = await apiClient.post("/api/detalleSolicitud/prestamo", {
-          id: consecutivo,
-        });
+        const response = await apiClient.post(
+          "/api/detalleSolicitud/prestamo",
+          {
+            id: consecutivo,
+          }
+        );
 
         const rawData = response.data;
 
@@ -418,181 +703,207 @@ export default {
     },
     async generarHashUnico() {
       const sol = this.detalle.solicitud || {};
-      const dataToHash = `solicitud_${sol.id || "N/A"}_${new Date().toISOString()}`;
+      const dataToHash = `solicitud_${sol.id || "N/A"
+        }_${new Date().toISOString()}`;
       const encoder = new TextEncoder();
       const dataBuffer = encoder.encode(dataToHash);
       const hashBuffer = await crypto.subtle.digest("SHA-256", dataBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      const hashHex = hashArray
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
       return hashHex;
     },
     async generarReportePDF() {
-    // Forzar que la pestaña de Progreso esté activa para que el timeline se renderice
-    this.activeTab = "progreso";
-    await this.$nextTick();
+      // Forzar que la pestaña de Progreso esté activa para que el timeline se renderice
+      this.activeTab = "progreso";
+      await this.$nextTick();
 
-    // Crea el documento PDF en formato A4 vertical
-    const doc = new jsPDF("p", "mm", "a4");
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
+      // Crea el documento PDF en formato A4 vertical
+      const doc = new jsPDF("p", "mm", "a4");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
 
-    const marginLeft = 15;
-    let currentY = 20;
-    const pageWidth = doc.internal.pageSize.getWidth();
+      const marginLeft = 15;
+      let currentY = 20;
+      const pageWidth = doc.internal.pageSize.getWidth();
 
-    // 1. Agrega el logo en la parte superior izquierda
-    doc.addImage(Logo, "PNG", 10, 10, 30, 15);
+      // 1. Agrega el logo en la parte superior izquierda
+      doc.addImage(Logo, "PNG", 10, 10, 30, 15);
 
-    // Genera el QR code (opcional) en la esquina superior derecha
-    const sol = this.detalle.solicitud || {};
-    const qrContent = "solicitud_" + (sol.id || "N/A");
-    let qrDataUrl = "";
-    try {
-      const QRCode = (await import("qrcode")).default;
-      qrDataUrl = await QRCode.toDataURL(qrContent);
-    } catch (error) {
-      console.error("Error generando QR:", error);
-    }
-    const qrWidth = 30;
-    const qrHeight = 30;
-    const qrX = pageWidth - marginLeft - qrWidth;
-    const qrY = 10;
-    if (qrDataUrl) {
-      doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrWidth, qrHeight);
-    }
+      // Genera el QR code (opcional) en la esquina superior derecha
+      const sol = this.detalle.solicitud || {};
+      const qrContent = "solicitud_" + (sol.id || "N/A");
+      let qrDataUrl = "";
+      try {
+        const QRCode = (await import("qrcode")).default;
+        qrDataUrl = await QRCode.toDataURL(qrContent);
+      } catch (error) {
+        console.error("Error generando QR:", error);
+      }
+      const qrWidth = 30;
+      const qrHeight = 30;
+      const qrX = pageWidth - marginLeft - qrWidth;
+      const qrY = 10;
+      if (qrDataUrl) {
+        doc.addImage(qrDataUrl, "PNG", qrX, qrY, qrWidth, qrHeight);
+      }
 
-    // 2. Título y fecha
-    currentY = 30; // debajo del logo
-    doc.setTextColor(204, 20, 23); // color #cc1417
-    doc.setFontSize(18);
-    doc.text("Reporte de Prestamos", marginLeft, currentY);
-    currentY += 10;
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    const fechaHoy = new Date().toLocaleDateString();
-    doc.text(`Fecha: ${fechaHoy}`, marginLeft, currentY);
-    currentY += 10;
-
-    // 3. Sección: Detalle de Prestamo
-    doc.setFontSize(14);
-    doc.setTextColor(204, 20, 23);
-    doc.text("Detalle de Prestamo", marginLeft, currentY);
-    currentY += 7;
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text(`Traslado N°: ${sol.id || ""}`, marginLeft, currentY);
-    currentY += 6;
-    doc.text(`Estado: ${sol.estado || ""}`, marginLeft, currentY);
-    currentY += 6;
-    doc.text(`Observaciones: ${sol.observaciones || ""}`, marginLeft, currentY);
-    currentY += 6;
-    doc.text(`Fecha Solicitud: ${this.formatDate(sol.fechaSolicitud) || ""}`, marginLeft, currentY);
-    currentY += 10;
-
-    // 4. Sección: Timeline capturado como imagen
-    const timelineElement = this.$refs.timelineRef;
-    if (timelineElement) {
-      const canvas = await html2canvas(timelineElement);
-      const timelineImage = canvas.toDataURL("image/png");
-      const pdfWidth = pageWidth - marginLeft * 2;
-      const imgProps = doc.getImageProperties(timelineImage);
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      currentY += 5;
-      doc.addImage(timelineImage, "PNG", marginLeft, currentY, pdfWidth, pdfHeight);
-      currentY += pdfHeight + 10;
-    } else {
-      doc.text("Timeline no disponible.", marginLeft, currentY);
+      // 2. Título y fecha
+      currentY = 30; // debajo del logo
+      doc.setTextColor(204, 20, 23); // color #cc1417
+      doc.setFontSize(18);
+      doc.text("Reporte de Prestamos", marginLeft, currentY);
       currentY += 10;
-    }
-
-    // 5. Sección: Historial de Estados
-    doc.setFontSize(14);
-    doc.setTextColor(204, 20, 23);
-    doc.text("Historial de Estados", marginLeft, currentY);
-    currentY += 7;
-    if (this.detalle.historial && this.detalle.historial.length > 0) {
-      const historialData = this.detalle.historial.map(item => [
-        item.estado,
-        `${this.formatDate(item.fecha)} - ${this.formatTime(item.fecha)}`,
-        item.usuario
-      ]);
-      autoTable(doc, {
-        head: [["Estado", "Fecha", "Usuario"]],
-        body: historialData,
-        startY: currentY,
-        styles: { fontSize: 10 },
-        headStyles: { fillColor: [204, 20, 23], textColor: 255 }
-      });
-      currentY = doc.lastAutoTable.finalY + 10;
-    } else {
+      doc.setFontSize(11);
       doc.setTextColor(0);
-      doc.text("No hay historial disponible.", marginLeft, currentY);
+      const fechaHoy = new Date().toLocaleDateString();
+      doc.text(`Fecha: ${fechaHoy}`, marginLeft, currentY);
       currentY += 10;
-    }
 
-    // 6. Sección: Datos de Contacto
-    doc.setFontSize(14);
-    doc.setTextColor(204, 20, 23);
-    doc.text("Datos de Contacto", marginLeft, currentY);
-    currentY += 7;
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text(`Transportista: ${sol.transportista || "Sin asignar"}`, marginLeft, currentY);
-    currentY += 6;
-    doc.text(`Documento de Identidad: ${sol.documentoIdentidad || "Sin asignar"}`, marginLeft, currentY);
-    currentY += 6;
-    doc.text(`Placa Vehiculo: ${sol.placa || "Sin asignar"}`, marginLeft, currentY);
-    currentY += 6;
-    if (sol.telefono) {
-      doc.text(`Teléfono: ${sol.telefono}`, marginLeft, currentY);
+      // 3. Sección: Detalle de Prestamo
+      doc.setFontSize(14);
+      doc.setTextColor(204, 20, 23);
+      doc.text("Detalle de Prestamo", marginLeft, currentY);
+      currentY += 7;
+      doc.setFontSize(11);
+      doc.setTextColor(0);
+      doc.text(`Traslado N°: ${sol.id || ""}`, marginLeft, currentY);
       currentY += 6;
-    }
-    if (sol.email) {
-      doc.text(`Email: ${sol.email}`, marginLeft, currentY);
+      doc.text(`Estado: ${sol.estado || ""}`, marginLeft, currentY);
       currentY += 6;
-    }
-    currentY += 10;
+      doc.text(
+        `Observaciones: ${sol.observaciones || ""}`,
+        marginLeft,
+        currentY
+      );
+      currentY += 6;
+      doc.text(
+        `Fecha Solicitud: ${this.formatDate(sol.fechaSolicitud) || ""}`,
+        marginLeft,
+        currentY
+      );
+      currentY += 10;
 
-    // 7. Sección: Comentarios / Notas
-    doc.setFontSize(14);
-    doc.setTextColor(204, 20, 23);
-    doc.text("Comentarios / Notas", marginLeft, currentY);
-    currentY += 7;
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text(this.comentario || "Sin comentarios.", marginLeft, currentY);
-    currentY += 10;
+      // 4. Sección: Timeline capturado como imagen
+      const timelineElement = this.$refs.timelineRef;
+      if (timelineElement) {
+        const canvas = await html2canvas(timelineElement);
+        const timelineImage = canvas.toDataURL("image/png");
+        const pdfWidth = pageWidth - marginLeft * 2;
+        const imgProps = doc.getImageProperties(timelineImage);
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        currentY += 5;
+        doc.addImage(
+          timelineImage,
+          "PNG",
+          marginLeft,
+          currentY,
+          pdfWidth,
+          pdfHeight
+        );
+        currentY += pdfHeight + 10;
+      } else {
+        doc.text("Timeline no disponible.", marginLeft, currentY);
+        currentY += 10;
+      }
 
-    // 8. Footer: Información de la Empresa y Hash Único
-    // Genera el hash único (Identificador de Autenticidad)
-    const hashUnico = await this.generarHashUnico();
+      // 5. Sección: Historial de Estados
+      doc.setFontSize(14);
+      doc.setTextColor(204, 20, 23);
+      doc.text("Historial de Estados", marginLeft, currentY);
+      currentY += 7;
+      if (this.detalle.historial && this.detalle.historial.length > 0) {
+        const historialData = this.detalle.historial.map((item) => [
+          item.estado,
+          `${this.formatDate(item.fecha)} - ${this.formatTime(item.fecha)}`,
+          item.usuario,
+        ]);
+        autoTable(doc, {
+          head: [["Estado", "Fecha", "Usuario"]],
+          body: historialData,
+          startY: currentY,
+          styles: { fontSize: 10 },
+          headStyles: { fillColor: [204, 20, 23], textColor: 255 },
+        });
+        currentY = doc.lastAutoTable.finalY + 10;
+      } else {
+        doc.setTextColor(0);
+        doc.text("No hay historial disponible.", marginLeft, currentY);
+        currentY += 10;
+      }
 
-    // Posición del footer (por ejemplo, 20 mm desde el final de la página)
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const footerY = pageHeight - 20;
+      // 6. Sección: Datos de Contacto
+      doc.setFontSize(14);
+      doc.setTextColor(204, 20, 23);
+      doc.text("Datos de Contacto", marginLeft, currentY);
+      currentY += 7;
+      doc.setFontSize(11);
+      doc.setTextColor(0);
+      doc.text(
+        `Transportista: ${sol.transportista || "Sin asignar"}`,
+        marginLeft,
+        currentY
+      );
+      currentY += 6;
+      doc.text(
+        `Documento de Identidad: ${sol.documentoIdentidad || "Sin asignar"}`,
+        marginLeft,
+        currentY
+      );
+      currentY += 6;
+      doc.text(
+        `Placa Vehiculo: ${sol.placa || "Sin asignar"}`,
+        marginLeft,
+        currentY
+      );
+      currentY += 6;
+      if (sol.telefono) {
+        doc.text(`Teléfono: ${sol.telefono}`, marginLeft, currentY);
+        currentY += 6;
+      }
+      if (sol.email) {
+        doc.text(`Email: ${sol.email}`, marginLeft, currentY);
+        currentY += 6;
+      }
+      currentY += 10;
 
-    // Dibuja una línea horizontal para separar el contenido del footer
-    doc.setLineWidth(0.5);
-    doc.setDrawColor(204, 20, 23);
-    doc.line(marginLeft, footerY - 5, pageWidth - marginLeft, footerY - 5);
+      // 7. Sección: Comentarios / Notas
+      doc.setFontSize(14);
+      doc.setTextColor(204, 20, 23);
+      doc.text("Comentarios / Notas", marginLeft, currentY);
+      currentY += 7;
+      doc.setFontSize(11);
+      doc.setTextColor(0);
+      doc.text(this.comentario || "Sin comentarios.", marginLeft, currentY);
+      currentY += 10;
 
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    // Información de la empresa (ajusta los datos según tu empresa)
-    doc.text(
-      "Siglo21 Documental | Dirección: Av. Principal 123, Bogota, Colombia | documental@siglo21.com.co | siglo21.com.co",
-      marginLeft,
-      footerY
-    );
-    doc.text(
-      "SECUREID: " + hashUnico,
-      marginLeft,
-      footerY + 5
-    );
+      // 8. Footer: Información de la Empresa y Hash Único
+      // Genera el hash único (Identificador de Autenticidad)
+      const hashUnico = await this.generarHashUnico();
 
-    // 9. Guarda el PDF
-    doc.save(`Solicitud de Prestamo Nro- ${sol.id}.pdf`);
-  },
+      // Posición del footer (por ejemplo, 20 mm desde el final de la página)
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const footerY = pageHeight - 20;
+
+      // Dibuja una línea horizontal para separar el contenido del footer
+      doc.setLineWidth(0.5);
+      doc.setDrawColor(204, 20, 23);
+      doc.line(marginLeft, footerY - 5, pageWidth - marginLeft, footerY - 5);
+
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      // Información de la empresa (ajusta los datos según tu empresa)
+      doc.text(
+        "Siglo21 Documental | Dirección: Av. Principal 123, Bogota, Colombia | documental@siglo21.com.co | siglo21.com.co",
+        marginLeft,
+        footerY
+      );
+      doc.text("SECUREID: " + hashUnico, marginLeft, footerY + 5);
+
+      // 9. Guarda el PDF
+      doc.save(`Solicitud de Prestamo Nro- ${sol.id}.pdf`);
+    },
     circleRelativePosition(index) {
       const totalSteps = this.timelineSteps.length;
       if (totalSteps <= 1) return 0;
@@ -604,7 +915,7 @@ export default {
       const startTime = performance.now();
       const initial = this.animatedProgress;
       const distance = target - initial;
-      const duration = Math.abs(distance) / speed * 1000;
+      const duration = (Math.abs(distance) / speed) * 1000;
       const animate = (currentTime) => {
         const elapsed = currentTime - startTime;
         if (elapsed < duration) {
@@ -616,31 +927,77 @@ export default {
       };
       requestAnimationFrame(animate);
     },
-    showDetalle(solicitudId, transportista, documentoIdentidad, placa, idPrestamo) {
-      console.log("ID solicitud transferencia:", solicitudId, transportista, documentoIdentidad, placa, idPrestamo);
+    async showEntregas(solicitudId, modulo) {
+      const payload = {
+        solicitudId: solicitudId,
+        modulo: "Prestamo",
+      };
+      try {
+        const response = await apiClient.post(
+          "/api/transferencias/entregaDetails",
+          payload
+        );
+        const data = response.data.data || [];
+
+        console.log("Detalles de entrega:", data.data);
+
+        // Asignar los datos obtenidos al detalle.detalle
+        this.detalle.detalle = data || [];
+        console.log("Detalles de entrega:", this.detalle.detalle);
+      } catch (error) {
+        console.error("Error al obtener el detalle de entrega:", error);
+      }
+    },
+    async showDetalle(
+      solicitudId,
+      transportista,
+      documentoIdentidad,
+      placa,
+      idPrestamo
+    ) {
+      console.log(
+        "ID solicitud transferencia:",
+        solicitudId,
+        transportista,
+        documentoIdentidad,
+        placa,
+        idPrestamo
+      );
+
+      await this.showEntregas(solicitudId, "Prestamo");
       this.loadingDetalle = true;
       this.detalleVisible = true;
       apiClient
         .post("/api/transferencias/detalle", { solicitudId })
-        .then(response => {
+        .then((response) => {
           const data = response.data;
           this.detalle.solicitud = data.solicitud || {};
-          this.detalle.detalle = data.detalle || [];
+
+          console.log("Detalles de entrega nuevo:", this.detalle.detalle);
+
           this.detalle.historial = data.historial || [
-            { estado: "solicitud creada", fecha: data.solicitud.createdAt, usuario: "Usuario A" },
-            { estado: "asignado a transportador", fecha: data.solicitud.updatedAt, usuario: "Usuario B" }
+            {
+              estado: "solicitud creada",
+              fecha: data.solicitud.createdAt,
+              usuario: "Usuario A",
+            },
+            {
+              estado: "asignado a transportador",
+              fecha: data.solicitud.updatedAt,
+              usuario: "Usuario B",
+            },
           ];
-          this.detalle.solicitud.transportista = transportista || 'Sin Asignar';
-          this.detalle.solicitud.documentoIdentidad = documentoIdentidad || '';
-          this.detalle.solicitud.placa = placa || '';
-          this.detalle.solicitud.idPrestamo = idPrestamo || '';
+          this.detalle.solicitud.transportista = transportista || "Sin Asignar";
+          this.detalle.solicitud.documentoIdentidad = documentoIdentidad || "";
+          this.detalle.solicitud.placa = placa || "";
+          this.detalle.solicitud.idPrestamo = idPrestamo || "";
           // Reinicia y anima el progreso
           this.animatedProgress = 0;
           this.$nextTick(() => {
             this.animateProgress();
           });
         })
-        .catch(error => {
+        .catch((error) => {
           console.error("Error al obtener el detalle de transferencia:", error);
         })
         .finally(() => {
@@ -673,7 +1030,7 @@ export default {
       try {
         const payload = {
           tipo: "prestamo",
-          clienteId: useAuthStore().clienteId
+          clienteId: useAuthStore().clienteId,
         };
         console.log("Payload listar estados:", payload);
         const response = await apiClient.post("/api/estados/listar", payload);
@@ -691,9 +1048,12 @@ export default {
           return;
         }
         const requestBody = { clienteId };
-        const response = await apiClient.post("/api/transferencias/consultar", requestBody);
-        this.transferencias = (response.data.data || []).filter(item =>
-          item.modulo && item.modulo.toLowerCase() === "prestamo"
+        const response = await apiClient.post(
+          "/api/transferencias/consultar",
+          requestBody
+        );
+        this.transferencias = (response.data.data || []).filter(
+          (item) => item.modulo && item.modulo.toLowerCase() === "prestamo"
         );
         this.totalRegistros = response.data.data.length;
         console.info(response.data.data);
@@ -707,30 +1067,115 @@ export default {
       this.fetchtransferencias();
     },
     exportToExcel() {
-      const dataToExport = this.transferencias.map(item => ({
-        "Consecutivo": item.consecutivo,
+      const dataToExport = this.transferencias.map((item) => ({
+        Consecutivo: item.consecutivo,
         "Traslado N°": item.id,
-        "Estado": item.estado,
-        "Ultima Actualizacion": item.updatedAt !== item.createdAt
-          ? this.formatDate(item.updatedAt) + " - " + this.formatTime(item.updatedAt)
-          : "Sin Actualizacion",
-        "Fecha Solicitud": this.formatDate(item.createdAt) + " - " + this.formatTime(item.createdAt),
-        "Transportista": item.transportista || "Sin Asignar",
+        Estado: item.estado,
+        "Ultima Actualizacion":
+          item.updatedAt !== item.createdAt
+            ? this.formatDate(item.updatedAt) +
+            " - " +
+            this.formatTime(item.updatedAt)
+            : "Sin Actualizacion",
+        "Fecha Solicitud":
+          this.formatDate(item.createdAt) +
+          " - " +
+          this.formatTime(item.createdAt),
+        Transportista: item.transportista || "Sin Asignar",
         "Documento de Identidad": item.documentoIdentidad,
         "Placa Vehiculo": item.placa,
-        "Fecha Asignación": item.fechaAsignacion ? this.formatDate(item.fechaAsignacion) : "Pendiente",
-        "Fecha Entrega": item.fechaCarga ? this.formatDate(item.fechaCarga) : "Pendiente",
+        "Fecha Asignación": item.fechaAsignacion
+          ? this.formatDate(item.fechaAsignacion)
+          : "Pendiente",
+        "Fecha Entrega": item.fechaCarga
+          ? this.formatDate(item.fechaCarga)
+          : "Pendiente",
         "Confirmo Entrega": item.usuarioVerifica || "Sin Confirmar",
-        "Fecha de Confirmacion": item.fechaVerificacion ? this.formatDate(item.fechaVerificacion) : "Pendiente",
-        "Observaciones": item.observaciones,
-        "Dirección": item.direccion
+        "Fecha de Confirmacion": item.fechaVerificacion
+          ? this.formatDate(item.fechaVerificacion)
+          : "Pendiente",
+        Observaciones: item.observaciones,
+        Dirección: item.direccion,
       }));
       const ws = XLSX.utils.json_to_sheet(dataToExport);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "transferencias");
-      XLSX.writeFile(wb, `Bodegapp_transferencias_${new Date().toISOString().split("T")[0]}.xlsx`);
-    }
-  }
+      XLSX.writeFile(
+        wb,
+        `Bodegapp_transferencias_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+    },
+    openFirmaModal(firma, a, b, c, d, e) {
+      console.log("Abriendo modal de firma...");
+      this.firmaSrc = firma;
+
+      this.det.receptorNombre = a;
+      this.det.receptorIdentificacion = b;
+      this.det.entregaId = c;
+      this.det.fechaEntregaFormato = d;
+      this.det.horaEntrega = e;
+      (async () => {
+      // Se añade la información de la imagen (por ejemplo, la longitud de la cadena base64)
+      const imageInfo = `length:${firma.length}`;
+      const dataToHash = `firma:${firma}|nombre:${a}|identificacion:${b}|entregaId:${c}|fecha:${d}|hora:${e}|imagenInfo:${imageInfo}`;
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(dataToHash));
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      this.det.hashFirma = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+      })();
+      console.log("Detalles de firma:", this.det);
+      // Lógica para abrir el modal de firma
+      this.firmaModalVisible = true;
+    },
+    openFotoModal(fotos) {
+      console.log("Abriendo modal de foto...");
+      this.fotoSrc = fotos; // Asignar la fuente de la foto
+      // Lógica para abrir el modal de foto
+      this.fotoModalVisible = true;
+    },
+    closeFirmaModalFn() {
+      this.firmaModalVisible = false;
+      this.firmaSrc = ""; // Limpiar la fuente de la firma
+    },
+    closeFotoModalFn() {
+      this.fotoModalVisible = false;
+      this.fotoSrc = ""; // Limpiar la fuente de la foto
+    },
+
+    async confirmarEntrega(idSolicitud) {
+      try {
+        if (!idSolicitud) {
+          console.error("No hay ID de solicitud actual.");
+          return;
+        }
+        const body = {
+          qrToken: `solicitud_${idSolicitud}`,
+          accion: "entrega Confirmada",
+          usuarioId: 1,
+          clienteId: 2,
+        };
+        console.log("body: ", body);
+        const response = await apiClient.post("/api/transferencias/qr/scan", body);
+        console.log('qr', response);
+        this.detalleVisible = false;
+        this.fetchtransferencias();
+        
+        await this.obtenerTransferencias();
+        this.cerrarModal();
+        Swal.fire({
+          toast: true,
+          position: "bottom-end",
+          icon: "success",
+          title: `Entrega Confirmada`,
+          timer: 10000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+        });
+      } catch (error) {
+        console.error("Error al cambiar estado:", error);
+      }
+    },
+  },
 };
 </script>
 

@@ -13,7 +13,8 @@ const {
   asignarTransportador,
   recoger,
   listarUbicaciones,
-  detalleCompletoTransferencia
+  detalleCompletoTransferencia,
+  getEntregaDetails
 } = require('../controllers/transferenciasController');
 const { authMiddleware } = require("../middlewares/authMiddleware");
 router.post('/crear', authMiddleware, createTransferencia);
@@ -28,5 +29,7 @@ router.put('/asignarTransportador', authMiddleware, asignarTransportador);
 router.put('/recoger', authMiddleware, recoger);
 router.get('/ubicaciones', authMiddleware, listarUbicaciones);
 router.post('/detalleCompleto', authMiddleware, detalleCompletoTransferencia);
+router.post('/entregaDetails', authMiddleware, getEntregaDetails);
+
 
 module.exports = router;
