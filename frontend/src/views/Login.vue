@@ -95,7 +95,8 @@ export default {
         // Extraer token, refreshToken y permisos desde la respuesta
         const token = response.data.token;
         const refreshToken = response.data.refreshToken;
-        const permisos = response.data.permisos; // Ejemplo: [{ nombre: "ADMIN_DASHBOARD_ACCESS", ... }, ...]
+        const permisos = response.data.user?.permisos || [];
+        console.log("Permisos:", permisos);
 
         // Inicializar authStore
         const authStore = useAuthStore();
@@ -145,12 +146,17 @@ export default {
         });
         console.log("Usuario se ha unido a la sala: usuario_" + decoded.clienteId);
 
-        if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'Acceso Panel Administrativo')) {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (permisos && permisos.some(p => p.nombre === 'AppMovil') && isMobile) {
+          this.$router.push({ name: 'AppMovil' });
+        } else if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'Acceso Panel Administrativo') && !isMobile) {
           this.$router.push({ name: 'AdminDashboard' });
-        } else if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'Acceso Panel Cliente')) {
+        } else if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'Acceso Panel Cliente') && !isMobile) {
           this.$router.push({ name: 'ClientHome' });
+        } else if (isMobile) {
+          this.$router.push({ name: 'AppMovil' });
         }
-
+        
 
       } catch (err) {
         console.error("Error en login:", err.response ? err.response.data : err);

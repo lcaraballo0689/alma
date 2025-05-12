@@ -11,6 +11,7 @@ export default defineConfig({
       '@': '/src'
     }
   },
+  assetsInclude: ['**/*.apk'],
   server: {
     proxy: {
       '/api': {
