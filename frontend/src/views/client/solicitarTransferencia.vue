@@ -127,7 +127,7 @@
                           <option disabled value="">Seleccionar</option>
                           <option value="CAJA-X100">CAJA-X100</option>
                           <option value="CAJA-X200">CAJA-X200</option>
-                          <option value="CAJA-X300">CAJA-X300|</option>
+                          <option value="CAJA-X300">CAJA-X300</option>
                         </select>
                       </td>
                       <td>
