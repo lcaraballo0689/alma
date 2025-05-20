@@ -115,6 +115,11 @@
                     <hr class="dropdown-divider" />
                   </li>
                   <li>
+                    <a class="dropdown-item" href="#" @click.prevent="showPasswordModal = true">
+                      <i class="bi bi-key me-2"></i>Cambiar Contraseña
+                    </a>
+                  </li>
+                  <li>
                     <a class="dropdown-item" href="#" @click.prevent="logout"><i class="bi bi-power me-2"></i>Cerrar
                       sesión</a>
                   </li>
@@ -133,6 +138,34 @@
         <component :is="currentComponent" :key="currentTab" />
       </div>
     </main>
+
+    <!-- Modal cambiar contraseña -->
+    <div class="modal fade show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);" v-if="showPasswordModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Cambiar Contraseña</h5>
+            <button type="button" class="btn-close" @click="showPasswordModal = false"></button>
+          </div>
+          <form @submit.prevent="handleChangePassword">
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Nueva Contraseña</label>
+                <input type="password" class="form-control" v-model="newPassword" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Confirmar Contraseña</label>
+                <input type="password" class="form-control" v-model="confirmPassword" required />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="showPasswordModal = false">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -143,6 +176,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useTabStore } from "@/stores/tabStore";
 import { useThemeStore } from "@/stores/themeStore";
 import { useNotificationStore } from "@/stores/notificationStore";
+import apiClient from "@/services/api";
+import Swal from "sweetalert2";
 
 
 // Carga asíncrona de componentes
@@ -233,6 +268,9 @@ export default {
         }, 
       
       ],
+      showPasswordModal: false,
+      newPassword: '',
+      confirmPassword: ''
     };
   },
   computed: {
@@ -311,6 +349,21 @@ export default {
         estado: data.estado,
       });
     },
+    async handleChangePassword() {
+      if (this.newPassword !== this.confirmPassword) {
+        return Swal.fire({ icon: 'error', title: 'Error', text: 'Las contraseñas no coinciden.' });
+      }
+      try {
+        await apiClient.post(`/api/usuarios/updatepass/${this.authStore.user.id}`, { password: this.newPassword });
+        Swal.fire({ icon: 'success', title: 'Éxito', text: 'Contraseña actualizada.' });
+        this.showPasswordModal = false;
+        this.newPassword = '';
+        this.confirmPassword = '';
+      } catch (error) {
+        console.error('Error al actualizar contraseña:', error);
+        Swal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.error || 'No se pudo actualizar.' });
+      }
+    }
   },
   mounted() {
     //socket.on("notify", this.handleSocketNotification);
