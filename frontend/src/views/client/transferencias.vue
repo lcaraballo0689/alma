@@ -208,6 +208,7 @@
                         <tr class="text-center">
                           <th>Tipo</th>
                           <th>Referencia 2</th>
+                          <th>Referencia 3</th>
                           <th>Estado</th>
                         </tr>
                       </thead>
@@ -215,6 +216,7 @@
                         <tr v-for="item in detalle.detalle" :key="item.id" class="text-center">
                           <td>{{ item.tipo }}</td>
                           <td>{{ item.referencia2 }}</td>
+                          <td>{{ item.referencia3 }}</td>
                           <td>{{ item.estado }}</td>
                         </tr>
                       </tbody>

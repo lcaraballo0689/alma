@@ -109,7 +109,9 @@
                   <thead>
                     <tr class="text-center">
                       <th>#</th>
-                      <th>Referencia</th>
+                      <th>Referencia2</th>
+                      <th>Referencia3</th>
+                      <th>Tipo</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
@@ -117,6 +119,17 @@
                     <tr v-for="(item, index) in itemsForm" :key="index" class="text-center">
                       <td>{{ index + 1 }}</td>
                       <td>{{ item.referencia2 }}</td>
+                      <td>
+                        <input type="text" v-model="item.referencia3" class="form-control form-control-sm" placeholder="Referencia3" />
+                      </td>
+                      <td>
+                        <select v-model="item.tipo" class="form-select form-select-sm">
+                          <option disabled value="">Seleccionar</option>
+                          <option value="CAJA-X100">CAJA-X100</option>
+                          <option value="CAJA-X200">CAJA-X200</option>
+                          <option value="CAJA-X300">CAJA-X300|</option>
+                        </select>
+                      </td>
                       <td>
                         <button type="button" class="btn btn-sm btn-danger" @click="removeItem(index)">
                           Eliminar
@@ -250,7 +263,7 @@ export default {
         });
         return;
       }
-      this.itemsForm.push({ referencia2: ref });
+      this.itemsForm.push({ referencia2: ref, tipo: '', referencia3: '' });
       this.newItemReferencia = "";
     },
     removeItem(index) {
@@ -306,48 +319,45 @@ export default {
             return;
           }
           const header = jsonData[0];
-          const indiceReferencia = header.findIndex(
-            (col) => typeof col === "string" && col.toLowerCase() === "referencia2"
-          );
-          if (indiceReferencia === -1) {
+          const idx2 = header.findIndex(col => typeof col === 'string' && col.toLowerCase() === 'referencia2');
+          const idx3 = header.findIndex(col => typeof col === 'string' && col.toLowerCase() === 'referencia3');
+          const idxTipo = header.findIndex(col => typeof col === 'string' && col.toLowerCase() === 'tipo');
+          if (idx2 === -1 || idx3 === -1 || idxTipo === -1) {
             Swal.fire({
-              icon: "error",
-              title: "Error",
-              text: "El archivo no contiene el encabezado 'referencia2'.",
+              icon: 'error',
+              title: 'Error',
+              text: 'El archivo debe contener los encabezados referencia2, referencia3 y tipo.',
               toast: true,
-              position: "bottom-end",
+              position: 'bottom-end',
               timer: 3000,
-              showConfirmButton: false,
+              showConfirmButton: false
             });
             return;
           }
           const refsFile = [];
           const duplicateInFile = [];
-          const refRegex = /^[A-Za-z0-9]{5,}$/;
-          jsonData.slice(1).forEach((row) => {
-            const ref = row[indiceReferencia];
-            if (ref && typeof ref === "string" && ref.trim() !== "") {
-              const trimmedRef = ref.trim();
-              if (!refRegex.test(trimmedRef)) {
+          const refRegex = /^[A-Za-z0-9]+$/; // Permitir referencias de 1 o más caracteres
+          jsonData.slice(1).forEach(row => {
+            const ref2 = row[idx2];
+            const ref3 = row[idx3] || '';
+            const tipoVal = row[idxTipo] || '';
+            if (ref2 && typeof ref2 === "string" && ref2.trim() !== "") {
+              const trimmedRef = ref2.trim();
+              if (!refRegex.test(trimmedRef) || !['x100', 'x200', 'x300'].includes(tipoVal)) {
                 Swal.fire({
-                  icon: "warning",
-                  title: "Formato de referencia inválido",
-                  text: `La referencia "${trimmedRef}" no cumple con el formato esperado.`,
-                  toast: true,
-                  position: "bottom-end",
-                  timer: 3000,
                   showConfirmButton: false,
                 });
                 return;
               }
-              if (refsFile.includes(trimmedRef)) {
+              if (refsFile.includes(trimmedRef + tipoVal + ref3)) {
                 duplicateInFile.push(trimmedRef);
               } else {
-                refsFile.push(trimmedRef);
-                this.itemsForm.push({ referencia2: trimmedRef });
+                refsFile.push(trimmedRef + tipoVal + ref3);
+                this.itemsForm.push({ referencia2: trimmedRef, referencia3: ref3, tipo: tipoVal });
               }
             }
           });
+          console.log("Items cargados desde el archivo:", this.itemsForm);
           if (this.itemsForm.length === 0) {
             Swal.fire({
               icon: "warning",
@@ -400,7 +410,7 @@ export default {
     },
     downloadTemplate() {
       const wb = XLSX.utils.book_new();
-      const wsData = [["referencia2"]];
+      const wsData = [["referencia2", "referencia3", "tipo"]];
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       XLSX.utils.book_append_sheet(wb, ws, "Template");
       XLSX.writeFile(wb, "template_referencias.xlsx");

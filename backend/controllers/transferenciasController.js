@@ -352,7 +352,7 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
   for (const item of items) {
     await new sql.Request(transaction)
       .input("solicitudTransporteId", sql.Int, solicitudId)
-      .input("tipo", sql.VarChar, "CAJA")
+      .input("tipo", sql.VarChar, item.tipo || "CAJA")
       .input("referencia1", sql.VarChar, item.referencia1 || "")
       .input("referencia2", sql.VarChar, item.referencia2)
       .input("referencia3", sql.VarChar, item.referencia3 || "")
@@ -748,7 +748,7 @@ async function createTransferencia(req, res, next) {
     for (const item of items) {
       await new sql.Request(transaction)
         .input("solicitudTransporteId", sql.Int, solicitudId)
-        .input("tipo", sql.VarChar, "CAJA")
+        .input("tipo", sql.VarChar, item.tipo || "CAJA")
         .input("referencia1", sql.VarChar, item.referencia1 || "")
         .input("referencia2", sql.VarChar, item.referencia2)
         .input("referencia3", sql.VarChar, item.referencia3 || "")
