@@ -114,11 +114,11 @@ console.log("Data obtenida para el PDF:", data);
         }
 
         if (firmaA) {
-          doc.addImage(firmaA, "PNG", logoX - 15, 210, logoWidth, logoHeight + 10);
+          doc.addImage(firmaA, "PNG", logoX , 220, logoWidth, logoHeight + 10);
         }
         if (firmaB) {
-          doc.addImage(firmaB, "PNG", logoX - 250, 210, logoWidth, logoHeight + 10);
-          doc.addImage(firmaB, "PNG", logoX - 115, 210, logoWidth, logoHeight + 10);
+          doc.addImage(firmaB, "PNG", logoX - 225, 220, logoWidth, logoHeight + 10);
+          doc.addImage(firmaB, "PNG", logoX - 115, 220, logoWidth, logoHeight + 10);
         }
         //console.info("Firmas A:", firmaA);
         //console.info("Firmas B:", firmaB);
@@ -158,7 +158,7 @@ console.log("Data obtenida para el PDF:", data);
 
       // Función para dibujar el pie de página
       const drawFooter = (yRef, paginaActual, totalPaginas) => {
-        yRef += 5;
+        yRef -= 5;
         doc.setFont("helvetica", "bold");
 
         // Definir información para cada persona: etiqueta, nombre, número de documento y firma
@@ -191,26 +191,40 @@ console.log("Data obtenida para el PDF:", data);
         ];
 
         // Por cada persona, dibujar sus datos en un bloque
+        // Definir dimensiones de la tabla
+        const cellPadding = 2;
+        const cellWidth = ((pageWidth - marginLeft * 2) / persons.length  ) - 1 ;
+        const cellHeight = 30;
+
+        // Dibujar cada celda de la tabla para cada persona
         persons.forEach((person, index) => {
-          const posX = positions[index];
-          // Primera línea: etiqueta en negrita
-          doc.text(person.label, posX, yRef);
-          // Segunda línea: Nombre
-          doc.setFont("helvetica", "normal");
-          doc.text("Nombre: " + person.name, posX, yRef + 5);
-          // Tercera línea: Número de documento
-          doc.text("DNI: " + person.doc, posX, yRef + 10);
-          // Cuarta línea: Firma (imagen) o línea de firma
-          const sigWidth = 50;
-          const sigHeight = 15;
-          const sigX = posX;
-          const sigY = yRef + 12;
-          
-          // Resetear la fuente a negrita para el siguiente bloque
+          const x = marginLeft + index * cellWidth;
+          const y = yRef;
+
+          // Dibujar borde de la celda
+          doc.rect(x, y, cellWidth, cellHeight);
+
+          // Primera línea: etiqueta centrada en negrita
           doc.setFont("helvetica", "bold");
+          doc.text(person.label, x + cellWidth / 2, y + 7, { align: "center" });
+
+          // Segunda línea: nombre en texto normal, alineado a la izquierda
+          doc.setFont("helvetica", "normal");
+          doc.text("Nombre: " + person.name, x + cellPadding, y + 15);
+
+          // Tercera línea: DNI en texto normal
+          doc.text("DNI: " + person.doc, x + cellPadding, y + 22);
+
+          // Cuarta línea: firma (imagen) o línea de firma
+          const sigWidth = cellWidth - 2 * cellPadding;
+          const sigHeight = 15;
+          const sigX = x + cellPadding;
+          const sigY = y ;
+
+          
         });
 
-        yRef += 20;
+        yRef += 40;
 
         yRef = drawRow(
           ["HORA DE SOLICITUD:", data.horaSolicitud || ""],
