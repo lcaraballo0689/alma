@@ -38,6 +38,7 @@ export default {
           id: this.consecutivo,
         });
         const rawData = response.data;
+        console.log("Datos obtenidos del servidor:", rawData);
 
         // Convertir los campos a strings de forma segura
         const data = {
@@ -73,6 +74,7 @@ export default {
               }))
             : [],
         };
+console.log("Data obtenida para el PDF:", data);
 
         // Generamos el PDF con la data obtenida
         this.createPDF(data);
@@ -112,11 +114,11 @@ export default {
         }
 
         if (firmaA) {
-          doc.addImage(firmaA, "PNG", logoX - 15, 220, logoWidth, logoHeight + 10);
+          doc.addImage(firmaA, "PNG", logoX - 15, 210, logoWidth, logoHeight + 10);
         }
         if (firmaB) {
-          doc.addImage(firmaB, "PNG", logoX - 250, 220, logoWidth, logoHeight + 10);
-          doc.addImage(firmaB, "PNG", logoX - 115, 220, logoWidth, logoHeight + 10);
+          doc.addImage(firmaB, "PNG", logoX - 250, 210, logoWidth, logoHeight + 10);
+          doc.addImage(firmaB, "PNG", logoX - 115, 210, logoWidth, logoHeight + 10);
         }
         //console.info("Firmas A:", firmaA);
         //console.info("Firmas B:", firmaB);
@@ -156,13 +158,59 @@ export default {
 
       // Función para dibujar el pie de página
       const drawFooter = (yRef, paginaActual, totalPaginas) => {
-        yRef += 20;
+        yRef += 5;
         doc.setFont("helvetica", "bold");
-        doc.text("ENTREGADO POR ________________________", marginLeft + 2, yRef);
-        doc.text("VERIFICACION SALIDA CUSTODIA ________________________", marginLeft +110 + 2, yRef);
-        doc.text("RECIBIDO POR __________________________", marginLeft + 240 + 4, yRef);
-        doc.setFont("helvetica", "normal");
-        yRef += 8;
+
+        // Definir información para cada persona: etiqueta, nombre, número de documento y firma
+        const persons = [
+          {
+            label: "ENTREGADO POR:",
+            name: data.solicitadoPor || "",
+            doc: data.contacto || "",
+            signature: data.verificadoPor || "",
+          },
+          {
+            label: "VERIFICACION SALIDA CUSTODIA:",
+            name: data.solicitadoPor || "",
+            doc: data.contacto || "",
+            signature: data.verificadoPor || "",
+          },
+          {
+            label: "RECIBIDO POR:",
+            name: data.nombreVerificador || "",
+            doc: data.identificacionVerificador || "",
+            signature: data.entregadoPor || "",
+          },
+        ];
+
+        // Definir las posiciones en X para cada columna
+        const positions = [
+          marginLeft + 2,
+          marginLeft + 110 + 2,
+          marginLeft + 240 + 4,
+        ];
+
+        // Por cada persona, dibujar sus datos en un bloque
+        persons.forEach((person, index) => {
+          const posX = positions[index];
+          // Primera línea: etiqueta en negrita
+          doc.text(person.label, posX, yRef);
+          // Segunda línea: Nombre
+          doc.setFont("helvetica", "normal");
+          doc.text("Nombre: " + person.name, posX, yRef + 5);
+          // Tercera línea: Número de documento
+          doc.text("DNI: " + person.doc, posX, yRef + 10);
+          // Cuarta línea: Firma (imagen) o línea de firma
+          const sigWidth = 50;
+          const sigHeight = 15;
+          const sigX = posX;
+          const sigY = yRef + 12;
+          
+          // Resetear la fuente a negrita para el siguiente bloque
+          doc.setFont("helvetica", "bold");
+        });
+
+        yRef += 20;
 
         yRef = drawRow(
           ["HORA DE SOLICITUD:", data.horaSolicitud || ""],

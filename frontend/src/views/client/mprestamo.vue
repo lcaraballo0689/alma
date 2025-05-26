@@ -106,7 +106,12 @@
                   : 'Pendiente'
                 }}
               </td>
-              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.observaciones }}</td>
+              <td
+                :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }"
+                :title="item.observaciones"
+              >
+                {{ item.observaciones && item.observaciones.length > 90 ? item.observaciones.slice(0, 90) + '...' : item.observaciones }}
+              </td>
               <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }" @click.stop>
                 <!-- Se pasa el consecutivo para que el componente haga la petición y descargue el PDF -->
                 <FormatoPrestamo style="margin-top: -2px; width: 100px" v-if="item.estado === 'entrega Confirmada'"

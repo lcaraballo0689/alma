@@ -1,6 +1,8 @@
+const { log } = require("winston");
 const { connectDB, sql } = require("../config/db");
 const logger = require("../logger");
 const { DateTime } = require("luxon");
+const fs = require('fs');
 
 async function obtenerDetalleSolicitudPrestamo(req, res) {
   const { id } = req.body;
@@ -43,7 +45,8 @@ async function obtenerDetalleSolicitudPrestamo(req, res) {
     }
 
     const solicitud = solicitudResult.recordset[0];
-    logger.info(`📄 Generar PDF Prestamo ID: ${id} | Solicitud encontrada con ID real: ${solicitud.solicitudId}`);
+    let solicitudIdReal = solicitud.solicitudId;
+    logger.info(`📄 Generar PDF Prestamo ID: ${id} | Solicitud encontrada con ID real: ${solicitudIdReal}`);
 
     // 🔹 Cliente
     const clienteResult = await pool.request()
@@ -65,22 +68,46 @@ async function obtenerDetalleSolicitudPrestamo(req, res) {
     //todo: se debe invertir 
     // 🔹 Firmas
     let firmaTransportista = "";
+    let nombreTransportista = "";
+    let identificacionTransportista = "";
     if (solicitud.transportista) {
       const transportistaFirma = await pool.request()
         .input("nombre", sql.VarChar, solicitud.transportista)
-        .query(`SELECT firma FROM Usuario WHERE nombre = @nombre`);
+        .query(`SELECT firma, nombre, cc FROM Usuario WHERE nombre = @nombre`);
+        
       console.log("transportistaFirma", transportistaFirma.recordset[0]);
 
       firmaTransportista = transportistaFirma.recordset[0]?.firma || "";
+      nombreTransportista = transportistaFirma.recordset[0]?.nombre || "";
+      identificacionTransportista = transportistaFirma.recordset[0]?.cc || "";
     }
 
+    //FIXME: sustituir la ifrma del usuario porla firma del usuario que recibe la solicitud
     let firmaVerificador = "";
-    if (solicitud.usuarioSolicitante) {
+    
       const verificadorFirma = await pool.request()
-        .input("id", sql.Int, solicitud.usuarioSolicitante)
-        .query(`SELECT firma FROM Usuario WHERE id = @id`);
-      firmaVerificador = verificadorFirma.recordset[0]?.firma || "";
-    }
+      .input("id", sql.Int, 22)
+      .query(`
+        SELECT 
+        receptorNombre,
+        receptorIdentificacion,
+        firmaPath
+        FROM Entregas
+        WHERE solicitudId = @id
+      `);
+
+
+      // Convertir ruta de firma a base64
+      const firmaPath = verificadorFirma.recordset[0]?.firmaPath || "";
+      let firmaBase64 = "";
+      if (firmaPath) {
+        const imgBuf = fs.readFileSync(firmaPath);
+        firmaBase64 = imgBuf.toString('base64');
+      }
+      firmaVerificador = firmaBase64;
+      const VerificadorNombre = verificadorFirma.recordset[0]?.receptorNombre || "";
+      const VerificadorIdentificacion = verificadorFirma.recordset[0]?.receptorIdentificacion || "";
+    
 
     // 🔹 Detalles
     const detallesResult = await pool.request()
@@ -153,10 +180,11 @@ async function obtenerDetalleSolicitudPrestamo(req, res) {
       stickerSeguridad: solicitud.stickerSeguridad || "",
       items,
       recibidoPor: firmaTransportista,
-      entregadoPor: firmaVerificador
+      entregadoPor: firmaVerificador,
+      nombreVerificador: VerificadorNombre,
+      identificacionVerificador: VerificadorIdentificacion,
     };
 
-    logger.info(`📄 Generar PDF Prestamo ID: ${id} | Respuesta construida correctamente.`);
     res.json(formatoData);
 
   } catch (error) {
