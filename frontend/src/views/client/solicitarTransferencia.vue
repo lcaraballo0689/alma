@@ -335,18 +335,20 @@ export default {
             return;
           }
           const refsFile = [];
-          const duplicateInFile = [];
-          const refRegex = /^[A-Za-z0-9]+$/; // Permitir referencias de 1 o más caracteres
+          const duplicateInFile = [];          const refRegex = /^[A-Za-z0-9]+$/; // Permitir referencias de 1 o más caracteres
+          const validTipos = ['x100', 'x200', 'x300', 'CAJA-X100', 'CAJA-X200', 'CAJA-X300'];
           jsonData.slice(1).forEach(row => {
             const ref2 = row[idx2];
             const ref3 = row[idx3] || '';
             const tipoVal = row[idxTipo] || '';
             if (ref2 && typeof ref2 === "string" && ref2.trim() !== "") {
               const trimmedRef = ref2.trim();
-              if (!refRegex.test(trimmedRef) || !['x100', 'x200', 'x300'].includes(tipoVal)) {
-                Swal.fire({
-                  showConfirmButton: false,
-                });
+              if (!refRegex.test(trimmedRef)) {
+                console.warn(`Referencia inválida: ${trimmedRef}`);
+                return;
+              }
+              if (!validTipos.includes(tipoVal)) {
+                console.warn(`Tipo inválido: ${tipoVal}`);
                 return;
               }
               if (refsFile.includes(trimmedRef + tipoVal + ref3)) {
