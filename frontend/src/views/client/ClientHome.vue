@@ -351,17 +351,38 @@ export default {
     },
     async handleChangePassword() {
       if (this.newPassword !== this.confirmPassword) {
-        return Swal.fire({ icon: 'error', title: 'Error', text: 'Las contraseñas no coinciden.' });
+        return Swal.fire({ 
+          icon: 'warning', 
+          title: 'Contraseñas No Coinciden', 
+          text: 'La nueva contraseña y su confirmación deben ser idénticas.',
+          toast: true,
+          position: 'top-end',
+          timer: 4000,
+          showConfirmButton: false
+        });
       }
+      
+      if (this.newPassword.length < 8) {
+        return Swal.fire({ 
+          icon: 'warning', 
+          title: 'Contraseña Muy Corta', 
+          text: 'La contraseña debe tener al menos 8 caracteres.',
+          toast: true,
+          position: 'top-end',
+          timer: 4000,
+          showConfirmButton: false
+        });
+      }
+      
       try {
-        await apiClient.post(`/api/usuarios/updatepass/${this.authStore.user.id}`, { password: this.newPassword });
-        Swal.fire({ icon: 'success', title: 'Éxito', text: 'Contraseña actualizada.' });
+        await apiClient.put(`/api/users/${this.authStore.user.id}/password`, { password: this.newPassword });
+        // El éxito se maneja automáticamente por el interceptor
         this.showPasswordModal = false;
         this.newPassword = '';
         this.confirmPassword = '';
       } catch (error) {
+        // Los errores se manejan automáticamente por el interceptor
         console.error('Error al actualizar contraseña:', error);
-        Swal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.error || 'No se pudo actualizar.' });
       }
     }
   },

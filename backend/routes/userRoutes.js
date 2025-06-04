@@ -3,25 +3,27 @@
  * @module routes/userRoutes
  */
 
-const { Router } = require('express');
-const {
-  getAllUsers,
-  getUserById,
-  createUser,
-  updateUser,
-  deleteUser,
-  updatePassword
+const express = require('express');
+const router = express.Router();
+const { 
+  getAllUsers, 
+  getUserById, 
+  createUser, 
+  updateUser, 
+  deleteUser, 
+  updatePassword 
 } = require('../controllers/userController');
-const { authMiddleware } = require("../middlewares/authMiddleware");
 
-const router = Router();
+// Middleware de autenticación (opcional)
+// const { authenticateToken } = require('../middleware/auth');
 
+// Rutas para usuarios
 /**
  * @route GET /usuarios
  * @description Obtiene la lista de todos los usuarios.
  * @returns {Object[]} Lista de usuarios en formato JSON.
  */
-router.get('/', getAllUsers);
+router.get('/', getAllUsers);           // GET /api/users
 
 /**
  * @route GET /usuarios/:id
@@ -29,7 +31,7 @@ router.get('/', getAllUsers);
  * @param {number} req.params.id - ID del usuario.
  * @returns {Object} Objeto JSON del usuario encontrado.
  */
-router.get('/:id', authMiddleware, getUserById);
+router.get('/:id', getUserById);        // GET /api/users/:id
 
 /**
  * @route POST /usuarios
@@ -37,7 +39,7 @@ router.get('/:id', authMiddleware, getUserById);
  * @param {Object} req.body - Datos del nuevo usuario.
  * @returns {Object} Objeto JSON con el usuario creado o mensaje de error.
  */
-router.post('/', createUser);
+router.post('/', createUser);           // POST /api/users
 
 /**
  * @route PUT /usuarios/:id
@@ -46,7 +48,7 @@ router.post('/', createUser);
  * @param {Object} req.body - Datos actualizados del usuario.
  * @returns {Object} Objeto JSON con el usuario actualizado o mensaje de error.
  */
-router.put('/:id', authMiddleware, updateUser);
+router.put('/:id', updateUser);         // PUT /api/users/:id
 
 /**
  * @route DELETE /usuarios/:id
@@ -54,15 +56,15 @@ router.put('/:id', authMiddleware, updateUser);
  * @param {number} req.params.id - ID del usuario a eliminar.
  * @returns {Object} Objeto JSON con mensaje de confirmación o error.
  */
-router.delete('/:id', authMiddleware, deleteUser);
+router.delete('/:id', deleteUser);      // DELETE /api/users/:id
 
 /**
- * @route POST /usuarios/firmar
+ * @route PATCH /usuarios/:id/password
  * @description Actualiza la contraseña de un usuario.
  * @param {number} req.params.id - ID del usuario.
  * @param {Object} req.body - Objeto que contiene la nueva contraseña.
  * @returns {Object} Objeto JSON con mensaje de confirmación o error.
  */
-router.post('/updatepass/:id', authMiddleware, updatePassword);
+router.patch('/:id/password', updatePassword); // PATCH /api/users/:id/password
 
 module.exports = router;

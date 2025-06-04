@@ -89,6 +89,7 @@ app.get("/api", (req, res) => {
 });
 
 app.use("/api/usuarios", userRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/custodias", custodiaRoutes);
 app.use("/api/clientes", clienteRoutes);
 app.use("/api/direcciones", direccionesRoutes);

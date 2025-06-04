@@ -72,7 +72,21 @@ async function createUser(req, res) {
 
   // Corrección en la validación - cc y direccion son opcionales
   if (!clienteId || !tipoUsuarioId || !nombre || !telefono || !email || !password || typeof activo === 'undefined') {
-    return res.status(400).json({ error: 'Faltan campos obligatorios.' });
+    return res.status(400).json({ 
+      error: 'Faltan campos obligatorios.',
+      type: 'validation_error',
+      showAlert: {
+        icon: 'error',
+        title: 'Campos Requeridos',
+        text: 'Por favor, completa todos los campos obligatorios para crear el usuario.',
+        toast: false,
+        position: 'center',
+        timer: 0,
+        showConfirmButton: true,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#e74c3c'
+      }
+    });
   }
 
   try {
@@ -100,16 +114,115 @@ async function createUser(req, res) {
       `);
 
     const newId = result.recordset[0].insertedId;
-    return res.status(201).json({ message: 'Usuario creado exitosamente', id: newId });
-  } catch (error) {
+    return res.status(201).json({ 
+      message: 'Usuario creado exitosamente', 
+      id: newId,
+      type: 'success',
+      showAlert: {
+        icon: 'success',
+        title: '¡Usuario Creado!',
+        text: `El usuario ${nombre} ha sido creado exitosamente.`,
+        toast: true,
+        position: 'top-end',
+        timer: 4000,
+        showConfirmButton: false
+      }
+    });  } catch (error) {
     console.error('Error en createUser:', error);
     
     // Manejo específico de errores de base de datos
     if (error.number === 2627) { // Error de clave duplicada
-      return res.status(409).json({ error: 'Ya existe un usuario con ese email.' });
+      // Verificar si el error es por email duplicado
+      if (error.message.includes('Usuario_email_key') || error.message.includes('email')) {
+        const response = {
+          error: `El email ${email} ya se encuentra registrado. Intenta con otro email.`,
+          type: 'duplicate_email',
+          showAlert: {
+            icon: 'warning',
+            title: 'Email Ya Registrado',
+            text: `El email ${email} ya se encuentra registrado en el sistema. Por favor, intenta con otro email.`,
+            toast: false,
+            position: 'center',
+            timer: 0,
+            showConfirmButton: true,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#f39c12'
+          }
+        };
+        return res.status(409).json(response);
+      }
+      
+      // Verificar si el error es por cédula duplicada
+      if (error.message.includes('Usuario_cc_key') || error.message.includes('cc')) {
+        return res.status(409).json({ 
+          error: `La cédula ${cc} ya se encuentra registrada. Intenta con otra cédula.`,
+          type: 'duplicate_cc',
+          showAlert: {
+            icon: 'warning',
+            title: 'Cédula Ya Registrada',
+            text: `La cédula ${cc} ya se encuentra registrada en el sistema. Por favor, verifica el número de cédula.`,
+            toast: false,
+            position: 'center',
+            timer: 0,
+            showConfirmButton: true,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#f39c12'
+          }
+        });
+      }
+      
+      // Error genérico de clave duplicada
+      return res.status(409).json({ 
+        error: 'Ya existe un registro con esa información. Verifica los datos ingresados.',
+        type: 'duplicate_key',
+        showAlert: {
+          icon: 'warning',
+          title: 'Información Duplicada',
+          text: 'Ya existe un usuario con esa información. Por favor, verifica los datos ingresados.',
+          toast: false,
+          position: 'center',
+          timer: 0,
+          showConfirmButton: true,
+          confirmButtonText: 'Revisar Datos',
+          confirmButtonColor: '#f39c12'
+        }
+      });
     }
     
-    return res.status(500).json({ error: 'Error interno del servidor.' });
+    // Error de clave foránea (cliente o tipo de usuario no existe)
+    if (error.number === 547) {
+      return res.status(400).json({ 
+        error: 'El cliente o tipo de usuario seleccionado no es válido.',
+        type: 'foreign_key_error',
+        showAlert: {
+          icon: 'error',
+          title: 'Datos Inválidos',
+          text: 'El cliente o tipo de usuario seleccionado no existe en el sistema. Por favor, selecciona opciones válidas.',
+          toast: false,
+          position: 'center',
+          timer: 0,
+          showConfirmButton: true,
+          confirmButtonText: 'Revisar Selección',
+          confirmButtonColor: '#e74c3c'
+        }
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: 'Error interno del servidor al crear el usuario.',
+      type: 'database_error',
+      showAlert: {
+        icon: 'error',
+        title: 'Error del Sistema',
+        text: 'No se pudo crear el usuario. Por favor, contacta al administrador del sistema.',
+        toast: false,
+        position: 'center',
+        timer: 0,
+        showConfirmButton: true,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#e74c3c'
+      }
+    });
   }
 }
 
@@ -207,14 +320,59 @@ async function updateUser(req, res) {
           firma = @firma
         WHERE id = @id
       `;
-    }
+    }    await request.query(queryText);
 
-    await request.query(queryText);
-
-    return res.json({ message: 'Usuario actualizado exitosamente.' });
-  } catch (error) {
+    return res.json({ 
+      message: 'Usuario actualizado exitosamente.',
+      type: 'success',
+      showAlert: {
+        icon: 'success',
+        title: '¡Usuario Actualizado!',
+        text: `Los datos del usuario ${nombre} han sido actualizados correctamente.`,
+        toast: true,
+        position: 'top-end',
+        timer: 4000,
+        showConfirmButton: false
+      }
+    });  } catch (error) {
     console.error('Error en updateUser:', error);
-    return res.status(500).json({ error: 'Error interno del servidor.' });
+    
+    // Manejo específico de errores de base de datos
+    if (error.number === 2627) { // Error de clave duplicada
+      if (error.message.includes('Usuario_email_key') || error.message.includes('email')) {
+        return res.status(409).json({ 
+          error: `El email ${email} ya se encuentra registrado. Intenta con otro email.`,
+          type: 'duplicate_email',
+          showAlert: {
+            icon: 'warning',
+            title: 'Email Ya Registrado',
+            text: `El email ${email} ya está en uso por otro usuario. Por favor, intenta con otro email.`,
+            toast: false,
+            position: 'center',
+            timer: 0,
+            showConfirmButton: true,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#f39c12'
+          }
+        });
+      }
+    }
+    
+    return res.status(500).json({ 
+      error: 'Error interno del servidor al actualizar usuario.',
+      type: 'database_error',
+      showAlert: {
+        icon: 'error',
+        title: 'Error del Sistema',
+        text: 'No se pudo actualizar el usuario. Por favor, intenta nuevamente.',
+        toast: false,
+        position: 'center',
+        timer: 0,
+        showConfirmButton: true,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#e74c3c'
+      }
+    });
   }
 }
 
@@ -233,20 +391,62 @@ async function deleteUser(req, res) {
     const pool = await connectDB();
     const check = await pool.request()
       .input('id', sql.Int, id)
-      .query('SELECT id FROM dbo.Usuario WHERE id = @id');
+      .query('SELECT nombre FROM dbo.Usuario WHERE id = @id');
 
     if (!check.recordset || check.recordset.length === 0) {
-      return res.status(404).json({ error: 'Usuario no encontrado.' });
+      return res.status(404).json({ 
+        error: 'Usuario no encontrado.',
+        type: 'not_found',
+        showAlert: {
+          icon: 'error',
+          title: 'Usuario No Encontrado',
+          text: 'El usuario que intentas eliminar no existe en el sistema.',
+          toast: false,
+          position: 'center',
+          timer: 0,
+          showConfirmButton: true,
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#e74c3c'
+        }
+      });
     }
+
+    const userName = check.recordset[0].nombre;
 
     await pool.request()
       .input('id', sql.Int, id)
       .query('DELETE FROM dbo.Usuario WHERE id = @id');
 
-    return res.json({ message: 'Usuario eliminado exitosamente.' });
+    return res.json({ 
+      message: 'Usuario eliminado exitosamente.',
+      type: 'success',
+      showAlert: {
+        icon: 'success',
+        title: 'Usuario Eliminado',
+        text: `El usuario "${userName}" ha sido eliminado exitosamente.`,
+        toast: true,
+        position: 'top-end',
+        timer: 4000,
+        showConfirmButton: false
+      }
+    });
   } catch (error) {
     console.error('Error en deleteUser:', error);
-    return res.status(500).json({ error: 'Error interno del servidor.' });
+    return res.status(500).json({ 
+      error: 'Error interno del servidor al eliminar usuario.',
+      type: 'database_error',
+      showAlert: {
+        icon: 'error',
+        title: 'Error del Sistema',
+        text: 'No se pudo eliminar el usuario. Por favor, intenta nuevamente.',
+        toast: false,
+        position: 'center',
+        timer: 0,
+        showConfirmButton: true,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#e74c3c'
+      }
+    });
   }
 }
 /**
@@ -283,12 +483,36 @@ async function updatePassword(req, res) {
         UPDATE dbo.Usuario
         SET password = @password
         WHERE id = @id
-      `);
-
-    return res.json({ message: 'Contraseña actualizada correctamente.' });
+      `);    return res.json({ 
+      message: 'Contraseña actualizada correctamente.',
+      type: 'success',
+      showAlert: {
+        icon: 'success',
+        title: '¡Contraseña Actualizada!',
+        text: 'La contraseña ha sido cambiada exitosamente.',
+        toast: true,
+        position: 'top-end',
+        timer: 4000,
+        showConfirmButton: false
+      }
+    });
   } catch (error) {
     console.error('Error en updatePassword:', error);
-    return res.status(500).json({ error: 'Error interno del servidor.' });
+    return res.status(500).json({ 
+      error: 'Error interno del servidor.',
+      type: 'database_error',
+      showAlert: {
+        icon: 'error',
+        title: 'Error del Sistema',
+        text: 'No se pudo actualizar la contraseña. Por favor, intenta nuevamente.',
+        toast: false,
+        position: 'center',
+        timer: 0,
+        showConfirmButton: true,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#e74c3c'
+      }
+    });
   }
 }
 

@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import Swal from "sweetalert2";
 import router from "@/router";
@@ -25,12 +24,16 @@ const hostname = window.location.hostname;
 
 const envURLs = {
   "localhost": "http://localhost:3001", // Desarrollo local
+  "127.0.0.1": "http://localhost:3001", // Alternativa localhost
   "bodegapp.siglo21.com.co": "https://api.siglo21.com.co", // Dominio específico
   "vn9mmqm7-5173.use2.devtunnels.ms": "https://vn9mmqm7-3001.use2.devtunnels.ms", // Dominio específico
   "vn9mmqm7-3000.use2.devtunnels.ms": "https://vn9mmqm7-3001.use2.devtunnels.ms", // Dominio específico
 };
 
-const baseURL = envURLs[hostname] || import.meta.env.VITE_API_BASE_URL;
+// Forzar localhost para desarrollo si no encuentra el hostname
+const baseURL = envURLs[hostname] || "http://localhost:3001";
+
+// Configuración del API Client establecida
 
 
 
@@ -41,34 +44,13 @@ const apiClient = axios.create({
   },
 });
 
-// Interceptor de request: agrega el token a cada solicitud y muestra información del token
+// Interceptor de request: agrega el token a cada solicitud
 apiClient.interceptors.request.use(
   (config) => {
     const sessionStore = useSessionStore();
     const token = sessionStore.token || localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      // Solo muestra logs en desarrollo
-      // if (process.env.NODE_ENV === "development") {
-      //   try {
-      //     const decoded = parseJwt(token);
-      //     if (decoded) {
-      //       const currentTime = Date.now() / 1000; // Tiempo actual en segundos
-      //       const timeLeft = decoded.exp - currentTime;
-      //       if (timeLeft <= 0) {
-      //         console.log("[Token Info] El token ha expirado.");
-      //         // Opcional: marcar la sesión como expirada
-      //         sessionStore.expireSession();
-      //       } else {
-      //         console.log(
-      //           `[Token Info] Token válido. Tiempo restante: ${Math.floor(timeLeft)} segundos.`
-      //         );
-      //       }
-      //     }
-      //   } catch (e) {
-      //     console.error("[Token Info] Error al decodificar el token:", e);
-      //   }
-      // }
     }
     return config;
   },
@@ -176,6 +158,46 @@ apiClient.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor para manejar respuestas con alertas
+apiClient.interceptors.response.use(
+  (response) => {
+    // Mostrar alertas de éxito desde el backend
+    if (response.data && response.data.showAlert) {
+      Swal.fire(response.data.showAlert);
+    }
+    return response;
+  },
+  (error) => {
+    // Mostrar alertas de error desde el backend
+    if (error.response && error.response.data && error.response.data.showAlert) {
+      Swal.fire(error.response.data.showAlert);
+    } else if (error.response && error.response.data && error.response.data.error) {
+      // Fallback para errores sin showAlert
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.response.data.error,
+        toast: true,
+        position: 'top-end',
+        timer: 4000,
+        showConfirmButton: false
+      });
+    } else {
+      // Error genérico de conexión
+      Swal.fire({
+        icon: 'error',
+        title: 'Error de Conexión',
+        text: 'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
+        toast: true,
+        position: 'top-end',
+        timer: 5000,
+        showConfirmButton: false
+      });
     }
     return Promise.reject(error);
   }

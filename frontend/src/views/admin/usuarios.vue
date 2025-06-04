@@ -328,35 +328,35 @@ export default {
         activo: true,
         cc: ''
       };
-    },
-    async loadUsers() {
+    },    async loadUsers() {
       this.loading = true;
       try {
-        const res = await apiClient.get('/api/usuarios');
+        const res = await apiClient.get('/api/users');
         this.users = res.data;
       } catch (err) {
         console.error('Error al cargar usuarios:', err);
         this.users = [];
+        // Los errores se manejan automáticamente por el interceptor
       } finally {
         this.loading = false;
       }
-    },
-    async loadClientes() {
+    },async loadClientes() {
       try {
         const res = await apiClient.get('/api/clientes');
         this.clientes = res.data;
       } catch (err) {
         console.error('Error al cargar clientes:', err);
         this.clientes = [];
+        // Los errores se manejan automáticamente por el interceptor
       }
-    },
-    async loadTiposUsuario() {
+    },async loadTiposUsuario() {
       try {
         const res = await apiClient.get("/api/roles");
         this.tiposUsuario = res.data;
         console.log("Tipos de usuario:", this.tiposUsuario);
       } catch (err) {
-        Swal.fire("Error", "No se pudieron cargar los roles", "error");
+        console.error('Error al cargar tipos de usuario:', err);
+        // Los errores se manejan automáticamente por el interceptor
       }
     },
     getClientName(clientId) {
@@ -374,56 +374,157 @@ export default {
       // Clonamos e inicializamos la contraseña en blanco
       this.currentUser = { ...user, password: '' };
       this.showModal();
-    },
-    async saveUser() {
+    },    async saveUser() {
       this.validatePassword();
       this.validateConfirmPassword();
       if (this.passwordError || this.confirmPasswordError) {
         return;
       }
+      
+      console.log('💾 Intentando guardar usuario...');
+      console.log('📤 Datos a enviar:', this.currentUser);
+      console.log('🔗 URL base del API:', apiClient.defaults.baseURL);
+      
       this.isLoading = true;
       try {
+        let response;
         if (this.isEditing && this.currentUser.id) {
-          await apiClient.put(`/api/usuarios/${this.currentUser.id}`, this.currentUser);
-          Swal.fire('Actualizado', 'Usuario actualizado correctamente', 'success');
+          console.log('✏️ Editando usuario ID:', this.currentUser.id);
+          response = await apiClient.put(`/api/users/${this.currentUser.id}`, this.currentUser);
         } else {
-          const res = await apiClient.post('/api/usuarios', this.currentUser);
-          this.currentUser.id = res.data.id;
-          Swal.fire('Creado', 'Usuario creado correctamente', 'success');
+          console.log('➕ Creando nuevo usuario');
+          response = await apiClient.post('/api/users', this.currentUser);
+          this.currentUser.id = response.data.id;
         }
+        
+        console.log('✅ Respuesta del servidor:', response.data);
+        
+        // Mostrar alerta de éxito si viene del backend
+        if (response.data && response.data.showAlert) {
+          console.log('🎉 Mostrando alerta de éxito:', response.data.showAlert);
+          Swal.fire(response.data.showAlert);
+        }
+        
         await this.loadUsers();
         this.closeUserModal();
       } catch (error) {
         console.error('Error al guardar usuario:', error);
-        Swal.fire('Error', 'No se pudo guardar el usuario', 'error');
+        console.log('🔍 Datos del error:', error.response?.data);
+        
+        // Mostrar alerta de error si viene del backend
+        if (error.response && error.response.data && error.response.data.showAlert) {
+          console.log('✅ Mostrando showAlert del backend:', error.response.data.showAlert);
+          Swal.fire(error.response.data.showAlert);
+        } else if (error.response && error.response.data && error.response.data.error) {
+          console.log('⚠️ Usando mensaje de error básico:', error.response.data.error);          // Fallback si no hay showAlert pero sí hay mensaje de error
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.response.data.error,
+            toast: false,
+            position: 'center',
+            showConfirmButton: true,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#e74c3c'
+          });
+        } else {
+          console.log('❌ Error genérico sin datos específicos');
+          // Error genérico
+          Swal.fire({
+            icon: 'error',
+            title: 'Error del Sistema',
+            text: 'No se pudo guardar el usuario. Intente nuevamente.',
+            toast: false,
+            position: 'center',
+            showConfirmButton: true,
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#e74c3c'
+          });
+        }
       } finally {
         this.isLoading = false;
       }
-    },
-    async deleteUser(id) {
+    },    async deleteUser(id) {
+      const userToDelete = this.users.find(u => u.id === id);
+      const userName = userToDelete ? userToDelete.nombre : 'el usuario';
+      
       const confirm = await Swal.fire({
         title: '¿Eliminar usuario?',
-        text: 'Esta acción no se puede deshacer.',
+        html: `
+          <p>Se eliminará el usuario <strong>"${userName}"</strong> permanentemente.</p>
+          <p class="text-warning"><small>Esta acción no se puede deshacer.</small></p>
+        `,
         icon: 'warning',
         showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar'
       });
-      if (confirm.isConfirmed) {
-        try {
-          await apiClient.delete(`/api/usuarios/${id}`);
+        if (confirm.isConfirmed) {        try {
+          const response = await apiClient.delete(`/api/users/${id}`);
+          
+          // Mostrar alerta de éxito si viene del backend
+          if (response.data && response.data.showAlert) {
+            Swal.fire(response.data.showAlert);
+          } else {
+            // Alerta de éxito por defecto
+            Swal.fire({
+              icon: 'success',
+              title: 'Usuario Eliminado',
+              text: `El usuario "${userName}" ha sido eliminado exitosamente.`,
+              toast: true,
+              position: 'top-end',
+              timer: 4000,
+              showConfirmButton: false
+            });
+          }
+          
           await this.loadUsers();
-          Swal.fire('Eliminado', 'Usuario eliminado correctamente', 'success');
         } catch (error) {
-          Swal.fire('Error', 'No se pudo eliminar el usuario', 'error');
+          console.error('Error al eliminar usuario:', error);
+          
+          // Mostrar alerta de error si viene del backend
+          if (error.response && error.response.data && error.response.data.showAlert) {
+            Swal.fire(error.response.data.showAlert);
+          } else if (error.response && error.response.data && error.response.data.error) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: error.response.data.error,
+              toast: false,
+              position: 'center',
+              showConfirmButton: true,
+              confirmButtonText: 'Entendido',
+              confirmButtonColor: '#e74c3c'
+            });
+          } else {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error del Sistema',
+              text: 'No se pudo eliminar el usuario. Intente nuevamente.',
+              toast: false,
+              position: 'center',
+              showConfirmButton: true,
+              confirmButtonText: 'Entendido',
+              confirmButtonColor: '#e74c3c'
+            });
+          }
         }
       }
-    },
-    onFirmaChange(event) {
+    },    onFirmaChange(event) {
       const file = event.target.files[0];
       if (!file) return;
       if (!file.name.toLowerCase().endsWith('.png')) {
-        Swal.fire('Error', 'Por favor selecciona un archivo .png', 'error');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Formato Incorrecto',
+          text: 'Por favor selecciona un archivo con formato .png',
+          toast: true,
+          position: 'top-end',
+          timer: 4000,
+          showConfirmButton: false
+        });
         return;
       }
       const reader = new FileReader();
@@ -474,8 +575,7 @@ export default {
     closeUserModal() {
       this.modalInstance?.hide();
     }
-  },
-  async mounted() {
+  },  async mounted() {
     await Promise.all([this.loadUsers(), this.loadClientes(), this.loadTiposUsuario()]);
   }
 };
