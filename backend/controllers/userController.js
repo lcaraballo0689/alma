@@ -70,6 +70,7 @@ async function createUser(req, res) {
     firma
   } = req.body;
 
+  // Corrección en la validación - cc y direccion son opcionales
   if (!clienteId || !tipoUsuarioId || !nombre || !telefono || !email || !password || typeof activo === 'undefined') {
     return res.status(400).json({ error: 'Faltan campos obligatorios.' });
   }
@@ -78,6 +79,7 @@ async function createUser(req, res) {
     // Hashear la contraseña con bcrypt
     const hashedPassword = await bcrypt.hash(password, 10);
     const pool = await connectDB();
+    
     const result = await pool.request()
       .input('clienteId', sql.Int, clienteId)
       .input('tipoUsuarioId', sql.Int, tipoUsuarioId)
@@ -98,9 +100,15 @@ async function createUser(req, res) {
       `);
 
     const newId = result.recordset[0].insertedId;
-    return res.status(201).json({ message: 'Usuario creado', id: newId });
+    return res.status(201).json({ message: 'Usuario creado exitosamente', id: newId });
   } catch (error) {
     console.error('Error en createUser:', error);
+    
+    // Manejo específico de errores de base de datos
+    if (error.number === 2627) { // Error de clave duplicada
+      return res.status(409).json({ error: 'Ya existe un usuario con ese email.' });
+    }
+    
     return res.status(500).json({ error: 'Error interno del servidor.' });
   }
 }
