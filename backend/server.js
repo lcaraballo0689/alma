@@ -8,6 +8,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 const http = require("http");
 const { connectDB } = require("./config/db");
+const path = require("path");
 
 // Rutas
 const userRoutes = require("./routes/userRoutes");
@@ -42,6 +43,7 @@ const roleRoutes = require("./routes/roleRoutes");
 const permissionRoutes = require("./routes/permissionRoutes");
 const rolePermissionRoutes = require("./routes/rolePermissionRoutes");
 const entregaRoutes = require('./routes/entregaRoute');
+const apkRoutes = require('./routes/apkRoutes');
 
 
 const app = express();
@@ -80,6 +82,10 @@ app.use("/api/permissions", permissionRoutes);
 app.use("/api/role-permissions", rolePermissionRoutes);
 app.use('/api', dashboardRouter);
 app.use('/api/pwa/entregas', entregaRoutes);
+app.use('/api/apk', apkRoutes);
+
+// Servir archivos estáticos desde la carpeta public
+app.use(express.static(path.join(__dirname, 'public')));
 
 //app.use("/api/bodega", Bodega); // Rutas de bodegas
 

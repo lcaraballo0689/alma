@@ -13,6 +13,8 @@ export default defineConfig({
   },
   assetsInclude: ['**/*.apk'],
   server: {
+    host: true, // Expone a todas las interfaces de red
+    port: 5173, // Puerto por defecto de Vite
     proxy: {
       '/api': {
         target: 'https://api.siglo21.com.co',

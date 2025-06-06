@@ -9,11 +9,10 @@
             </div>
             <!-- Contenedor principal -->
             <div class="app-download-container">
- 
                 <img :src="logo" alt="Logo" class="logo" />
                 <h1>Descarga la App Móvil</h1>
                 <p>¡Disfruta de la mejor experiencia en tu móvil!</p>
-                <a :href="apkPath" download class="btn">
+                <a :href="apkPath" download="bodegapp.apk" class="btn btn-primary download-btn">
                     <i class="bi bi-download"></i> Descargar APK
                 </a>
             </div>
@@ -25,7 +24,6 @@
                 </button>
             </div>
             <div class="app-download-container">
-
                 <img :src="logo" alt="Logo" class="logo" />
                 <h1>Acceso no autorizado</h1>
                 <p>No tienes permiso para acceder a esta sección.</p>
@@ -36,8 +34,8 @@
 </template>
 
 <script>
-import appAndroid from "@/assets/apps/bodegapp.apk";
 import logo from "@/assets/img/siglo.png";
+import apkFile from "@/assets/apps/bodegapp.apk";
 import { useAuthStore } from "@/stores/authStore";
 
 export default {
@@ -45,8 +43,7 @@ export default {
     data() {
         return {
             logo,
-            apkPath: appAndroid,
-            permission: ''
+            apkPath: apkFile
         };
     },
     computed: {
@@ -57,16 +54,6 @@ export default {
             return this.authStore.permissions.some(item => item.nombre === 'appMovil');
         }
     },
-    mounted() {
-        this.permission = this.authStore.userPermissions.find(item => item.nombre === 'appMovil');
-        if (this.permission) {
-            console.log('Nombre del permiso:', this.permission.nombre);
-        } else {
-            console.log('No se encontró permiso appMovil');
-        }
-    },
-    
-    
     methods: {
         logout() {
             this.authStore.resetAuth();
@@ -182,5 +169,34 @@ p {
         font-size: 16px;
         padding: 12px 20px;
     }
+}
+
+.download-btn {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.download-btn:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.download-btn:active {
+    transform: translateY(0);
+}
+
+.download-btn i {
+    font-size: 1.2rem;
 }
 </style>
