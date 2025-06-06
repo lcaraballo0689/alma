@@ -40,6 +40,7 @@
 <script>
 import logo from "@/assets/img/siglo.png";
 import { useAuthStore } from "@/stores/authStore";
+import apiClient from "@/services/api";
 
 export default {
     name: "AppMovilDownload",
@@ -47,8 +48,7 @@ export default {
         return {
             logo,
             downloadError: null,
-            downloading: false,
-            publicApkPath: '/bodegapp.apk' // Actualizada la ruta para apuntar directamente a public
+            downloading: false
         };
     },
     computed: {
@@ -65,16 +65,18 @@ export default {
                 this.downloading = true;
                 this.downloadError = null;
 
-                console.log('Intentando descargar desde:', this.publicApkPath);
-                const response = await fetch(this.publicApkPath);
-                
-                if (!response.ok) {
-                    console.error('Error en la respuesta:', response.status, response.statusText);
-                    throw new Error(`No se pudo encontrar el archivo APK. Estado: ${response.status}`);
-                }
-                
-                const blob = await response.blob();
-                console.log('APK encontrada, tamaño:', blob.size);
+                console.log('Solicitando APK al backend...');
+                const response = await apiClient.get('/api/apk/download', {
+                    responseType: 'blob',
+                    headers: {
+                        'Authorization': `Bearer ${this.authStore.token}`
+                    }
+                });
+
+                console.log('APK recibida, tamaño:', response.data.size);
+                const blob = new Blob([response.data], {
+                    type: 'application/vnd.android.package-archive'
+                });
                 const url = URL.createObjectURL(blob);
 
                 // En dispositivos móviles, abrir en una nueva pestaña
@@ -99,7 +101,7 @@ export default {
 
             } catch (error) {
                 console.error('Error detallado al descargar la APK:', error);
-                this.downloadError = `Error al descargar la APK: ${error.message}. Por favor, intenta nuevamente.`;
+                this.downloadError = `Error al descargar la APK: ${error.response?.data?.error || error.message}. Por favor, intenta nuevamente.`;
             } finally {
                 this.downloading = false;
             }
