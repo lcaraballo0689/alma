@@ -146,22 +146,37 @@ export default {
         });
         console.log("Usuario se ha unido a la sala: usuario_" + decoded.clienteId);
 
+        // Detectar si es un dispositivo móvil
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (permisos && permisos.some(p => p.nombre === 'AppMovil') && isMobile) {
-          this.$router.push({ name: 'AppMovil' });
-        } else if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'Acceso Panel Administrativo') && !isMobile) {
-          this.$router.push({ name: 'AdminDashboard' });
-        } else if (decoded.permisos && decoded.permisos.some(p => p.nombre === 'Acceso Panel Cliente') && !isMobile) {
-          this.$router.push({ name: 'ClientHome' });
-        } else if (isMobile) {
-          this.$router.push({ name: 'AppMovil' });
-        }
         
+        // Verificar si tiene el permiso específico de appMovil
+        const hasAppMovilPermission = permisos.some(p => p.nombre === 'appMovil');
+        console.log('¿Tiene permiso appMovil?:', hasAppMovilPermission);
+        console.log('¿Es dispositivo móvil?:', isMobile);
+
+        // Lógica de redirección
+        if (isMobile) {
+          if (hasAppMovilPermission) {
+            console.log('Redirigiendo a AppMovil...');
+            this.$router.push({ name: 'AppMovil' });
+          } else {
+            console.log('Usuario móvil sin permiso appMovil');
+            this.error = "No tienes permiso para acceder a la aplicación móvil";
+            throw new Error("No tienes permiso para acceder a la aplicación móvil");
+          }
+        } else {
+          // Lógica para dispositivos de escritorio
+          if (decoded.permisos.some(p => p.nombre === 'Acceso Panel Administrativo')) {
+            this.$router.push({ name: 'AdminDashboard' });
+          } else if (decoded.permisos.some(p => p.nombre === 'Acceso Panel Cliente')) {
+            this.$router.push({ name: 'ClientHome' });
+          }
+        }
 
       } catch (err) {
         console.error("Error en login:", err.response ? err.response.data : err);
         const errorMsg =
-          err.response?.data?.error || "Error al iniciar sesión. Verifica tus credenciales.";
+          err.response?.data?.error || err.message || "Error al iniciar sesión. Verifica tus credenciales.";
         this.error = errorMsg;
         Swal.fire({
           toast: true,

@@ -12,9 +12,13 @@
                 <img :src="logo" alt="Logo" class="logo" />
                 <h1>Descarga la App Móvil</h1>
                 <p>¡Disfruta de la mejor experiencia en tu móvil!</p>
-                <a :href="apkPath" download="bodegapp.apk" class="btn btn-primary download-btn">
-                    <i class="bi bi-download"></i> Descargar APK
-                </a>
+                <button @click="downloadApk" class="btn btn-primary download-btn" :disabled="downloading">
+                    <i class="bi bi-download"></i> 
+                    {{ downloading ? 'Descargando...' : 'Descargar APK' }}
+                </button>
+                <div v-if="downloadError" class="alert alert-danger mt-3">
+                    {{ downloadError }}
+                </div>
             </div>
         </div>
         <div v-else class="app-wrapper">
@@ -35,15 +39,16 @@
 
 <script>
 import logo from "@/assets/img/siglo.png";
-import apkFile from "@/assets/apps/bodegapp.apk";
 import { useAuthStore } from "@/stores/authStore";
+import apiClient from "@/services/api";
 
 export default {
     name: "AppMovilDownload",
     data() {
         return {
             logo,
-            apkPath: apkFile
+            downloadError: null,
+            downloading: false
         };
     },
     computed: {
@@ -55,6 +60,52 @@ export default {
         }
     },
     methods: {
+        async downloadApk() {
+            try {
+                this.downloading = true;
+                this.downloadError = null;
+
+                // Obtener el token del store
+                const token = this.authStore.token;
+
+                // Realizar la solicitud con el token
+                const response = await apiClient.get('/api/apk/download', {
+                    responseType: 'blob',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                // Crear un objeto URL para el blob
+                const url = window.URL.createObjectURL(new Blob([response.data], {
+                    type: 'application/vnd.android.package-archive'
+                }));
+
+                // En dispositivos móviles, abrir en una nueva pestaña
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    window.open(url, '_blank');
+                } else {
+                    // En desktop, usar el método de descarga tradicional
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', 'bodegapp.apk');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+                
+                // Limpiar la URL creada
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+
+            } catch (error) {
+                console.error('Error al descargar la APK:', error);
+                this.downloadError = 'Error al descargar la APK. Por favor, intenta nuevamente.';
+            } finally {
+                this.downloading = false;
+            }
+        },
         logout() {
             this.authStore.resetAuth();
             localStorage.clear();
@@ -198,5 +249,17 @@ p {
 
 .download-btn i {
     font-size: 1.2rem;
+}
+
+.download-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.download-btn:disabled:hover {
+    background-color: #6c757d;
+    transform: none;
+    box-shadow: none;
 }
 </style>
