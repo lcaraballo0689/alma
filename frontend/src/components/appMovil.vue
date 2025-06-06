@@ -40,15 +40,6 @@
 <script>
 import logo from "@/assets/img/siglo.png";
 import { useAuthStore } from "@/stores/authStore";
-import apiClient from "@/services/api";
-
-// Importar la APK desde assets (puede fallar en producción)
-let apkFromAssets;
-try {
-    apkFromAssets = import.meta.glob('/src/assets/apps/bodegapp.apk');
-} catch (error) {
-    console.log('APK no encontrada en assets');
-}
 
 export default {
     name: "AppMovilDownload",
@@ -74,43 +65,31 @@ export default {
                 this.downloading = true;
                 this.downloadError = null;
 
-                // Primero intentar con la APK en assets
-                if (apkFromAssets) {
-                    try {
-                        const apkModule = await apkFromAssets['/src/assets/apps/bodegapp.apk']();
-                        if (apkModule.default) {
-                            this.downloadFile(apkModule.default);
-                            return;
-                        }
-                    } catch (error) {
-                        console.log('Error al cargar APK desde assets:', error);
-                    }
+                const response = await fetch(this.publicApkPath);
+                if (!response.ok) {
+                    throw new Error('No se pudo encontrar el archivo APK');
+                }
+                
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+
+                // En dispositivos móviles, abrir en una nueva pestaña
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    window.open(url, '_blank');
+                } else {
+                    // En desktop, usar el método de descarga tradicional
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', 'bodegapp.apk');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                 }
 
-                // Si falla assets, intentar con la APK en public
-                try {
-                    const response = await fetch(this.publicApkPath);
-                    if (response.ok) {
-                        const blob = await response.blob();
-                        this.downloadFile(URL.createObjectURL(blob));
-                        return;
-                    }
-                } catch (error) {
-                    console.log('Error al cargar APK desde public:', error);
-                }
-
-                // Si ambos métodos fallan, intentar con el backend
-                const response = await apiClient.get('/api/apk/download', {
-                    responseType: 'blob',
-                    headers: {
-                        'Authorization': `Bearer ${this.authStore.token}`
-                    }
-                });
-
-                const blob = new Blob([response.data], {
-                    type: 'application/vnd.android.package-archive'
-                });
-                this.downloadFile(URL.createObjectURL(blob));
+                // Limpiar la URL creada
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 100);
 
             } catch (error) {
                 console.error('Error al descargar la APK:', error);
@@ -118,26 +97,6 @@ export default {
             } finally {
                 this.downloading = false;
             }
-        },
-
-        downloadFile(url) {
-            // En dispositivos móviles, abrir en una nueva pestaña
-            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                window.open(url, '_blank');
-            } else {
-                // En desktop, usar el método de descarga tradicional
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', 'bodegapp.apk');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
-
-            // Limpiar la URL creada
-            setTimeout(() => {
-                URL.revokeObjectURL(url);
-            }, 100);
         },
 
         logout() {
