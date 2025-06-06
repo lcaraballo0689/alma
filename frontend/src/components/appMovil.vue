@@ -48,7 +48,7 @@ export default {
             logo,
             downloadError: null,
             downloading: false,
-            publicApkPath: '/apk/bodegapp.apk' // Ruta a la APK en public
+            publicApkPath: '/bodegapp.apk' // Actualizada la ruta para apuntar directamente a public
         };
     },
     computed: {
@@ -65,19 +65,25 @@ export default {
                 this.downloading = true;
                 this.downloadError = null;
 
+                console.log('Intentando descargar desde:', this.publicApkPath);
                 const response = await fetch(this.publicApkPath);
+                
                 if (!response.ok) {
-                    throw new Error('No se pudo encontrar el archivo APK');
+                    console.error('Error en la respuesta:', response.status, response.statusText);
+                    throw new Error(`No se pudo encontrar el archivo APK. Estado: ${response.status}`);
                 }
                 
                 const blob = await response.blob();
+                console.log('APK encontrada, tamaño:', blob.size);
                 const url = URL.createObjectURL(blob);
 
                 // En dispositivos móviles, abrir en una nueva pestaña
                 if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    console.log('Dispositivo móvil detectado, abriendo en nueva pestaña');
                     window.open(url, '_blank');
                 } else {
                     // En desktop, usar el método de descarga tradicional
+                    console.log('Desktop detectado, iniciando descarga');
                     const link = document.createElement('a');
                     link.href = url;
                     link.setAttribute('download', 'bodegapp.apk');
@@ -92,8 +98,8 @@ export default {
                 }, 100);
 
             } catch (error) {
-                console.error('Error al descargar la APK:', error);
-                this.downloadError = 'Error al descargar la APK. Por favor, intenta nuevamente.';
+                console.error('Error detallado al descargar la APK:', error);
+                this.downloadError = `Error al descargar la APK: ${error.message}. Por favor, intenta nuevamente.`;
             } finally {
                 this.downloading = false;
             }
