@@ -350,80 +350,60 @@
                               <td>{{ det.estado }}</td>
                               <td>
                                 {{
-                                  (
-                                    item.entregas.find(
-                                      (e) => e.entregaId === det.entregaId
-                                    ) || {}
-                                  ).entregaId || "-"
+                                  ((item.entregas || []).find(
+                                    (e) => e.entregaId === det.entregaId
+                                  ) || {}).entregaId || "-"
                                 }}
                               </td>
                               <td>
                                 {{
-                                  (
-                                    item.entregas.find(
-                                      (e) => e.entregaId === det.entregaId
-                                    ) || {}
-                                  ).fechaEntregaFormato || "-"
+                                  ((item.entregas || []).find(
+                                    (e) => e.entregaId === det.entregaId
+                                  ) || {}).fechaEntregaFormato || "-"
                                 }}
                               </td>
                               <td>
                                 {{
-                                  (
-                                    item.entregas.find(
-                                      (e) => e.entregaId === det.entregaId
-                                    ) || {}
-                                  ).horaEntrega || "-"
+                                  ((item.entregas || []).find(
+                                    (e) => e.entregaId === det.entregaId
+                                  ) || {}).horaEntrega || "-"
                                 }}
                               </td>
                               <td>
                                 {{
-                                  (
-                                    item.entregas.find(
-                                      (e) => e.entregaId === det.entregaId
-                                    ) || {}
-                                  ).receptorNombre || "-"
+                                  ((item.entregas || []).find(
+                                    (e) => e.entregaId === det.entregaId
+                                  ) || {}).receptorNombre || "-"
                                 }}
                               </td>
                               <td>
                                 {{
-                                  (
-                                    item.entregas.find(
-                                      (e) => e.entregaId === det.entregaId
-                                    ) || {}
-                                  ).receptorIdentificacion || "-"
+                                  ((item.entregas || []).find(
+                                    (e) => e.entregaId === det.entregaId
+                                  ) || {}).receptorIdentificacion || "-"
                                 }}
                               </td>
                               <td>
                                 <button
                                   class="btn btn-outline-warning"
-                                  :disabled="!(item.entregas.find(e => e.entregaId === det.entregaId) || {}).firmaBase64"
+                                  :disabled="!((item.entregas || []).find(e => e.entregaId === det.entregaId) || {}).firmaBase64"
                                   @click="openFirmaModal(
-                                    (item.entregas.find(e => e.entregaId === det.entregaId) || {}).firmaBase64,
-                                    (item.entregas.find(e => e.entregaId === det.entregaId) || {}).receptorNombre || '-',
-                                    (item.entregas.find(e => e.entregaId === det.entregaId) || {}).receptorIdentificacion || '-',
-                                    (item.entregas.find(e => e.entregaId === det.entregaId) || {}).entregaId,
-                                    (item.entregas.find(e => e.entregaId === det.entregaId) || {}).fechaEntregaFormato,
-                                    (item.entregas.find(e => e.entregaId === det.entregaId) || {}).horaEntrega,
+                                    ((item.entregas || []).find(e => e.entregaId === det.entregaId) || {}).firmaBase64,
+                                    ((item.entregas || []).find(e => e.entregaId === det.entregaId) || {}).receptorNombre || '-',
+                                    ((item.entregas || []).find(e => e.entregaId === det.entregaId) || {}).receptorIdentificacion || '-',
+                                    ((item.entregas || []).find(e => e.entregaId === det.entregaId) || {}).entregaId,
+                                    ((item.entregas || []).find(e => e.entregaId === det.entregaId) || {}).fechaEntregaFormato,
+                                    ((item.entregas || []).find(e => e.entregaId === det.entregaId) || {}).horaEntrega,
                                   )"
                                 >
                                   <i class="bi bi-eye-fill"></i>
                                 </button>
                               </td>
                               <td>
-                                <button class="btn btn-outline-warning" :disabled="!(
-                                  item.entregas.find(
-                                    (e) => e.entregaId === det.entregaId
-                                  ) || {}
-                                ).fotosPaths
-                                  " @click="
-                                    openFotoModal(
-                                      (
-                                        item.entregas.find(
-                                          (e) => e.entregaId === det.entregaId
-                                        ) || {}
-                                      ).fotosPaths
-                                    )
-                                    ">
+                                <button class="btn btn-outline-warning" 
+                                  :disabled="!((item.entregas || []).find((e) => e.entregaId === det.entregaId) || {}).fotosPaths"
+                                  @click="openFotoModal(((item.entregas || []).find((e) => e.entregaId === det.entregaId) || {}).fotosPaths)"
+                                >
                                   <i class="bi bi-eye-fill"></i>
                                 </button>
                               </td>
@@ -611,7 +591,8 @@ export default {
       return this.animatedProgress + "%";
     },
     timelineSteps() {
-      const moduloActual = this.detalle.solicitud.modulo || "Prestamo";
+      // Usar el operador de encadenamiento opcional para evitar errores
+      const moduloActual = this.detalle?.solicitud?.modulo || "Prestamo";
       return timelineMap[moduloActual] || [];
     },
     currentStepIndex() {
@@ -659,7 +640,10 @@ export default {
   mounted() {
     //this.fetchEstados();
     this.fetchtransferencias();
-    this.showEntregas(this.detalle.solicitud.id, this.detalle.solicitud.modulo);
+    // Solo llamar a showEntregas si tenemos un ID y módulo válidos
+    if (this.detalle?.solicitud?.id && this.detalle?.solicitud?.modulo) {
+      this.showEntregas(this.detalle.solicitud.id, this.detalle.solicitud.modulo);
+    }
   },
   methods: {
     async generarFormatoPrestamo(consecutivo) {
