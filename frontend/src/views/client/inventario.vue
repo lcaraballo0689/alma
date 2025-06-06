@@ -88,6 +88,9 @@
                 class="form-control form-control-sm"
                 placeholder="Buscar"
                 v-model="searchTerm"
+                @input="handleSearch"
+                @keyup.delete="handleSearch"
+                @keyup.backspace="handleSearch"
               />
             </div>
             <button class="btn btn-small" @click="toggleMenu">
@@ -129,7 +132,7 @@
             </thead>
             <tbody>
               <tr
-                v-for="item in paginatedInventarios"
+                v-for="item in filteredInventarios"
                 :key="item.id"
                 class="text-start rows"
                 @click="currentTab !== 'inventario' && toggleRow(item.id)"
@@ -270,12 +273,11 @@ export default {
   data() {
     return {
       currentPage: 1,
-      // Estos totales se obtendrán de llamadas separadas a la API
       totalCountAll: 0,
       totalCountDisponible: 0,
       totalCountEntregado: 0,
       authStore: useAuthStore(),
-      currentTab: "inventario", // Valores posibles: "inventario", "Disponible para prestar", "Disponible para devolver"
+      currentTab: "inventario",
       searchTerm: "",
       recordsPerPage: 100,
       recordsOptions: [25, 50, 100, 250, 500],
@@ -293,6 +295,7 @@ export default {
         devolucion: false,
         almacenada: false,
       },
+      searchTimeout: null
     };
   },
   async mounted() {
@@ -345,12 +348,20 @@ export default {
       }
     },
     filteredInventarios() {
-      let filtered = this.inventarios.filter(
-        (item) =>
-          (item.referencia1 || "").toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-          (item.referencia2 || "").toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-      return filtered;
+      if (!this.searchTerm || this.searchTerm.trim() === '') {
+        return this.inventarios;
+      }
+      
+      const searchTermLower = this.searchTerm.toLowerCase().trim();
+      return this.inventarios.filter(item => {
+        return (
+          (item.objeto && item.objeto.toLowerCase().includes(searchTermLower)) ||
+          (item.bodega && item.bodega.toLowerCase().includes(searchTermLower)) ||
+          (item.referencia1 && item.referencia1.toLowerCase().includes(searchTermLower)) ||
+          (item.referencia2 && item.referencia2.toLowerCase().includes(searchTermLower)) ||
+          (item.referencia3 && item.referencia3.toLowerCase().includes(searchTermLower))
+        );
+      });
     },
     sortedInventarios() {
       if (!this.sortColumn) return this.filteredInventarios;
@@ -472,14 +483,11 @@ export default {
           clienteId,
           page: this.currentPage,
           pageSize: this.recordsPerPage,
-          tipo: tipo
+          tipo: tipo,
+          searchTerm: this.searchTerm ? this.searchTerm.trim() : ''
         };
 
-        if (import.meta.env.DEV === true) {
-          console.log("Request body:", body);
-        }
-
-        // Opcional: this.loaderStore.showLoader();
+        //this.loaderStore.showLoader();
         const response = await apiClient.post(`/api/custodias/cliente`, body);
         const datos = response.data.data ? response.data.data : response.data;
         this.inventarios = datos.map((custodia) => ({
@@ -494,10 +502,8 @@ export default {
           estado: custodia.estado,
           baja: custodia.baja,
         }));
-        console.log("Datos paginados:", datos);
 
-        // Se asigna el total de registros filtrados recibido desde la API (para la pestaña activa)
-        // Este valor se actualizará al cambiar de pestaña
+        // Actualizar los contadores según el tipo y el término de búsqueda
         if (tipo === "disponible") {
           this.totalCountDisponible = response.data.totalCount || this.inventarios.length;
         } else if (tipo === "entregado") {
@@ -505,9 +511,11 @@ export default {
         } else {
           this.totalCountAll = response.data.totalCount || this.inventarios.length;
         }
-        this.loaderStore.hideLoader();
+        
+        //this.loaderStore.hideLoader();
       } catch (error) {
         console.error("Error al obtener datos de Custodia:", error);
+        //this.loaderStore.hideLoader();
       }
     },
     loadMoreRecords() {
@@ -516,11 +524,12 @@ export default {
     },
     resetPagination() {
       this.currentPage = 1;
+      this.selectedItems = [];
     },
     changeTab(tabName) {
       this.currentTab = tabName;
-      this.resetPagination();
-      // Al cambiar de pestaña se actualizan tanto los datos paginados como los totales (si fuera necesario)
+      this.currentPage = 1;
+      this.searchTerm = ''; // Limpiar el término de búsqueda al cambiar de pestaña
       this.fetchCustodias();
       this.selectedItems = [];
     },
@@ -580,6 +589,18 @@ export default {
         this.sortColumn = column;
         this.sortOrder = "asc";
       }
+    },
+    handleSearch() {
+      // Cancelar el timeout anterior si existe
+      if (this.searchTimeout) {
+        clearTimeout(this.searchTimeout);
+      }
+      
+      // Crear un nuevo timeout
+      this.searchTimeout = setTimeout(() => {
+        this.currentPage = 1; // Resetear a la primera página
+        this.fetchCustodias();
+      }, 300); // Esperar 300ms después de que el usuario deje de escribir
     },
   },
 };
