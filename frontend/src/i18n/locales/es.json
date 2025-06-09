@@ -1,0 +1,71 @@
+{
+  "welcome": "Bienvenido",
+  "enterCredentials": "Ingrese sus credenciales para continuar",
+  "email": "Correo electrónico",
+  "emailPlaceholder": "Correo electrónico",
+  "emailExample": "tu@correo.com",
+  "password": "Contraseña",
+  "passwordPlaceholder": "Contraseña",
+  "rememberMe": "Recordarme",
+  "forgotPassword": "¿Olvidaste tu contraseña?",
+  "forgotPasswordDescription": "Ingresa tu correo electrónico y te enviaremos un código de verificación para restablecer tu contraseña.",
+  "login": "Iniciar Sesión",
+  "backToLogin": "Volver",
+  "version": "Versión",
+  "cancel": "Cancelar",
+  "ok": "Aceptar",
+  "checkYourEmail": "Revisa tu correo",
+  
+  "sendOTPCode": "Enviar",
+  "verifyOTPCode": "Verificar código",
+  "otpSentToEmail": "Hemos enviado un código de 6 dígitos a {email}",
+  "otpCodePlaceholder": "Código de verificación",
+  "otpCodeExample": "123456",
+  "didNotReceiveCode": "¿No recibiste el código?",
+  "resendCode": "Reenviar código",
+  "resendCodeIn": "Reenviar en {seconds}s",
+  "backToEmail": "Cambiar correo",
+  "verifyCode": "Verificar código",
+  
+  "newPassword": "Nueva contraseña",
+  "newPasswordDescription": "Ingresa tu nueva contraseña. Debe ser segura y fácil de recordar.",
+  "newPasswordPlaceholder": "Nueva contraseña",
+  "confirmPasswordPlaceholder": "Confirmar contraseña",
+  "passwordStrength": "Seguridad",
+  "passwordVeryWeak": "Muy débil",
+  "passwordWeak": "Débil",
+  "passwordFair": "Regular",
+  "passwordGood": "Buena",
+  "passwordStrong": "Fuerte",
+  "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
+  "passwordTooWeak": "La contraseña debe incluir mayúsculas, minúsculas y números",
+  "passwordsDontMatch": "Las contraseñas no coinciden",
+  "backToCode": "Volver al código",
+  "updatePassword": "Actualizar contraseña",
+  
+  "passwordUpdated": "¡Contraseña actualizada!",
+  "passwordUpdatedDescription": "Tu contraseña ha sido actualizada exitosamente. Ya puedes iniciar sesión con tu nueva contraseña.",
+  "invalidEmail": "Correo electrónico inválido",
+  
+  "errors": {
+    "emailRequired": "El correo electrónico es obligatorio",
+    "emailInvalid": "El correo electrónico no es válido",
+    "passwordRequired": "La contraseña es obligatoria",
+    "passwordLength": "La contraseña debe tener al menos 6 caracteres",
+    "loginError": "Error al iniciar sesión",
+    "accessError": "Error de acceso",
+    "tooManyAttempts": "Demasiados intentos fallidos. Por favor, espera 5 minutos.",
+    "generalError": "Ha ocurrido un error. Por favor, intenta de nuevo.",
+    "passwordResetError": "Error al procesar la solicitud de recuperación de contraseña",
+    "invalidOTP": "Código de verificación inválido o expirado"
+  },
+  "accessibility": {
+    "showPassword": "Mostrar/ocultar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "loading": "Cargando"
+  },
+  "notifications": {
+    "welcome": "¡Bienvenido de nuevo!",
+    "sessionStarted": "Sesión iniciada como {name}"
+  }
+} 

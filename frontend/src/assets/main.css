@@ -1,0 +1,157 @@
+/* Animaciones globales */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Clases de utilidad para animaciones */
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Transiciones suaves */
+.smooth-transition {
+  transition: all 0.3s ease;
+}
+
+/* Efectos hover */
+.hover-lift {
+  transition: transform 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Efectos de brillo */
+.hover-glow {
+  transition: box-shadow 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 15px rgba(0, 48, 73, 0.3);
+}
+
+/* Efectos de escala */
+.hover-scale {
+  transition: transform 0.2s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Efectos de color */
+.hover-color {
+  transition: color 0.2s ease;
+}
+
+.hover-color:hover {
+  color: #003049;
+}
+
+/* Efectos de fondo */
+.hover-bg {
+  transition: background-color 0.2s ease;
+}
+
+.hover-bg:hover {
+  background-color: rgba(0, 48, 73, 0.05);
+}
+
+/* Efectos de borde */
+.hover-border {
+  transition: border-color 0.2s ease;
+}
+
+.hover-border:hover {
+  border-color: #003049;
+}
+
+/* Efectos de opacidad */
+.hover-opacity {
+  transition: opacity 0.2s ease;
+}
+
+.hover-opacity:hover {
+  opacity: 0.8;
+}
+
+/* Efectos de rotación */
+.hover-rotate {
+  transition: transform 0.3s ease;
+}
+
+.hover-rotate:hover {
+  transform: rotate(5deg);
+}
+
+/* Efectos de desenfoque */
+.hover-blur {
+  transition: filter 0.2s ease;
+}
+
+.hover-blur:hover {
+  filter: blur(2px);
+}
+
+/* Efectos de sombra de texto */
+.hover-text-shadow {
+  transition: text-shadow 0.2s ease;
+}
+
+.hover-text-shadow:hover {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Efectos de saturación */
+.hover-saturate {
+  transition: filter 0.2s ease;
+}
+
+.hover-saturate:hover {
+  filter: saturate(1.5);
+}
+
+/* Efectos de contraste */
+.hover-contrast {
+  transition: filter 0.2s ease;
+}
+
+.hover-contrast:hover {
+  filter: contrast(1.1);
+}
+
+/* Efectos de brillo */
+.hover-brightness {
+  transition: filter 0.2s ease;
+}
+
+.hover-brightness:hover {
+  filter: brightness(1.1);
+} 

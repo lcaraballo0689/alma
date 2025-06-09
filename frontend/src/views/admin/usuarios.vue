@@ -331,7 +331,7 @@ export default {
     },    async loadUsers() {
       this.loading = true;
       try {
-        const res = await apiClient.get('/api/users');
+        const res = await apiClient.get('/api/usuarios');
         this.users = res.data;
       } catch (err) {
         console.error('Error al cargar usuarios:', err);
@@ -390,10 +390,10 @@ export default {
         let response;
         if (this.isEditing && this.currentUser.id) {
           console.log('✏️ Editando usuario ID:', this.currentUser.id);
-          response = await apiClient.put(`/api/users/${this.currentUser.id}`, this.currentUser);
+          response = await apiClient.put(`/api/usuarios/${this.currentUser.id}`, this.currentUser);
         } else {
           console.log('➕ Creando nuevo usuario');
-          response = await apiClient.post('/api/users', this.currentUser);
+          response = await apiClient.post('/api/usuarios', this.currentUser);
           this.currentUser.id = response.data.id;
         }
         
@@ -462,7 +462,7 @@ export default {
         cancelButtonText: 'Cancelar'
       });
         if (confirm.isConfirmed) {        try {
-          const response = await apiClient.delete(`/api/users/${id}`);
+          const response = await apiClient.delete(`/api/usuarios/${id}`);
           
           // Mostrar alerta de éxito si viene del backend
           if (response.data && response.data.showAlert) {

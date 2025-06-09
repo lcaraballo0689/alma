@@ -61,8 +61,8 @@
 <script>
 import DashboardCard from "@/components/monitorCard.vue";
 import EmptyState from "@/components/EmptyState.vue";
-import { useThemeStore } from "@/stores/themeStore";
 import { useAuthStore } from "@/stores/authStore";
+import { useRouter } from "vue-router";
 import { useLoaderStore } from "@/stores/loaderStore";
 import { useTabStore } from "@/stores/tabStore";
 import { useNotificationStore } from "@/stores/notificationStore";
@@ -83,8 +83,8 @@ export default {
       maximized: true,
       filtroTipo: "diario",
       loaderStore: useLoaderStore(),
-      themeStore: useThemeStore(),
       authStore: useAuthStore(),
+      router: useRouter(),
       tabStore: useTabStore(),
       notificationStore: useNotificationStore(),
       currentDate: dayjs().format("dddd, DD/MM/YYYY").toUpperCase(),

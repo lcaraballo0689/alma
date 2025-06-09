@@ -19,6 +19,39 @@ export const useAuthStore = defineStore('auth', {
     userPermissions: (state) => state.permissions
   },
   actions: {
+    async login(credentials) {
+      try {
+        // Importar apiClient dinámicamente para evitar problemas de dependencias circulares
+        const apiClient = (await import('@/services/api')).default;
+        
+        const response = await apiClient.post('/api/auth/login', credentials);
+        
+        if (response.data) {
+          const { token, refreshToken, user } = response.data;
+          
+          // Guardar tokens y usuario
+          this.setToken(token);
+          this.setRefreshToken(refreshToken);
+          this.setUser(user);
+          
+          // Devolver los datos incluyendo el tipo de usuario para que el componente pueda redirigir
+          return {
+            success: true,
+            tipoUsuarioId: user.tipoUsuarioId,
+            user: user
+          };
+        }
+      } catch (error) {
+        // Limpiar cualquier dato de sesión anterior
+        this.resetAuth();
+        throw error;
+      }
+    },
+    
+    logout() {
+      this.resetAuth();
+    },
+    
     setToken(token) {
       this.token = token;
       localStorage.setItem('token', token);

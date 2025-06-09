@@ -1,0 +1,11 @@
+{
+  "forgotPassword": "Forgot Password?",
+  "forgotPasswordDescription": "Enter your email and we'll send you a link to reset your password",
+  "emailPlaceholder": "Email address",
+  "emailExample": "example@email.com",
+  "backToLogin": "Back to login",
+  "sendResetLink": "Send reset link",
+  "passwordResetSent": "Reset link sent successfully",
+  "passwordResetError": "Error sending reset link",
+  "invalidEmail": "Invalid email address"
+} 

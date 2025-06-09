@@ -35,11 +35,10 @@
         <!-- Columna Izquierda: Transacciones, Calendario y Notas -->
         <div class="col-md-6">
           <!-- Tabla de Últimas Transacciones -->
-          <div class="card modern-card mb-4" :class="{ 'card-dark-custom': themeStore.theme === 'dark' }">
+          <div class="card modern-card mb-4">
             <div class="card-header modern-card-header">Últimas Transacciones</div>
             <div class="card-body p-0">
-              <table class="table table-sm table-striped mb-0"
-                     :class="{ 'table-dark-custom': themeStore.theme === 'dark' }">
+              <table class="table table-sm table-striped mb-0">
                 <thead>
                   <tr>
                     <th>ID</th>
@@ -61,7 +60,7 @@
           </div>
 
           <!-- Calendario (Placeholder usando Vue Cal) -->
-          <div class="card modern-card mb-4" :class="{ 'card-dark-custom': themeStore.theme === 'dark' }">
+          <div class="card modern-card mb-4">
             <div class="card-header modern-card-header">Calendario</div>
             <div class="card-body">
               <!-- Componente de calendario -->
@@ -70,7 +69,7 @@
           </div>
 
           <!-- Panel de Notas -->
-          <div class="card modern-card mb-4" :class="{ 'card-dark-custom': themeStore.theme === 'dark' }">
+          <div class="card modern-card mb-4">
             <div class="card-header modern-card-header">Notas</div>
             <div class="card-body">
               <textarea class="form-control modern-textarea" rows="4"
@@ -86,7 +85,7 @@
         <!-- Columna Derecha: Gráfico, Notificaciones y Actividad Reciente -->
         <div class="col-md-6">
           <!-- Gráfico de Estadísticas -->
-          <div class="card modern-card mb-4" :class="{ 'card-dark-custom': themeStore.theme === 'dark' }">
+          <div class="card modern-card mb-4">
             <div class="card-header modern-card-header">Estadísticas</div>
             <div class="card-body">
               <canvas id="myChart" width="400" height="200"></canvas>
@@ -94,13 +93,12 @@
           </div>
 
           <!-- Panel de Notificaciones -->
-          <div class="card modern-card mb-4" :class="{ 'card-dark-custom': themeStore.theme === 'dark' }">
+          <div class="card modern-card mb-4">
             <div class="card-header modern-card-header">Notificaciones</div>
             <div class="card-body">
               <ul class="list-group">
                 <li class="list-group-item modern-list-item"
-                    v-for="(notification, index) in notifications" :key="index"
-                    :class="{ 'list-group-item-dark': themeStore.theme === 'dark' }">
+                    v-for="(notification, index) in notifications" :key="index">
                   {{ notification }}
                 </li>
               </ul>
@@ -108,13 +106,12 @@
           </div>
 
           <!-- Registro de Actividad Reciente -->
-          <div class="card modern-card mb-4" :class="{ 'card-dark-custom': themeStore.theme === 'dark' }">
+          <div class="card modern-card mb-4">
             <div class="card-header modern-card-header">Actividad Reciente</div>
             <div class="card-body">
               <ul class="list-group">
                 <li class="list-group-item modern-list-item"
-                    v-for="(activity, index) in activityLog" :key="index"
-                    :class="{ 'list-group-item-dark': themeStore.theme === 'dark' }">
+                    v-for="(activity, index) in activityLog" :key="index">
                   {{ activity }}
                 </li>
               </ul>
@@ -128,24 +125,35 @@
 
 <script>
 import DashboardCard from "@/components/monitorCard.vue";
-import { useThemeStore } from "@/stores/themeStore";
 import { useAuthStore } from "@/stores/authStore";
 import apiClient from "@/services/api";
 import Chart from "chart.js/auto";
 import dayjs from "dayjs";
 import VueCal from "vue-cal";
 import "vue-cal/dist/vuecal.css";
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
 
 export default {
-  name: "Dashboard",
+  name: "DashboardClient2",
   components: {
     DashboardCard,
     VueCal,
   },
+  setup() {
+    const authStore = useAuthStore();
+    const router = useRouter();
+    const i18n = useI18n();
+
+    return {
+      authStore,
+      router,
+      i18n
+    };
+  },
   data() {
     return {
-      themeStore: useThemeStore(),
-      authStore: useAuthStore(),
       currentDateTime: dayjs().format("DD/MM/YYYY HH:mm:ss"),
       notes: "",
       cards: [],
@@ -260,8 +268,8 @@ export default {
             {
               label: "Ventas",
               data: [12, 19, 3, 5, 2],
-              backgroundColor: this.themeStore.theme === "dark" ? "#f0f0f0" : "#007bff",
-              borderColor: this.themeStore.theme === "dark" ? "#f0f0f0" : "#007bff",
+              backgroundColor: "#007bff",
+              borderColor: "#007bff",
               borderWidth: 1,
             },
           ],
@@ -271,19 +279,19 @@ export default {
             y: {
               beginAtZero: true,
               ticks: {
-                color: this.themeStore.theme === "dark" ? "#f0f0f0" : "#000",
+                color: "#000",
               },
             },
             x: {
               ticks: {
-                color: this.themeStore.theme === "dark" ? "#f0f0f0" : "#000",
+                color: "#000",
               },
             },
           },
           plugins: {
             legend: {
               labels: {
-                color: this.themeStore.theme === "dark" ? "#f0f0f0" : "#000",
+                color: "#000",
               },
             },
           },

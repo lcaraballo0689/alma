@@ -1,4 +1,4 @@
-{/**
+/**
  * @fileoverview Archivo principal del servidor, donde se configuran middlewares, conexión a la base de datos y rutas.
  */
 
@@ -37,6 +37,7 @@ const obtenerDetalleSolicitud  = require("./routes/obtenerDetalleSolicitudRoutes
 const cargarFirma = require("./routes/firmaRoutes");
 const horariosRouter = require('./routes/horariosRoutes');
 const dashboardRouter = require('./routes/dashboard');
+const passwordResetRoutes = require('./routes/passwordResetRoutes');
 //const Bodega  = require("./routes/bodegaRoutes");  
 
 const roleRoutes = require("./routes/roleRoutes");
@@ -47,7 +48,7 @@ const apkRoutes = require('./routes/apkRoutes');
 
 
 const app = express();
-const port = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001;
 
 // Crear el servidor HTTP a partir de la app Express
 const server = http.createServer(app);
@@ -59,7 +60,8 @@ const { initSocket, emitirNotificacion } = require("./services/socket");
 initSocket(server);
 
 // Middlewares globales
-app.use(express.json({limit: "900mb"}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 app.use(cors());
 
@@ -83,6 +85,7 @@ app.use("/api/role-permissions", rolePermissionRoutes);
 app.use('/api', dashboardRouter);
 app.use('/api/pwa/entregas', entregaRoutes);
 app.use('/api/apk', apkRoutes);
+app.use('/api/password-reset', passwordResetRoutes);
 
 // Servir archivos estáticos desde la carpeta public
 app.use(express.static(path.join(__dirname, 'public')));
@@ -95,7 +98,6 @@ app.get("/api", (req, res) => {
 });
 
 app.use("/api/usuarios", userRoutes);
-app.use("/api/users", userRoutes);
 app.use("/api/custodias", custodiaRoutes);
 app.use("/api/clientes", clienteRoutes);
 app.use("/api/direcciones", direccionesRoutes);
@@ -111,8 +113,8 @@ app.use("/api/auth", authRoutes);
 // Conectar a la base de datos e iniciar el servidor
 connectDB()
   .then(() => {
-    server.listen(process.env.PORT, "0.0.0.0", () => {
-      console.log(`Servidor en marcha en http://localhost:${port}`);
+    server.listen(PORT, "0.0.0.0", () => {
+      console.log(`Servidor en marcha en http://localhost:${PORT}`);
     });
   })
   .catch((err) => {
@@ -122,4 +124,3 @@ connectDB()
 
 // Exportar la aplicación, el servidor y la función de notificaciones
 module.exports = { app, server, emitirNotificacion };
-}

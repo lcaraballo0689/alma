@@ -1,0 +1,71 @@
+{
+  "welcome": "Welcome",
+  "enterCredentials": "Enter your credentials to continue",
+  "email": "Email",
+  "emailPlaceholder": "Email address",
+  "emailExample": "your@email.com",
+  "password": "Password",
+  "passwordPlaceholder": "Password",
+  "rememberMe": "Remember me",
+  "forgotPassword": "Forgot your password?",
+  "forgotPasswordDescription": "Enter your email address and we'll send you a verification code to reset your password.",
+  "login": "Login",
+  "backToLogin": "Back to login",
+  "version": "Version",
+  "cancel": "Cancel",
+  "ok": "OK",
+  "checkYourEmail": "Check your email",
+  
+  "sendOTPCode": "Send verification code",
+  "verifyOTPCode": "Verify code",
+  "otpSentToEmail": "We've sent a 6-digit code to {email}",
+  "otpCodePlaceholder": "Verification code",
+  "otpCodeExample": "123456",
+  "didNotReceiveCode": "Didn't receive the code?",
+  "resendCode": "Resend code",
+  "resendCodeIn": "Resend in {seconds}s",
+  "backToEmail": "Change email",
+  "verifyCode": "Verify code",
+  
+  "newPassword": "New password",
+  "newPasswordDescription": "Enter your new password. It should be secure and easy to remember.",
+  "newPasswordPlaceholder": "New password",
+  "confirmPasswordPlaceholder": "Confirm password",
+  "passwordStrength": "Strength",
+  "passwordVeryWeak": "Very weak",
+  "passwordWeak": "Weak",
+  "passwordFair": "Fair",
+  "passwordGood": "Good",
+  "passwordStrong": "Strong",
+  "passwordTooShort": "Password must be at least 8 characters",
+  "passwordTooWeak": "Password must include uppercase, lowercase, and numbers",
+  "passwordsDontMatch": "Passwords don't match",
+  "backToCode": "Back to code",
+  "updatePassword": "Update password",
+  
+  "passwordUpdated": "Password updated!",
+  "passwordUpdatedDescription": "Your password has been successfully updated. You can now log in with your new password.",
+  "invalidEmail": "Invalid email address",
+  
+  "errors": {
+    "emailRequired": "Email is required",
+    "emailInvalid": "Please enter a valid email",
+    "passwordRequired": "Password is required",
+    "passwordLength": "Password must be at least 6 characters",
+    "loginError": "Login error",
+    "accessError": "Access error",
+    "tooManyAttempts": "Too many failed attempts. Please wait 5 minutes.",
+    "generalError": "An error occurred. Please try again.",
+    "passwordResetError": "Error processing password reset request",
+    "invalidOTP": "Invalid or expired verification code"
+  },
+  "accessibility": {
+    "showPassword": "Show/hide password",
+    "hidePassword": "Hide password",
+    "loading": "Loading"
+  },
+  "notifications": {
+    "welcome": "Welcome back!",
+    "sessionStarted": "Logged in as {name}"
+  }
+} 

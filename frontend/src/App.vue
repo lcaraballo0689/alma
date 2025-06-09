@@ -1,10 +1,10 @@
 <template>
-  <div id="app"  class="bg-custom">
-    <!-- <div id="app"  class="bg-light" :class="{ 'bg-custom': themeStore.theme === 'dark' }"> -->
+  <div id="app" class="bg-light">
+    <!-- <div id="app"  class="bg-custom"> -->
     <!-- Componente global de loader -->
     <LoadingOverlay :visible="isLoading" />
     <router-view />
-    <FooterComponent />
+    <FooterComponent v-if="$route.name !== 'Login'" />
   </div>
 </template>
 
@@ -12,7 +12,6 @@
 import LoadingOverlay from "@/components/LoadingOverlay.vue";
 import FooterComponent from "@/components/Footer.vue";
 import { useLoaderStore } from "@/stores/loaderStore";
-import { useThemeStore } from "@/stores/themeStore";
 
 export default {
   name: "App",
@@ -23,20 +22,17 @@ export default {
   data() {
     return {
       loaderStore: useLoaderStore(), // se obtiene el store
-      themeStore: useThemeStore(),
     };
-  },
-  computed: {
-    isLoading() {
-      return this.loaderStore.isLoading;
-    },
   },
 };
 </script>
 
 <style>
-.bg-custom {
+#app {
+  min-height: 100vh;
+}
 
+.bg-custom {
   margin: 0;
   padding: 0;
   box-sizing: border-box;

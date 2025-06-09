@@ -1,5 +1,5 @@
 <template>
-    <footer class="footer">
+    <footer class="footer" v-if="$route.name !== 'Login'">
       <div class="container-fluid text-end">
         <small>&copy; {{ new Date().getFullYear() }} BODEGAPP - Todos los derechos reservados</small>
       </div>
@@ -14,7 +14,7 @@
   
   <style scoped>
   .footer {
-    position: fixed;
+    position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;

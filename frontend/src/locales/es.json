@@ -1,0 +1,11 @@
+{
+  "forgotPassword": "¿Olvidaste tu contraseña?",
+  "forgotPasswordDescription": "Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña",
+  "emailPlaceholder": "Correo electrónico",
+  "emailExample": "ejemplo@correo.com",
+  "backToLogin": "Volver al inicio",
+  "sendResetLink": "Enviar enlace",
+  "passwordResetSent": "Enlace enviado con éxito",
+  "passwordResetError": "Error al enviar el enlace",
+  "invalidEmail": "Correo electrónico inválido"
+} 

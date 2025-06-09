@@ -1,183 +1,70 @@
 <template>
-  <div >
-    <!-- Navbar con transición y sticky -->
-    <div>
-      <nav class="navbar navbar-expand-lg bg-white  shadow fixed-top p-0 m-0 navegacion"  style="min-height: 60px" aria-label="Barra de navegación principal">
-        <div class="container-fluid">
-          <!-- Logo e Identificación del cliente -->
-          <a class="navbar-brand d-flex align-items-center" href="#" aria-label="Inicio">
-            <img :src="themeStore.isDarkTheme ? LogoLight : Logo" alt="BODEGAPP" height="35" class="me-2" />
-          </a>
-          <strong v-if="clienteNombre" class="ms-2 pe-none d-none d-sm-inline-block text-uppercase"
-            aria-label="Nombre del cliente">
-            <i class="bi bi-building me-1"></i>{{ clienteNombre }}
-          </strong>
+  <div class="client-home-container" role="application" aria-label="Panel de Control">
+    <div 
+      class="background-image"
+      :style="{ backgroundImage: `url(${backgroundImage})` }"
+    ></div>
+    <div class="background-overlay"></div>
+    
+    <!-- Navbar moderno con efecto glassmorphism -->
+    <TopNavbar 
+      :logo="Logo"
+      :cliente-nombre="clienteNombre"
+      :current-tab="currentTab"
+      :user="user"
+      :tabs1="tabs1"
+      :tabs2="tabs2"
+      :movimientos-tabs="movimientosTabs"
+      :informes-tabs="informesTabs"
+      @set-tab="setTab"
+      @show-password-modal="showPasswordModal = true"
+      @logout="logout"
+      class="mt-2"
+    />
 
-          <!-- Botón toggler para móviles -->
-          <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
-            data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false"
-            aria-label="Alternar navegación">
-            <span class="navbar-toggler-icon"></span>
-          </button>
-
-          <!-- Contenido colapsable -->
-          <div class="collapse navbar-collapse" id="navbarContent">
-            <!-- Pestañas de navegación con roles y transiciones -->
-            <ul class="navbar-nav mx-auto my-2 my-lg-0" role="tablist">
-              <li class="nav-item" v-for="tabItem in tabs1" :key="tabItem.name" role="presentation">
-                <button class="nav-link nav-btn" :class="{ active: currentTab === tabItem.name }"
-                  @click.prevent="setTab(tabItem.name)" role="tab" :aria-selected="currentTab === tabItem.name">
-                  <i :class="tabItem.icon + ' me-1'"></i>
-                  <span class="d-none d-sm-inline">{{ tabItem.label }}</span>
-                </button>
-              </li>
-
-
-
-              <!-- Dropdown para "Movimientos" -->
-              <li class="nav-item dropdown">
-                <button class="nav-link nav-btn dropdown-toggle" id="moviemientosDropdown" data-bs-toggle="dropdown"
-                  aria-expanded="false">
-                  <i class="bi bi-arrow-left-right me-1" style="font-weight: 900"></i>
-                  <span class="d-none d-sm-inline">Reportes</span>
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="moviemientosDropdown">
-
-                  <li v-for="tabItem in movimientosTabs" :key="tabItem.name">
-                    <a class="dropdown-item" href="#" :class="{ active: currentTab === tabItem.name }"
-                      @click.prevent="setTab(tabItem.name)">
-                      <i :class="tabItem.icon + ' me-2'"></i>
-                      {{ tabItem.label }}
-                    </a>
-                  </li>
-                </ul>
-              </li>
-
-              <!-- Dropdown para "Reportes" -->
-              <li class="nav-item dropdown">
-                <button class="nav-link nav-btn dropdown-toggle" id="informesDropdown" data-bs-toggle="dropdown"
-                  aria-expanded="false">
-
-                  <span class="d-none d-sm-inline">Solicitudes</span>
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="informesDropdown">
-                  <li v-for="tabItem in informesTabs" :key="tabItem.name">
-                    <a class="dropdown-item" href="#" :class="{ active: currentTab === tabItem.name }"
-                      @click.prevent="setTab(tabItem.name)">
-                      <i :class="tabItem.icon + ' me-2'"></i>
-                      {{ tabItem.label }}
-                    </a>
-                  </li>
-                </ul>
-
-
-              </li>
-
-              <li class="nav-item" v-for="tabItem in tabs2" :key="tabItem.name" role="presentation">
-                <button class="nav-link nav-btn" :class="{ active: currentTab === tabItem.name }"
-                  @click.prevent="setTab(tabItem.name)" role="tab" :aria-selected="currentTab === tabItem.name">
-                  <i :class="tabItem.icon + ' me-1'"></i>
-                  <span class="d-none d-sm-inline">{{ tabItem.label }}</span>
-                </button>
-              </li>
-
-
-
-            </ul>
-
-            <!-- Sección de usuario con dropdown -->
-            <div class="d-flex align-items-center">
-              <NotificationsNavbar />
-              <div class="me-3 pe-none d-none d-sm-flex align-items-center me-4">
-                <i class="bi bi-person-circle me-1 fs-5"></i>
-                <span class="fw-semibold"></span>
-              </div>
-              <div class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle nav-link-profile" href="#" id="userDropdown" role="button"
-                  data-bs-toggle="dropdown" aria-expanded="false">
-                  Perfil
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end" style="min-width: 300px;"
-                  :class="isDarkTheme ? 'dropdown-menu-dark' : ''" aria-labelledby="userDropdown">
-                  <li>
-                    <span class="dropdown-item-text" style="width: fit-content">
-                      <i class="bi bi-person-circle me-1 fs-5"></i>
-                      {{ user.nombre || "N/A" }}
-                    </span>
-                  </li>
-                  <li>
-                    <span class="dropdown-item-text">
-                      <i class="bi bi-envelope me-1 fs-5"></i>
-                      {{ user.email || "N/A" }}
-                    </span>
-                  </li>
-                  <li>
-                    <hr class="dropdown-divider" />
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="#" @click.prevent="showPasswordModal = true">
-                      <i class="bi bi-key me-2"></i>Cambiar Contraseña
-                    </a>
-                  </li>
-                  <li>
-                    <a class="dropdown-item" href="#" @click.prevent="logout"><i class="bi bi-power me-2"></i>Cerrar
-                      sesión</a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+    <!-- Contenido principal -->
+    <main class="main-content" role="main">
+      <div class="content-container">
+        
+        <div class="content-body">
+          <component 
+            :is="currentComponent" 
+            :key="currentTab"
+            v-slot="{ Component }"
+          >
+            <transition 
+              name="fade" 
+              mode="out-in"
+              @before-leave="beforeLeave"
+              @enter="enter"
+              @after-enter="afterEnter"
+            >
+              <component :is="Component" />
+            </transition>
+          </component>
         </div>
-      </nav>
-    </div>
-
-    <!-- Contenido de la pestaña actual -->
-    <main>
-      <div class="custom-mt" style="height: calc(100vh - 90px)">
-        <breadcrumb :path="breadcrumbPath" />
-        <component :is="currentComponent" :key="currentTab" />
       </div>
     </main>
 
     <!-- Modal cambiar contraseña -->
-    <div class="modal fade show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);" v-if="showPasswordModal">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Cambiar Contraseña</h5>
-            <button type="button" class="btn-close" @click="showPasswordModal = false"></button>
-          </div>
-          <form @submit.prevent="handleChangePassword">
-            <div class="modal-body">
-              <div class="mb-3">
-                <label class="form-label">Nueva Contraseña</label>
-                <input type="password" class="form-control" v-model="newPassword" required />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Confirmar Contraseña</label>
-                <input type="password" class="form-control" v-model="confirmPassword" required />
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="showPasswordModal = false">Cancelar</button>
-              <button type="submit" class="btn btn-primary">Guardar</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+    <PasswordChangeModal 
+      :visible="showPasswordModal"
+      @close="showPasswordModal = false"
+    />
   </div>
 </template>
 
 <script>
 import breadcrumb from "../../components/breadcrumb.vue";
+import TopNavbar from "@/components/TopNavbar.vue";
+import PasswordChangeModal from "@/components/PasswordChangeModal.vue";
 import { defineAsyncComponent } from "vue";
 import { useAuthStore } from "@/stores/authStore";
 import { useTabStore } from "@/stores/tabStore";
-import { useThemeStore } from "@/stores/themeStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import apiClient from "@/services/api";
 import Swal from "sweetalert2";
+import { useRouter } from "vue-router";
 
 
 // Carga asíncrona de componentes
@@ -215,13 +102,15 @@ export default {
   name: "ClientHome",
   components: {
     breadcrumb,
-    NotificationsNavbar,
-    solicitarTransferencia
+    TopNavbar,
+    solicitarTransferencia,
+    PasswordChangeModal
   },
   data() {
     return {
       Logo,
       Logolight,
+      backgroundImage: '/images/backgrounds/milad-fakurian-tGTa40GKSRI-unsplash.jpg',
       tabs1: [
         { name: "Dashboard", label: "Dashboard", icon: "bi bi-grid-1x2" },
         { name: "Inventario", label: "Inventario", icon: "bi bi-boxes" },
@@ -269,8 +158,14 @@ export default {
       
       ],
       showPasswordModal: false,
-      newPassword: '',
-      confirmPassword: ''
+      dropdownOpen: {
+        reportes: false,
+        solicitudes: false,
+        user: false
+      },
+      mobileMenuOpen: false,
+      isTransitioning: false,
+      lastScrollPosition: 0
     };
   },
   computed: {
@@ -290,9 +185,6 @@ export default {
       } else {
         return [{ menu: this.currentTab, submenu: "" }];
       }
-    },
-    themeStore() {
-      return useThemeStore();
     },
     authStore() {
       return useAuthStore();
@@ -333,6 +225,19 @@ export default {
     },
   },
   methods: {
+    handleDropdownLeave(dropdownName, event) {
+      // Verificar si el cursor está sobre el menú o el botón
+      const dropdown = event.currentTarget;
+      const relatedTarget = event.relatedTarget;
+      
+      // Si el elemento relacionado está dentro del dropdown, no lo cerramos
+      if (dropdown.contains(relatedTarget)) {
+        return;
+      }
+      
+      // Si el cursor salió completamente del dropdown, lo cerramos
+      this.dropdownOpen[dropdownName] = false;
+    },
     setTab(tabName) {
       this.tabStore.setTab(tabName);
     },
@@ -349,40 +254,35 @@ export default {
         estado: data.estado,
       });
     },
-    async handleChangePassword() {
-      if (this.newPassword !== this.confirmPassword) {
-        return Swal.fire({ 
-          icon: 'warning', 
-          title: 'Contraseñas No Coinciden', 
-          text: 'La nueva contraseña y su confirmación deben ser idénticas.',
-          toast: true,
-          position: 'top-end',
-          timer: 4000,
-          showConfirmButton: false
+    beforeLeave(el) {
+      this.lastScrollPosition = window.scrollY;
+      this.isTransitioning = true;
+    },
+    enter(el) {
+      el.style.transform = 'translateY(20px)';
+      el.style.opacity = '0';
+    },
+    afterEnter(el) {
+      this.isTransitioning = false;
+      window.scrollTo(0, this.lastScrollPosition);
+    },
+    modalEnter(el) {
+      el.style.opacity = '0';
+      el.style.transform = 'scale(0.9)';
+    },
+    modalLeave(el) {
+      el.style.opacity = '0';
+      el.style.transform = 'scale(0.9)';
+    }
+  },
+  watch: {
+    currentTab() {
+      // Scroll suave al cambiar de pestaña
+      if (!this.isTransitioning) {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
         });
-      }
-      
-      if (this.newPassword.length < 8) {
-        return Swal.fire({ 
-          icon: 'warning', 
-          title: 'Contraseña Muy Corta', 
-          text: 'La contraseña debe tener al menos 8 caracteres.',
-          toast: true,
-          position: 'top-end',
-          timer: 4000,
-          showConfirmButton: false
-        });
-      }
-      
-      try {
-        await apiClient.put(`/api/users/${this.authStore.user.id}/password`, { password: this.newPassword });
-        // El éxito se maneja automáticamente por el interceptor
-        this.showPasswordModal = false;
-        this.newPassword = '';
-        this.confirmPassword = '';
-      } catch (error) {
-        // Los errores se manejan automáticamente por el interceptor
-        console.error('Error al actualizar contraseña:', error);
       }
     }
   },
@@ -396,105 +296,230 @@ export default {
 </script>
 
 <style scoped>
-/* Ajuste del dropdown */
-.dropdown-menu {
-  animation: fadeIn 0.3s ease-in-out;
+/* Variables globales */
+:root {
+  --primary-color: #4CAF50;
+  --primary-hover: #45a049;
+  --primary-light: rgba(76, 175, 80, 0.1);
+  --secondary-color: #6c757d;
+  --background: #f8f9fa;
+  --surface: #ffffff;
+  --text-primary: #1a1a1a;
+  --text-secondary: #6c757d;
+  --border-color: #e9ecef;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.15);
+  --navbar-height: 60px;
+  --transition: all 0.3s ease;
 }
 
-@keyframes fadeIn {
+/* Container principal */
+.client-home-container {
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.background-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.5s ease;
+  z-index: 1;
+}
+
+.background-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(109, 108, 108, 0.041);
+  z-index: 2;
+}
+
+/* Asegurar que el contenido esté por encima del fondo */
+.main-content {
+  position: relative;
+  z-index: 3;
+}
+
+/* Main content */
+.main-content {
+  margin-top: calc(var(--navbar-height) + 80px);
+  min-height: calc(100vh - var(--navbar-height) - 80px);
+  padding-top: 100px;
+  background: transparent;
+  position: relative;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.content-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-header {
+  background: rgba(255, 255, 255, 0.171);
+  backdrop-filter: blur(10px);
+  padding: 0.75rem 2rem;
+  border-bottom: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: calc(var(--navbar-height) + 10px);
+  z-index: 100;
+  border-radius: 1rem;
+  margin: 0 10px 12px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.content-body {
+  flex: 1;
+  padding: 0.5rem;
+  overflow-y: auto;
+  animation: contentFade 0.6s ease;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Contenedor para componentes hijos con diseño de tarjeta */
+.content-body > * {
+  background: rgba(255, 255, 255, 0.116);
+  backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes contentFade {
   from {
     opacity: 0;
-    transform: translateY(-5px);
+    transform: translateY(20px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* Transiciones suaves */
+/* Transiciones para contenido */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+  transform: translateY(20px);
 }
 
-/* Variables de color para personalización */
-:root {
-  --primary-color: #cc1417;
-  --active-border-color: #cc1417;
+/* Responsive */
+@media (max-width: 768px) {
+  .main-content {
+    margin-top: calc(var(--navbar-height) + 15px);
+    padding: 0;
+  }
+
+  .content-header {
+    margin: 0 5px 10px 5px;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+  }
+
+  .content-body {
+    padding: 0.25rem;
+  }
+
+  .content-body > * {
+    padding: 1rem;
+    border-radius: 0.75rem;
+  }
 }
 
-/* Estilo para el tema oscuro */
-.dark-mode {
-  background-color: #121212;
-  color: #f0f0f0;
+/* Animaciones adicionales */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.dark-mode .navbar-dark.bg-dark {
-  background-color: #2c2c2c !important;
+/* Mejoras de accesibilidad */
+*:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
-.dark-mode .navbar-toggler-icon {
-  filter: invert(1);
+button:focus,
+a:focus {
+  outline-offset: 4px;
 }
 
-.dark-mode .nav-link-profile,
-.dark-mode .nav-link,
-.dark-mode .dropdown-item-text {
-  color: #f0f0f0 !important;
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.dark-mode .dropdown-menu-dark {
-  background-color: #3a3a3a;
-  color: #f0f0f0;
+::-webkit-scrollbar-track {
+  background: var(--background);
 }
 
-/* Botones de navegación con transición y foco */
-.nav-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  font-size: 1rem;
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
 }
 
-.nav-btn:hover,
-.nav-btn:focus {
-  color: #b1b1b1;
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
 }
 
-.nav-btn.active {
-  font-weight: bold;
-  border-bottom: 2px solid var(--active-border-color);
-  color: #cc1417 !important;
+/* Mejoras en las transiciones */
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
 }
 
-/* Enlaces de perfil con transición */
-.nav-link-profile {
-  transition: color 0.2s ease;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
 }
 
-.nav-link-profile:hover,
-.nav-link-profile:focus {
-  color: var(--primary-color);
+/* Mejoras en el modo oscuro */
+@media (prefers-color-scheme: dark) {
+  .content-header,
+  .content-body > * {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1a1a;
+  }
 }
 
-/* Remover subrayado en enlaces */
-a {
-  text-decoration: none;
-}
-
-.custom-mt {
-  margin-top: 60px !important;
-}
-
-.navegacion {
-  z-index: 10000 !important;
+/* Mejoras en el contraste */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 </style>
