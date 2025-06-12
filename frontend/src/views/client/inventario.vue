@@ -283,6 +283,7 @@ export default {
       recordsOptions: [25, 50, 100, 250, 500],
       inventarios: [],
       selectedItems: [],
+      selectedItemsCache: {},
       showModal: false,
       sortColumn: "",
       sortOrder: "asc",
@@ -328,7 +329,15 @@ export default {
       return this.totalCountEntregado;
     },
     selectedItemsData() {
-      return this.selectedItems.map((id) => this.getItemById(id));
+      return this.selectedItems
+        .map((id) => {
+          // Prioriza el caché
+          if (this.selectedItemsCache[id]) return this.selectedItemsCache[id];
+          const item = this.getItemById(id);
+          if (item) this.selectedItemsCache[id] = item;
+          return item;
+        })
+        .filter((item) => item);
     },
     modalTitle() {
       if (this.currentTab === "Disponible para prestar") {
@@ -420,10 +429,17 @@ export default {
       return "";
     },
     toggleRow(id) {
+      const item = this.getItemById(id);
       if (this.selectedItems.includes(id)) {
+        // Quitar selección y limpiar caché
         this.selectedItems = this.selectedItems.filter((itemId) => itemId !== id);
+        delete this.selectedItemsCache[id];
       } else {
+        // Añadir selección y guardar en caché si existe el objeto
         this.selectedItems.push(id);
+        if (item) {
+          this.selectedItemsCache[id] = item;
+        }
       }
     },
     // Obtiene los totales para cada categoría haciendo llamadas a la API (solo se solicita una fila para obtener totalCount)
@@ -502,6 +518,13 @@ export default {
           estado: custodia.estado,
           baja: custodia.baja,
         }));
+
+        // Actualizar caché con los ítems que ya estaban seleccionados y aparecen en la nueva lista
+        this.inventarios.forEach((itm) => {
+          if (this.selectedItems.includes(itm.id)) {
+            this.selectedItemsCache[itm.id] = itm;
+          }
+        });
 
         // Actualizar los contadores según el tipo y el término de búsqueda
         if (tipo === "disponible") {

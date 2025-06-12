@@ -268,10 +268,6 @@ async function createPrestamos(req, res) {
     await procesarTransferenciaInterna(transferenciaPayload, transaction);
     logger.info("createPrestamos - Transferencia interna procesada");
 
-    // Incrementar consecutivo del préstamo
-    await incrementarUltimoPrestamo(transaction, user.clienteId);
-    logger.info("createPrestamos - Consecutivo incrementado", { clienteId: user.clienteId });
-
     await transaction.commit();
     logger.info("createPrestamos - Transacción comprometida");
 

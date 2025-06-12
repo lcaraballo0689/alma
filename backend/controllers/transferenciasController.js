@@ -317,11 +317,13 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
   let ultimoNumero = resultCons.recordset[0]?.ultimoNumero || 0;
   const nuevoConsecutivo = ultimoNumero + 1;
 
-  // Actualizar el consecutivo en la columna correspondiente
-  await new sql.Request(transaction)
-    .input("nuevoNumero", sql.Int, nuevoConsecutivo)
-    .input("clienteId", sql.Int, clienteId)
-    .query(`UPDATE Consecutivos SET ${columnaConsecutivo} = @nuevoNumero WHERE clienteId = @clienteId`);
+  // Actualizar consecutivo SOLO si el módulo NO es 'Prestamo' (para evitar doble incremento)
+  if (modulo !== "Prestamo") {
+    await new sql.Request(transaction)
+      .input("nuevoNumero", sql.Int, nuevoConsecutivo)
+      .input("clienteId", sql.Int, clienteId)
+      .query(`UPDATE Consecutivos SET ${columnaConsecutivo} = @nuevoNumero WHERE clienteId = @clienteId`);
+  }
 
   // Se define la dirección (si no se pasa direccion_entrega se utiliza direccion_recoleccion)
   const direccion = direccion_entrega || direccion_recoleccion || null;
