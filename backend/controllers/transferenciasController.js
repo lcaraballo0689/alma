@@ -1299,8 +1299,12 @@ async function consultarTransferencias(req, res, next) {
 		  dir.lng,
           st.placa,
           st.transportista,
-          st.documentoIdentidad
+          st.documentoIdentidad,
+          ISNULL(st.prioridad, prio.modalidad) AS prioridad
       FROM SolicitudTransporte st
+	  OUTER APPLY (
+		  SELECT TOP 1 modalidad FROM Prestamos pr WHERE pr.consecutivo = st.consecutivo
+	  ) prio
 	  LEFT JOIN Direccion AS dir 
         ON st.direccion = dir.direccion
       LEFT JOIN Cliente AS cl 

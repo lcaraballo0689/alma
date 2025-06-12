@@ -38,6 +38,7 @@
                 <th>Fecha Solicitud</th>
                 <th>Transportista</th>
                 <th>Documento de Identidad</th>
+                <th>Prioridad</th>
                 <th>Placa Vehiculo</th>
                 <th>Fecha Asignación</th>
                 <th>Dirección Entrega</th>
@@ -78,6 +79,7 @@
               </td>
               <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.transportista || 'Sin Asignar' }}</td>
               <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.documentoIdentidad }}</td>
+              <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.prioridad || 'Normal' }}</td>
               <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">{{ item.placa }}</td>
               <td :style="{ backgroundColor: item.estado && item.estado.toLowerCase() === 'entrega confirmada' ? 'rgba(218, 255, 144, 0.13)' : '' }">
                 {{
@@ -1072,6 +1074,7 @@ export default {
           this.formatTime(item.createdAt),
         Transportista: item.transportista || "Sin Asignar",
         "Documento de Identidad": item.documentoIdentidad,
+        Prioridad: item.prioridad || 'Normal',
         "Placa Vehiculo": item.placa,
         "Fecha Asignación": item.fechaAsignacion
           ? this.formatDate(item.fechaAsignacion)
