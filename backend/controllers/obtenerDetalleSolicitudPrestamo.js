@@ -3,6 +3,8 @@ const { connectDB, sql } = require("../config/db");
 const logger = require("../logger");
 const { DateTime } = require("luxon");
 const fs = require('fs');
+const path = require('path');
+const { resolveFilePath, filePathToBase64 } = require('../config/environment');
 
 async function obtenerDetalleSolicitudPrestamo(req, res) {
   const { id } = req.body;
@@ -63,30 +65,35 @@ async function obtenerDetalleSolicitudPrestamo(req, res) {
     const contacto = usuarioSolicitanteResult.recordset[0]?.telefono || "";
 
     logger.info(`📄 Generar PDF Prestamo ID: ${id} | Solicitante: ${solicitadoPor}`);
-
-
     //todo: se debe invertir 
     // 🔹 Firmas
     let firmaTransportista = "";
     let nombreTransportista = "";
     let identificacionTransportista = "";
     if (solicitud.transportista) {
-      const transportistaFirma = await pool.request()
-        .input("nombre", sql.VarChar, solicitud.transportista)
-        .query(`SELECT firma, nombre, cc FROM Usuario WHERE nombre = @nombre`);
-        
-      console.log("transportistaFirma", transportistaFirma.recordset[0]);
-
-      firmaTransportista = transportistaFirma.recordset[0]?.firma || "";
-      nombreTransportista = transportistaFirma.recordset[0]?.nombre || "";
-      identificacionTransportista = transportistaFirma.recordset[0]?.cc || "";
+      try {
+        const transportistaFirma = await pool.request()
+          .input("nombre", sql.VarChar, solicitud.transportista)
+          .query(`SELECT firma, nombre, cc FROM Usuario WHERE nombre = @nombre`);
+          
+        logger.info(`📄 Generar PDF Prestamo ID: ${id} | Transportista encontrado: ${!!transportistaFirma.recordset.length}`);
+  
+        if (transportistaFirma.recordset.length > 0) {
+          firmaTransportista = transportistaFirma.recordset[0]?.firma || "";
+          nombreTransportista = transportistaFirma.recordset[0]?.nombre || "";
+          identificacionTransportista = transportistaFirma.recordset[0]?.cc || "";
+        } else {
+          logger.warn(`📄 Generar PDF Prestamo ID: ${id} | No se encontró el transportista: ${solicitud.transportista}`);
+        }
+      } catch (error) {
+        logger.error(`📄 Generar PDF Prestamo ID: ${id} | Error al obtener datos del transportista: ${error.message}`);
+      }
     }
 
     //FIXME: sustituir la ifrma del usuario porla firma del usuario que recibe la solicitud
     let firmaVerificador = "";
-    
       const verificadorFirma = await pool.request()
-      .input("id", sql.Int, 22)
+      .input("id", sql.Int, solicitudIdReal)  // Usar el ID real de la solicitud en lugar de un valor hardcodeado
       .query(`
         SELECT 
         receptorNombre,
@@ -95,14 +102,25 @@ async function obtenerDetalleSolicitudPrestamo(req, res) {
         FROM Entregas
         WHERE solicitudId = @id
       `);
+      
+      logger.info(`📄 Generar PDF Prestamo ID: ${id} | Buscando firmas para solicitudId: ${solicitudIdReal}`);
 
 
-      // Convertir ruta de firma a base64
-      const firmaPath = verificadorFirma.recordset[0]?.firmaPath || "";
+      // Convertir ruta de firma a base64      const firmaPath = verificadorFirma.recordset[0]?.firmaPath || "";
       let firmaBase64 = "";
       if (firmaPath) {
-        const imgBuf = fs.readFileSync(firmaPath);
-        firmaBase64 = imgBuf.toString('base64');
+        try {
+          // Utilizar el helper para manejar la ruta y convertir a base64
+          firmaBase64 = filePathToBase64(firmaPath);
+          
+          if (firmaBase64) {
+            logger.info(`✅ Firma leída correctamente de la ruta: ${firmaPath}`);
+          } else {
+            logger.warn(`⚠️ No se pudo leer la firma de la ruta: ${firmaPath}`);
+          }
+        } catch (error) {
+          logger.error(`❌ Error al leer el archivo de firma: ${error.message}`);
+        }
       }
       firmaVerificador = firmaBase64;
       const VerificadorNombre = verificadorFirma.recordset[0]?.receptorNombre || "";
@@ -186,10 +204,19 @@ async function obtenerDetalleSolicitudPrestamo(req, res) {
     };
 
     res.json(formatoData);
-
   } catch (error) {
     logger.error(`📄 Generar PDF Prestamo ID: ${id} | ❌ Error: ${error.message}`);
-    res.status(500).json({ error: "Error interno del servidor." });
+    logger.error(`📄 Stack: ${error.stack}`);
+    
+    // Proporcionar más detalles en la respuesta de error en modo desarrollo
+    const errorResponse = {
+      error: "Error interno del servidor.",
+      message: error.message,
+      // Incluir stack solo en desarrollo
+      ...(process.env.NODE_ENV !== 'production' && { stack: error.stack })
+    };
+    
+    res.status(500).json(errorResponse);
   }
 }
 

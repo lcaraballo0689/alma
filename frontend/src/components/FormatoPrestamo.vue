@@ -53,18 +53,9 @@ export default {
           fechaElaboracion: String(rawData.fechaElaboracion ?? ""),
           horaSolicitud: String(rawData.horaSolicitud ?? ""),
           horaEntrega: String(rawData.horaEntrega ?? ""),
-          stickerSeguridad: String(rawData.stickerSeguridad ?? ""),
-          // Se asume que las firmas pueden venir sin el prefijo, por lo que se corrige:
-          entregadoPor: rawData.entregadoPor
-            ? rawData.entregadoPor.startsWith("data:image/png;base64,")
-              ? rawData.entregadoPor
-              : "data:image/png;base64," + rawData.entregadoPor
-            : "",
-          recibidoPor: rawData.recibidoPor
-            ? rawData.recibidoPor.startsWith("data:image/png;base64,")
-              ? rawData.recibidoPor
-              : "data:image/png;base64," + rawData.recibidoPor
-            : "",
+          stickerSeguridad: String(rawData.stickerSeguridad ?? ""),          // Manejo seguro de las firmas, asegurando que sean cadenas válidas antes de procesarlas
+          entregadoPor: this.procesarFirma(rawData.entregadoPor),
+          recibidoPor: this.procesarFirma(rawData.recibidoPor),
           items: Array.isArray(rawData.items)
             ? rawData.items.map((item) => ({
                 item: String(item.item ?? ""),
@@ -101,24 +92,26 @@ console.log("Data obtenida para el PDF:", data);
         const logoX = pageWidth - logoWidth - marginLeft;
         const logoY = 0;
         doc.addImage(siglo_logo, "PNG", logoX - 60, logoY + 30, logoWidth + 15, logoHeight);
-        doc.addImage(sdh_logo, "PNG", logoX, logoY + 27, logoWidth, logoHeight + 10);
-
-        // Verificar y agregar el prefijo a las firmas si no lo tienen
+        doc.addImage(sdh_logo, "PNG", logoX, logoY + 27, logoWidth, logoHeight + 10);        // Verificar y agregar el prefijo a las firmas si no lo tienen
         let firmaA = data.entregadoPor || "";
         let firmaB = data.recibidoPor || "";
-        if (firmaA && !firmaA.startsWith("data:image/png;base64,")) {
-          firmaA = "data:image/png;base64," + firmaA;
+        
+        // Agregar firmas solo si tienen datos válidos
+        try {
+          if (firmaA && firmaA.startsWith("data:image/png;base64,")) {
+            doc.addImage(firmaA, "PNG", logoX, 220, logoWidth, logoHeight + 10);
+          }
+        } catch (error) {
+          console.error("Error al añadir firma A al PDF:", error);
         }
-        if (firmaB && !firmaB.startsWith("data:image/png;base64,")) {
-          firmaB = "data:image/png;base64," + firmaB;
-        }
-
-        if (firmaA) {
-          doc.addImage(firmaA, "PNG", logoX , 220, logoWidth, logoHeight + 10);
-        }
-        if (firmaB) {
-          doc.addImage(firmaB, "PNG", logoX - 225, 220, logoWidth, logoHeight + 10);
-          doc.addImage(firmaB, "PNG", logoX - 115, 220, logoWidth, logoHeight + 10);
+        
+        try {
+          if (firmaB && firmaB.startsWith("data:image/png;base64,")) {
+            doc.addImage(firmaB, "PNG", logoX - 225, 220, logoWidth, logoHeight + 10);
+            doc.addImage(firmaB, "PNG", logoX - 115, 220, logoWidth, logoHeight + 10);
+          }
+        } catch (error) {
+          console.error("Error al añadir firma B al PDF:", error);
         }
         //console.info("Firmas A:", firmaA);
         //console.info("Firmas B:", firmaB);
@@ -332,8 +325,36 @@ console.log("Data obtenida para el PDF:", data);
       // Mostrar en una nueva pestaña del navegador
 const pdfUrl = doc.output("bloburl");
 window.open(pdfUrl, "_blank");
+    },    // Método para procesar firmas de manera segura
+    procesarFirma(firma) {
+      if (!firma) return ""; // Si no hay firma, devuelve cadena vacía
+      
+      try {
+        // Verificar si ya tiene el prefijo de datos
+        if (typeof firma === 'string') {
+          if (firma.startsWith("data:image/png;base64,")) {
+            return firma;
+          } else {
+            // Asegurarse de que sea una cadena base64 válida antes de añadir el prefijo
+            // Un simple check para ver si parece base64 (caracteres base64 válidos)
+            const base64Regex = /^[A-Za-z0-9+/=]+$/;
+            if (base64Regex.test(firma)) {
+              return "data:image/png;base64," + firma;
+            } else {
+              console.warn("Firma no parece ser un base64 válido");
+              return ""; // O podrías devolver una imagen por defecto
+            }
+          }
+        } else {
+          console.warn("Firma recibida pero no es una cadena");
+          return "";
+        }
+      } catch (error) {
+        console.error("Error al procesar firma:", error);
+        return ""; // En caso de error, devuelve cadena vacía
+      }
     },
-
+    
     generateHash(data) {
       // Define un salt seguro; se puede obtener de variables de entorno o definirlo estáticamente.
       const salt =

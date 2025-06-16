@@ -9,6 +9,7 @@ const cors = require("cors");
 const http = require("http");
 const { connectDB } = require("./config/db");
 const path = require("path");
+const fs = require("fs");
 
 // Rutas
 const userRoutes = require("./routes/userRoutes");
@@ -86,6 +87,27 @@ app.use('/api/apk', apkRoutes);
 
 // Servir archivos estáticos desde la carpeta public
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Configurar la ruta para acceder a las firmas (útil en producción)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Crear directorios necesarios si no existen
+const uploadsPath = path.join(__dirname, 'uploads');
+const firmasPath = path.join(uploadsPath, 'firmas');
+const entregasPath = path.join(uploadsPath, 'entregas');
+
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+  console.log('✅ Directorio uploads creado');
+}
+if (!fs.existsSync(firmasPath)) {
+  fs.mkdirSync(firmasPath, { recursive: true });
+  console.log('✅ Directorio uploads/firmas creado');
+}
+if (!fs.existsSync(entregasPath)) {
+  fs.mkdirSync(entregasPath, { recursive: true });
+  console.log('✅ Directorio uploads/entregas creado');
+}
 
 //app.use("/api/bodega", Bodega); // Rutas de bodegas
 
