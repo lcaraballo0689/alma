@@ -88,43 +88,59 @@ async function obtenerDetalleSolicitudPrestamo(req, res) {
       } catch (error) {
         logger.error(`📄 Generar PDF Prestamo ID: ${id} | Error al obtener datos del transportista: ${error.message}`);
       }
-    }
-
-    //FIXME: sustituir la ifrma del usuario porla firma del usuario que recibe la solicitud
+    }    //FIXME: sustituir la firma del usuario por la firma del usuario que recibe la solicitud
     let firmaVerificador = "";
+    let VerificadorNombre = "";
+    let VerificadorIdentificacion = "";
+    
+    try {
       const verificadorFirma = await pool.request()
-      .input("id", sql.Int, solicitudIdReal)  // Usar el ID real de la solicitud en lugar de un valor hardcodeado
-      .query(`
-        SELECT 
-        receptorNombre,
-        receptorIdentificacion,
-        firmaPath
-        FROM Entregas
-        WHERE solicitudId = @id
-      `);
+        .input("id", sql.Int, solicitudIdReal)
+        .query(`
+          SELECT 
+          receptorNombre,
+          receptorIdentificacion,
+          firmaPath
+          FROM Entregas
+          WHERE solicitudId = @id
+        `);
       
       logger.info(`📄 Generar PDF Prestamo ID: ${id} | Buscando firmas para solicitudId: ${solicitudIdReal}`);
-
-
-      // Convertir ruta de firma a base64      const firmaPath = verificadorFirma.recordset[0]?.firmaPath || "";
-      let firmaBase64 = "";
-      if (firmaPath) {
-        try {
-          // Utilizar el helper para manejar la ruta y convertir a base64
-          firmaBase64 = filePathToBase64(firmaPath);
-          
-          if (firmaBase64) {
-            logger.info(`✅ Firma leída correctamente de la ruta: ${firmaPath}`);
-          } else {
-            logger.warn(`⚠️ No se pudo leer la firma de la ruta: ${firmaPath}`);
+      logger.info(`📄 Registros encontrados en Entregas: ${verificadorFirma.recordset.length}`);
+      
+      // Verificar si hay registros antes de tratar de acceder a sus propiedades
+      if (verificadorFirma.recordset && verificadorFirma.recordset.length > 0) {
+        // Asignar valores de forma segura
+        VerificadorNombre = verificadorFirma.recordset[0].receptorNombre || "";
+        VerificadorIdentificacion = verificadorFirma.recordset[0].receptorIdentificacion || "";
+        
+        // Recuperar el path de la firma
+        const firmaPath = verificadorFirma.recordset[0].firmaPath || "";
+        logger.info(`📄 Ruta de firma encontrada: ${firmaPath}`);
+        
+        if (firmaPath) {
+          try {
+            // Utilizar el helper para manejar la ruta y convertir a base64
+            const firmaBase64 = filePathToBase64(firmaPath);
+            
+            if (firmaBase64) {
+              logger.info(`✅ Firma leída correctamente de la ruta: ${firmaPath}`);
+              firmaVerificador = firmaBase64;
+            } else {
+              logger.warn(`⚠️ No se pudo leer la firma de la ruta: ${firmaPath}`);
+            }
+          } catch (error) {
+            logger.error(`❌ Error al leer el archivo de firma: ${error.message}`);
           }
-        } catch (error) {
-          logger.error(`❌ Error al leer el archivo de firma: ${error.message}`);
+        } else {
+          logger.warn(`⚠️ No se encontró ruta de firma para la solicitud: ${solicitudIdReal}`);
         }
+      } else {
+        logger.warn(`⚠️ No se encontraron registros de entrega para la solicitud: ${solicitudIdReal}`);
       }
-      firmaVerificador = firmaBase64;
-      const VerificadorNombre = verificadorFirma.recordset[0]?.receptorNombre || "";
-      const VerificadorIdentificacion = verificadorFirma.recordset[0]?.receptorIdentificacion || "";
+    } catch (error) {
+      logger.error(`❌ Error al consultar datos de entrega: ${error.message}`);
+    }
     
 
     // 🔹 Detalles

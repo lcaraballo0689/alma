@@ -46,17 +46,49 @@ const resolveFilePath = (relativePath) => {
 // Función para convertir rutas de archivos a base64
 const filePathToBase64 = (filePath) => {
   try {
-    const absolutePath = resolveFilePath(filePath);
-    
-    if (!fs.existsSync(absolutePath)) {
-      console.warn(`⚠️ Archivo no encontrado: ${absolutePath}`);
+    // Si la ruta está vacía o es undefined/null, retornamos cadena vacía
+    if (!filePath) {
+      console.warn(`⚠️ Ruta de archivo vacía o no definida`);
       return '';
     }
     
+    // Resolver la ruta absoluta
+    const absolutePath = resolveFilePath(filePath);
+    console.log(`🔍 Intentando leer archivo desde: ${absolutePath}`);
+    
+    // Verificar que el archivo existe
+    if (!fs.existsSync(absolutePath)) {
+      console.warn(`⚠️ Archivo no encontrado: ${absolutePath}`);
+      
+      // Intentar un enfoque alternativo para entornos de producción
+      if (isProduction) {
+        // En producción, probar diferentes rutas comunes si la original no existe
+        const alternativePaths = [
+          path.join(BASE_DIR, 'uploads', path.basename(filePath)),
+          path.join(BASE_DIR, 'public', path.basename(filePath)),
+          path.join(BASE_DIR, path.basename(filePath))
+        ];
+        
+        for (const altPath of alternativePaths) {
+          console.log(`🔍 Intentando ruta alternativa: ${altPath}`);
+          if (fs.existsSync(altPath)) {
+            console.log(`✅ Archivo encontrado en ruta alternativa: ${altPath}`);
+            const fileBuffer = fs.readFileSync(altPath);
+            return fileBuffer.toString('base64');
+          }
+        }
+      }
+      
+      return '';
+    }
+    
+    // Leer el archivo y convertir a base64
     const fileBuffer = fs.readFileSync(absolutePath);
+    console.log(`✅ Archivo leído correctamente: ${absolutePath} (${fileBuffer.length} bytes)`);
     return fileBuffer.toString('base64');
   } catch (error) {
     console.error(`❌ Error al convertir archivo a base64: ${error.message}`);
+    console.error(error.stack);
     return '';
   }
 };
