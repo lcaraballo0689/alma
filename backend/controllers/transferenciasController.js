@@ -1525,16 +1525,34 @@ async function consultarDetalleTransferencia(req, res, next) {
         .json({ error: `"Solicitud Numero: ${solicitudId} no encontrada."` });
     }
     const solicitud = headerResult.recordset[0];
+    
+    // Obtener el detalle de la solicitud
     const requestDetalle = new sql.Request(pool);
     requestDetalle.input("solicitudId", sql.Int, solicitudId);
     const detailResult = await requestDetalle.query(`
       SELECT * FROM DetalleSolicitudTransporte WHERE solicitudTransporteId = @solicitudId ORDER BY id ASC
     `);
-    logger.info(`Consulta de detalle para solicitud ${solicitudId} exitosa.`);
+
+    // Obtener el historial de auditoría de la solicitud
+    const requestHistorial = new sql.Request(pool);
+    requestHistorial.input("solicitudId", sql.Int, solicitudId);
+    const historialResult = await requestHistorial.query(`
+      SELECT 
+        sa.NuevoEstado as estado,
+        sa.FechaEvento as fecha,
+        ISNULL(u.nombre, 'Sistema') as usuario
+      FROM SolicitudTransporte_Audit sa
+      LEFT JOIN Usuario u ON sa.Usuario = u.id
+      WHERE sa.SolicitudID = @solicitudId
+      ORDER BY sa.FechaEvento DESC
+    `);
+    
+    logger.info(`Consulta de detalle para solicitud ${solicitudId} exitosa con historial de auditoría.`);
     return res.status(200).json({
       message: "Consulta exitosa",
       solicitud,
       detalle: detailResult.recordset,
+      historial: historialResult.recordset
     });
   } catch (error) {
     logger.error("Error en consultarDetalleTransferencia: " + error);

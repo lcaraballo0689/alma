@@ -688,6 +688,8 @@ export default {
         this.formatoData = cleanedData;
         this.activeTab = "acciones"; // Tab donde está FormatoDevolucion
         this.detalleVisible = true;
+        console.log("✅ Formato de devolución generado:", this.formatoData);
+        
       } catch (error) {
         console.error("❌ Error al obtener el formato de devolución:", error);
       }
@@ -964,20 +966,7 @@ export default {
           const data = response.data;
           this.detalle.solicitud = data.solicitud || {};
 
-          console.log("Detalles de entrega nuevo:", this.detalle.detalle);
-
-          this.detalle.historial = data.historial || [
-            {
-              estado: "solicitud creada",
-              fecha: data.solicitud.createdAt,
-              usuario: "Usuario A",
-            },
-            {
-              estado: "asignado a transportador",
-              fecha: data.solicitud.updatedAt,
-              usuario: "Usuario B",
-            },
-          ];
+          console.log("Detalles de entrega nuevo:", this.detalle.detalle);          this.detalle.historial = data.historial || [];
           this.detalle.solicitud.transportista = transportista || "Sin Asignar";
           this.detalle.solicitud.documentoIdentidad = documentoIdentidad || "";
           this.detalle.solicitud.placa = placa || "";
