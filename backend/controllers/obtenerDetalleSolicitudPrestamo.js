@@ -104,33 +104,34 @@ async function obtenerDetalleSolicitudPrestamo(req, res) {
           FROM Entregas
           WHERE solicitudId = @id
         `);
+        logger.info(`📄 Generar PDF Prestamo ID: ${id} | Buscando firmas para solicitudId: ${solicitudIdReal}`);
+      // Verificamos que recordset existe antes de intentar acceder a su propiedad length
+      logger.info(`📄 Registros encontrados en Entregas: ${verificadorFirma.recordset ? verificadorFirma.recordset.length : 0}`);
       
-      logger.info(`📄 Generar PDF Prestamo ID: ${id} | Buscando firmas para solicitudId: ${solicitudIdReal}`);
-      logger.info(`📄 Registros encontrados en Entregas: ${verificadorFirma.recordset.length}`);
-      
-      // Verificar si hay registros antes de tratar de acceder a sus propiedades
-      if (verificadorFirma.recordset && verificadorFirma.recordset.length > 0) {
+      // Definir variables necesarias aquí para que estén disponibles en todo el ámbito
+      let firmaPath = ""; 
+      let firmaBase64 = "";
+        // Verificar si verificadorFirma y recordset existen, y si hay registros en el recordset
+      if (verificadorFirma && verificadorFirma.recordset && verificadorFirma.recordset.length > 0) {
         // Asignar valores de forma segura
         VerificadorNombre = verificadorFirma.recordset[0].receptorNombre || "";
         VerificadorIdentificacion = verificadorFirma.recordset[0].receptorIdentificacion || "";
         
-        // Recuperar el path de la firma
-        const firmaPath = verificadorFirma.recordset[0].firmaPath || "";
-        logger.info(`📄 Ruta de firma encontrada: ${firmaPath}`);
-        
-        if (firmaPath) {
+        // Recuperar el path de la firma (ahora asignamos a la variable ya definida)
+        firmaPath = verificadorFirma.recordset[0].firmaPath || "";
+        logger.info(`📄 Ruta de firma encontrada: ${firmaPath}`);          if (firmaPath) {
           try {
             // Utilizar el helper para manejar la ruta y convertir a base64
-            const firmaBase64 = filePathToBase64(firmaPath);
+            firmaBase64 = filePathToBase64(firmaPath);
             
             if (firmaBase64) {
               logger.info(`✅ Firma leída correctamente de la ruta: ${firmaPath}`);
               firmaVerificador = firmaBase64;
             } else {
               logger.warn(`⚠️ No se pudo leer la firma de la ruta: ${firmaPath}`);
-            }
-          } catch (error) {
+            }          } catch (error) {
             logger.error(`❌ Error al leer el archivo de firma: ${error.message}`);
+            logger.error(`❌ Stack: ${error.stack}`);
           }
         } else {
           logger.warn(`⚠️ No se encontró ruta de firma para la solicitud: ${solicitudIdReal}`);
