@@ -54,9 +54,9 @@
       </div>
       <div class="card-body p-0">
         <hr class="m-0" />
-        <div class="table-responsive">
+        <div class="table-container">
           <table class="table table-striped mb-0">
-            <thead class="table-light">
+            <thead class="table-light table-sticky-header">
               <tr>
                 <th>ID</th>
                 <th>Cliente</th>
@@ -68,14 +68,13 @@
                 <th>Acciones</th>
               </tr>
             </thead>
-            <tbody>
-              <tr v-for="t in filteredTransferencias" :key="t.id">
+            <tbody>              <tr v-for="t in filteredTransferencias" :key="t.id">
                 <td>{{ t.id }}</td>
-                <td>{{ t.clienteId }}</td>
+                <td>{{ getClienteDisplayName(t) }}</td>
                 <td>{{ t.modulo }}</td>
                 <td>{{ t.estado }}</td>
                 <td>{{ t.direccion }}</td>
-                <td>{{ t.observaciones }}</td>
+                <td style="width: 100px; text-align: justify;">{{ t.observaciones }}</td>
                 <td>{{ formatDate(t.fechaSolicitud) }} - {{ formatTime(t.fechaSolicitud) }}</td>
 
                 <td>
@@ -93,161 +92,46 @@
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+      </div>    </div>
 
-    <!-- Modal para Detalle -->
-    <div class="modal fade" id="detalleModal" tabindex="-1" aria-labelledby="detalleModalLabel" aria-hidden="true"
-      ref="detalleModal">
-      <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-          <!-- Encabezado del Modal -->
-          <div class="modal-header ">
-            <h5 class="modal-title" id="detalleModalLabel">
-              Detalle de Solicitud #{{ selectedTransferencia?.id }}
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"
-              @click="closeDetalle"></button>
-          </div>
-          <!-- Cuerpo del Modal -->
-          <div class="modal-body">
-            <div v-if="detalle">
-              <p>
-                <strong>Cliente:</strong>
-                {{ selectedTransferencia.clienteId }}
-              </p>
-              <p>
-                <strong>Modulo:</strong>
-                {{ selectedTransferencia.modulo }}
-              </p>
-              <p>
-                <strong>Estado Actual:</strong>
-                {{ selectedTransferencia.estado }}
-              </p>
-
-              <p>
-                <strong>Observacion:</strong>
-                {{ selectedTransferencia.observaciones }}
-              </p>
-              <p>
-                <strong>Frech Solicitud:</strong>
-                {{ formatDate(selectedTransferencia.fechaSolicitud) }} - {{
-                  formatTime(selectedTransferencia.fechaSolicitud) }}
-              </p>
-              <p>
-                <strong>Ultima Actualizacion:</strong>
-                {{ formatDate(selectedTransferencia.updatedAt) }} - {{ formatTime(selectedTransferencia.updatedAt) }}
-              </p>
-              <hr />
-              <h6>Detalles:</h6>
-              <div class="table-responsive">
-                <table class="table table-bordered">
-                  <thead class="table-light">
-                    <tr>
-                      <th>ID</th>
-                      <th>Referencia2</th>
-                      <th>Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="item in detalle" :key="item.id">
-                      <td>{{ item.id }}</td>
-                      <td>{{ item.referencia2 }}</td>
-                      <td>{{ item.estado }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-<h1>{{ estadoPermitido }} </h1>
-              <div v-if="estadoPermitido === 'asignado a transportador'">
-                <div class="mb-3">
-                  <label for="transportista" class="form-label">Transportador:</label>
-                  <input type="text" id="transportista" class="form-control" v-model="transportista"
-                    placeholder="Ingrese el nombre del transportador" required />
-                </div>
-                <div class="mb-3">
-                  <label for="documentoIdentidad" class="form-label">Documento de Identidad:</label>
-                  <input type="text" id="documentoIdentidad" class="form-control" v-model="documentoIdentidad"
-                    placeholder="Ingrese el documento de identidad" required />
-                </div>
-                <div class="mb-3">
-                  <label for="placa" class="form-label">Placa:</label>
-                  <input type="text" id="placa" class="form-control" v-model="placa"
-                    placeholder="Ingrese la placa del vehículo" required />
-                </div>
-                <div class="mb-3">
-                  <label for="sticker" class="form-label">Sticker Seguridad:</label>
-                  <input type="text" id="sticker" class="form-control" v-model="sticker"
-                    placeholder="Ingrese el codigo del sticker" />
-                </div>
-              </div>
-
-              <!-- Asignación de Ubicaciones (solo si el estado permitido es 'completado') -->
-              <div v-if="estadoPermitido === 'completado'" class="mt-3">
-                <h6>Asignación de Ubicaciones:</h6>
-                <div v-for="(item, idx) in detalle" :key="item.id" class="mb-2">
-                  <label class="form-label">
-                    Detalle ID {{ item.id }} - Ref.2: {{ item.referencia2 }}
-                  </label>
-                  <select class="form-select form-select-sm" v-model.number="item.nuevaUbicacionId">
-                    <option disabled value="">Seleccione ubicación...</option>
-                    <option v-for="u in availableUbicaciones.filter(
-                      (u) =>
-                        !detalle.some(
-                          (d) =>
-                            d.nuevaUbicacionId === u.id &&
-                            d.id !== item.id
-                        )
-                    )" :key="u.id" :value="u.id">
-                      {{ u.codigo }} - {{ u.estado }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-            </div>
-            <div v-else class="text-center py-3">
-              <i class="bi bi-arrow-repeat spin me-2"></i>
-              Cargando detalle...
-            </div>
-          </div>
-          <!-- Pie del Modal -->
-          <div v-if="!botonDisabled" class="modal-footer">
-            <div class="d-flex align-items-center w-100 justify-content-end">
-              <h6 class="me-2 mb-0">Actualizar estado a:</h6>
-              <button class="btn btn-success" :disabled="botonDisabled" @click="cambiarEstado">
-                <i class="bi bi-qr-code-scan me-1"></i>
-                {{
-                  botonDisabled
-                    ? "Confirmación Cliente Pendiente"
-                    : estadoPermitido || "Cambiar Estado"
-                }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Componente Modal -->    <TransferenciaDetalleModal
+      ref="detalleModal"
+      :selectedTransferencia="selectedTransferencia"
+      :detalle="detalle"
+      :estadoPermitido="estadoPermitido"
+      :botonDisabled="botonDisabled"
+      :transportistas="transportistas"
+      :availableUbicaciones="availableUbicaciones"      :isLoading="isLoadingModal"
+      :hasError="hasModalError"
+      :errorMessage="modalErrorMessage"
+      v-model:selectedTransportistaId="selectedTransportistaId"
+      v-model:transportista="transportista"
+      v-model:documentoIdentidad="documentoIdentidad"      v-model:placa="placa"
+      v-model:sticker="sticker"
+      v-model:observaciones="observaciones"@close="closeDetalle"
+      @cambiar-estado="cambiarEstado"
+      @retry="retryLoadModal"
+    />
   </div>
 </template>
 
 <script>
 import apiClient from "@/services/api";
-import { Modal } from "bootstrap";
 import { useAuthStore } from "@/stores/authStore";
 import { DateTime } from "luxon";
-import es from "dayjs/locale/es";
-
-
-
+import TransferenciaDetalleModal from "@/components/TransferenciaDetalleModal.vue";
 
 export default {
   name: "TransferenciaManager",
+  components: {
+    TransferenciaDetalleModal
+  },
   data() {
     return {
-      transferencias: [],
-      selectedTransferencia: null,
-      detalle: null,
-      detalleModalInstance: null,
+      transferencias: [],      selectedTransferencia: null,
+      detalle: null,      isLoadingModal: false, // Loading state para el modal
+      hasModalError: false, // Estado de error del modal
+      modalErrorMessage: 'Ha ocurrido un error al cargar los datos', // Mensaje de error
       availableUbicaciones: [],
       search: "",
       selectedEstado: "",
@@ -255,12 +139,13 @@ export default {
       modules: ["Transferencia", "Prestamo", "Devolucion", "Desarchive"],
       activeModule: "Transferencia",
       estadoPermitido: null,
-      botonDisabled: true,
-      authStore: useAuthStore(),
+      botonDisabled: true,      authStore: useAuthStore(),
       transportista: '',
-      documentoIdentidad: '',
-      placa: '',
+      transportistas: [], // Lista de transportistas
+      selectedTransportistaId: null, // ID del transportista seleccionado
+      documentoIdentidad: '',      placa: '',
       sticker: '',
+      observaciones: '', // Campo para observaciones del cambio de estado
     };
   },
   computed: {
@@ -299,18 +184,51 @@ export default {
       });
     },
   },
-  methods: {
-    // Retorna la fecha formateada "dd/MM/yyyy" en la zona de Bogotá
+  methods: {    // Retorna la fecha formateada "dd/MM/yyyy" en la zona de Bogotá
     formatDate(dateString) {
       if (!dateString) return "N/A";
-      const dt = DateTime.fromISO(dateString, { zone: "utc" });
+      
+      let dt;
+      if (dateString.endsWith('Z')) {
+        // Es UTC, convertir a Bogotá
+        dt = DateTime.fromISO(dateString, { zone: "utc" }).setZone("America/Bogota");
+      } else {
+        // No es UTC, parsear directamente
+        dt = DateTime.fromISO(dateString);
+      }
+      
       return dt.setLocale("es").toFormat("dd/MM/yyyy");
     },
     // Retorna la hora formateada "HH:mm" en la zona de Bogotá
     formatTime(dateString) {
       if (!dateString) return "N/A";
-      const dt = DateTime.fromISO(dateString, { zone: "utc" });
+      
+      let dt;
+      if (dateString.endsWith('Z')) {
+        // Es UTC, convertir a Bogotá
+        dt = DateTime.fromISO(dateString, { zone: "utc" }).setZone("America/Bogota");
+      } else {
+        // No es UTC, parsear directamente
+        dt = DateTime.fromISO(dateString);
+      }
+      
       return dt.setLocale("es").toFormat("hh:mm a");
+    },
+      // Obtener el nombre del cliente para mostrar en la tabla
+    getClienteDisplayName(transferencia) {
+      if (!transferencia) return 'N/A';
+      
+      // Si el backend ya envió el nombre, usarlo
+      if (transferencia.clienteNombre && transferencia.clienteNombre.trim() !== '') {
+        return transferencia.clienteNombre;
+      }
+      
+      // Si no, mostrar ID como fallback
+      if (transferencia.clienteId) {
+        return `Cliente ${transferencia.clienteId}`;
+      }
+      
+      return 'N/A';
     },
     async fetchTransferencias() {
       try {
@@ -320,17 +238,28 @@ export default {
           body
         );
         this.transferencias = response.data.data || [];
-        console.log("Transferencias:", this.transferencias);
+        // console.log("Transferencias:", this.transferencias);
       } catch (error) {
         console.error("Error fetching transferencias:", error);
       }
     },
+
+    async cargarTransportistas() {
+      try {
+        const response = await apiClient.get("/api/transferencias/transportistas");
+        this.transportistas = response.data.data || [];
+        // console.log("Transportistas cargados:", this.transportistas);
+      } catch (error) {
+        console.error("Error cargando transportistas:", error);
+        this.transportistas = [];      }
+    },
+    
     async fetchEstadoPermitido() {
-      
+
       try {
         const tipoUsuarioId = this.authStore.user?.tipoUsuarioId;
-        console.log("Tipo Usuario ID:", tipoUsuarioId);
-        
+        // console.log("Tipo Usuario ID:", tipoUsuarioId);
+
         if (!this.selectedTransferencia) return;
         const body = {
           clienteId: this.selectedTransferencia.clienteId,
@@ -338,7 +267,7 @@ export default {
           modulo: this.selectedTransferencia.modulo,
           estadoActual: this.selectedTransferencia.estado,
         };
-        console.log("Body para estado permitido:", body);
+        // console.log("Body para estado permitido:", body);
         const response = await apiClient.post(
           "/api/estados/transiciones",
           body
@@ -346,33 +275,91 @@ export default {
         const data = response.data;
         this.estadoPermitido = data.estadoPermitido;
         this.botonDisabled = data.disabled;
-        console.log("EstadoPermitido:", this.estadoPermitido, "Disabled:", this.botonDisabled);
+        // console.log("EstadoPermitido:", this.estadoPermitido, "Disabled:", this.botonDisabled);
       } catch (error) {
         console.error("Error fetching estadoPermitido:", error);
         this.estadoPermitido = null;
         this.botonDisabled = true;
-      }
-    },
-    async seleccionarTransferencia(t) {
-      try {
+      }    },    async seleccionarTransferencia(t) {
+      try {        // Limpiar estados anteriores
+        this.isLoadingModal = true;
+        this.hasModalError = false;
         this.selectedTransferencia = t;
-        await this.fetchDetalle(t.id);
-        await this.fetchUbicacionesDisponibles();
-        await this.fetchEstadoPermitido();
+        
+        // Limpiar todos los datos anteriores
+        this.detalle = null;
+        this.estadoPermitido = null;
+        this.availableUbicaciones = [];
+        this.transportistas = [];
+        
+        // Mostrar el modal con el loader
         this.showDetalleModal();
+        
+        // Cargar detalle básico primero
+        await this.fetchDetalle(t.id);
+        
+        // Cargar estado permitido
+        await this.fetchEstadoPermitido();
+        
+        // Cargar datos adicionales basados en el estado
+        const loadingPromises = [];
+        
+        if (this.estadoPermitido === 'completado') {
+          loadingPromises.push(this.fetchUbicacionesDisponibles());
+        }
+        
+        if (this.estadoPermitido === 'asignado a transportador') {
+          loadingPromises.push(this.fetchTransportistas());
+        }
+        
+        // Esperar a que se carguen todos los datos adicionales necesarios
+        if (loadingPromises.length > 0) {
+          await Promise.all(loadingPromises);
+        }
+        
+        // Pequeña pausa para asegurar que el renderizado se complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Desactivar loading una vez que todo esté cargado
+        this.isLoadingModal = false;
+        
       } catch (error) {
         console.error("Error al seleccionar transferencia:", error);
+        this.isLoadingModal = false; // Asegurar que se desactive el loading en caso de error
+        this.hasModalError = true; // Activar estado de error
+        this.modalErrorMessage = "No se pudo cargar la información de la solicitud. Verifique su conexión e intente nuevamente.";
+        
+        // Mostrar mensaje de error al usuario
+        await import("sweetalert2").then((Swal) => {
+          Swal.default.fire({
+            toast: true,
+            position: "bottom-right",
+            icon: "error",
+            title: "Error al cargar detalle",
+            text: "No se pudo cargar la información de la solicitud",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+          });
+        });
       }
-    },
-    async fetchDetalle(solicitudId) {
-      try {
+    },    async fetchDetalle(solicitudId) {      try {
         const body = { solicitudId };
         const response = await apiClient.post(
           "/api/transferencias/detalle",
           body
         );
         this.detalle = response.data.detalle || [];
-        console.log("Detalle:", this.detalle);
+        
+        // Asegurarse de que selectedTransferencia tenga el timeline
+        if (response.data.solicitud) {
+          this.selectedTransferencia = {
+            ...this.selectedTransferencia,
+            ...response.data.solicitud
+          };
+        }
+        
+        // console.log("Detalle:", this.detalle);
       } catch (error) {
         console.error("Error fetching detalle:", error);
       }
@@ -381,31 +368,39 @@ export default {
       try {
         const response = await apiClient.get("/api/transferencias/ubicaciones");
         this.availableUbicaciones = response.data.data.filter(
-          (u) => !u.ocupado && u.estado.toUpperCase() === "DISPONIBLE"
-        );
-        console.log("Ubicaciones:", this.availableUbicaciones);
+          (u) => !u.ocupado && u.estado.toUpperCase() === "DISPONIBLE"        );
+        // console.log("Ubicaciones:", this.availableUbicaciones);
       } catch (error) {
         console.error("Error fetching ubicaciones:", error);
       }
     },
-    showDetalleModal() {
-      const modalEl = this.$refs.detalleModal;
-      if (!this.detalleModalInstance) {
-        this.detalleModalInstance = new Modal(modalEl, {});
+    
+    async fetchTransportistas() {
+      try {
+        const response = await apiClient.get("/api/transferencias/transportistas");
+        this.transportistas = response.data.data || [];
+        // console.log("Transportistas:", this.transportistas);
+      } catch (error) {
+        console.error("Error fetching transportistas:", error);
+        this.transportistas = [];
       }
-      this.detalleModalInstance.show();
-    },
-    closeDetalle() {
-      if (this.detalleModalInstance) {
-        this.detalleModalInstance.hide();
-      }
+    },showDetalleModal() {      this.$refs.detalleModal.show();
+    },      closeDetalle() {
+      this.$refs.detalleModal.hide();
+      this.$refs.detalleModal.resetFields();
       this.selectedTransferencia = null;
       this.detalle = null;
-      this.transportista = '';
-      this.placa = '';
-      this.sticker = '';
-      this.documentoIdentidad = '';
+      this.isLoadingModal = false; // Resetear estado de loading
+      this.hasModalError = false; // Resetear estado de error
     },
+    
+    // Método para reintentar cargar los datos del modal
+    async retryLoadModal() {
+      if (this.selectedTransferencia) {
+        await this.seleccionarTransferencia(this.selectedTransferencia);
+      }
+    },
+    
     async cambiarEstado() {
       try {
         if (this.botonDisabled) {
@@ -414,25 +409,62 @@ export default {
         }
 
         const accion = this.estadoPermitido?.toLowerCase() || "";
-
-        // Si la acción es asignar a transportador, validamos que los campos requeridos estén completos.
+        
+        // Pequeña pausa para asegurar que los datos del modal se han sincronizado
+        await new Promise(resolve => setTimeout(resolve, 50));
+          // Si la acción es asignar a transportador, validamos que los campos requeridos estén completos.
         if (accion === "asignado a transportador") {
-          if (!this.transportista || !this.documentoIdentidad || !this.placa) {
+          // Obtener valores actuales del modal para asegurar sincronización
+          const modalData = {
+            selectedTransportistaId: this.selectedTransportistaId || this.$refs.detalleModal?.selectedTransportistaId,
+            transportista: this.transportista || this.$refs.detalleModal?.transportista,
+            documentoIdentidad: this.documentoIdentidad || this.$refs.detalleModal?.documentoIdentidad,
+            placa: this.placa || this.$refs.detalleModal?.placa
+          };          
+          // console.log('Validando campos para asignación a transportador:', {
+          //   padre: {
+          //     selectedTransportistaId: this.selectedTransportistaId,
+          //     transportista: this.transportista,
+          //     documentoIdentidad: this.documentoIdentidad,
+          //     placa: this.placa
+          //   },
+          //   modal: {
+          //     selectedTransportistaId: this.$refs.detalleModal?.selectedTransportistaId,
+          //     transportista: this.$refs.detalleModal?.transportista,
+          //     documentoIdentidad: this.$refs.detalleModal?.documentoIdentidad,
+          //     placa: this.$refs.detalleModal?.placa
+          //   },
+          //   merged: modalData
+          // });
+          
+          if (!modalData.selectedTransportistaId || !modalData.transportista || !modalData.documentoIdentidad || !modalData.placa) {            const camposFaltantes = [];
+            if (!modalData.selectedTransportistaId) camposFaltantes.push('Transportista');
+            if (!modalData.documentoIdentidad) camposFaltantes.push('Documento de identidad');
+            if (!modalData.placa) camposFaltantes.push('Placa');
+            
             await import("sweetalert2").then((Swal) => {
               Swal.default.fire({
                 toast: true,
                 position: "bottom-right",
                 icon: "warning",
                 title: "Campos incompletos",
-                text: "Por favor, complete los campos: transportista, documento de identidad y placa.",
+                text: `Por favor, complete los siguientes campos: ${camposFaltantes.join(', ')}.`,
                 showConfirmButton: false,
-                timer: 3000,
+                timer: 4000,
                 timerProgressBar: true,
               });
             });
-
             return;
-          }
+          }        }
+
+        // Sincronizar valores del modal antes de continuar
+        if (this.$refs.detalleModal) {
+          this.selectedTransportistaId = this.$refs.detalleModal.selectedTransportistaId || this.selectedTransportistaId;
+          this.transportista = this.$refs.detalleModal.transportista || this.transportista;
+          this.documentoIdentidad = this.$refs.detalleModal.documentoIdentidad || this.documentoIdentidad;
+          this.placa = this.$refs.detalleModal.placa || this.placa;
+          this.sticker = this.$refs.detalleModal.sticker || this.sticker;
+          this.observaciones = this.$refs.detalleModal.observaciones || this.observaciones;
         }
 
         const asignaciones =
@@ -444,8 +476,7 @@ export default {
                 ubicacionId: d.nuevaUbicacionId,
               }))
             : [];
-        const idUsuario = this.authStore.user?.id;
-        const body = {
+        const idUsuario = this.authStore.user?.id;        const body = {
           qrToken: `solicitud_${this.selectedTransferencia.id}`,
           accion,
           modulo: this.selectedTransferencia.modulo,
@@ -456,11 +487,12 @@ export default {
           documentoIdentidad: this.documentoIdentidad,
           placa: this.placa,
           sticker: this.sticker || '',
+          observaciones: this.observaciones || '', // Observaciones del cambio de estado
         };
 
-        console.log("Cambio de estado antes:", body);
+        // console.log("Cambio de estado antes:", body);
         const response = await apiClient.post("/api/transferencias/qr/scan", body);
-        console.log("Cambio de estado después:", response.data);
+        // console.log("Cambio de estado después:", response.data);
         this.selectedTransferencia.estado = response.data.NuevoEstado || accion;
         await this.fetchTransferencias();
         this.closeDetalle();
@@ -469,9 +501,9 @@ export default {
       }
     },
 
-  },
-  mounted() {
+  }, mounted() {
     this.fetchTransferencias();
+    this.cargarTransportistas(); // Cargar transportistas al inicializar el componente
   },
 };
 </script>
@@ -515,5 +547,37 @@ export default {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.input-disabled {
+  background-color: #e9ecef;
+  opacity: 0.8;
+  cursor: not-allowed;
+  color: #6c757d;
+  border-color: #ced4da;
+  box-shadow: none;
+}
+
+.input-disabled:hover {
+  cursor: not-allowed;
+}
+
+/* Estilos para la tabla con encabezado fijo */
+.table-container {
+  max-height: 400px;
+  /* Altura máxima del contenedor de la tabla */
+  overflow-y: auto;
+  /* Habilita el scroll vertical si es necesario */
+}
+
+.table-sticky-header th {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f8f9fa;
+  /* Color de fondo del encabezado */
+  border-bottom: 2px solid #dee2e6;
+  /* Línea inferior del encabezado */
 }
 </style>

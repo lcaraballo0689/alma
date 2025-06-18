@@ -31,9 +31,7 @@ async function detalleCompletoTransferencia(req, res, next) {
     if (!solicitudId) {
       return res.status(400).json({ error: "El parámetro solicitudId es obligatorio." });
     }
-    const pool = await connectDB();
-
-    // Header
+    const pool = await connectDB();    // Header
     const headerResult = await pool
       .request()
       .input("solicitudId", sql.Int, solicitudId)
@@ -43,6 +41,25 @@ async function detalleCompletoTransferencia(req, res, next) {
     }
     const solicitud = headerResult.recordset[0];
 
+    // Parsear observacionesUsuario desde JSON
+    let observacionesTimeline = [];
+    if (solicitud.observacionesUsuario) {
+      try {
+        observacionesTimeline = JSON.parse(solicitud.observacionesUsuario);
+        // Asegurar que es un array
+        if (!Array.isArray(observacionesTimeline)) {
+          observacionesTimeline = [];
+        }
+      } catch (parseError) {
+        logger.warn("detalleCompletoTransferencia - Error al parsear observacionesUsuario", { 
+          error: parseError.message, 
+          solicitudId,
+          observacionesRaw: solicitud.observacionesUsuario 
+        });
+        observacionesTimeline = [];
+      }
+    }
+
     // Detalle
     const detalleResult = await pool
       .request()
@@ -51,11 +68,13 @@ async function detalleCompletoTransferencia(req, res, next) {
         SELECT id, tipo, referencia1, referencia2, referencia3, descripcion, estado, entregaId, procesado
         FROM DetalleSolicitudTransporte
         WHERE solicitudTransporteId = @solicitudId
-        ORDER BY id ASC
-      `);
+        ORDER BY id ASC      `);
 
     return res.status(200).json({
-      solicitud,
+      solicitud: {
+        ...solicitud,
+        observacionesTimeline // Agregar timeline parseado
+      },
       detalle: detalleResult.recordset.map(item => ({
         ...item,
         entregaId: item.entregaId || null,
@@ -1015,7 +1034,7 @@ function generatePDFBuffer(nuevoConsecutivo, clienteId, observaciones, items) {
 
 async function scanQR(req, res, next) {
   try {
-    const { qrToken, accion, usuarioId, clienteId, asignaciones, transportista, documentoIdentidad, placa, sticker } = req.body;
+    const { qrToken, accion, usuarioId, clienteId, asignaciones, transportista, documentoIdentidad, placa, sticker, observaciones } = req.body;
 
     // Validación inicial de campos obligatorios
     if (!qrToken || !accion || !usuarioId || !clienteId) {
@@ -1030,9 +1049,7 @@ async function scanQR(req, res, next) {
 
     // Conexión a la base de datos
     const pool = await connectDB();
-    logger.info("scanQR - Conexión a la BD establecida");
-
-    // Configuración de parámetros para el SP
+    logger.info("scanQR - Conexión a la BD establecida");    // Configuración de parámetros para el SP
     const request = pool.request()
       .input("qrToken", sql.NVarChar, qrToken)
       .input("accion", sql.NVarChar, accion)
@@ -1041,7 +1058,8 @@ async function scanQR(req, res, next) {
       .input("transportista", sql.NVarChar, transportista)
       .input("documentoIdentidad", sql.NVarChar, documentoIdentidad)
       .input("placa", sql.NVarChar, placa)
-      .input("sticker", sql.NVarChar, sticker || null);
+      .input("sticker", sql.NVarChar, sticker || null)
+      .input("observacionesUsuario", sql.NVarChar, observaciones || null);
 
 
     // Manejo de asignaciones según la acción
@@ -1075,10 +1093,31 @@ async function scanQR(req, res, next) {
     if (!result.recordset || result.recordset.length === 0) {
       logger.error("scanQR - El SP_ScanQR no devolvió resultados");
       return res.status(500).json({ error: "Error interno al procesar la transición." });
-    }
-
-    const spResponse = result.recordset[0];
+    }    const spResponse = result.recordset[0];
     logger.info("scanQR - SP_ScanQR ejecutado exitosamente", { spResponse });
+      // Registrar auditoría adicional con observaciones si se proporcionaron
+    if (observaciones && observaciones.trim() !== '') {
+      try {
+        await registrarAuditoria(
+          pool,
+          spResponse.SolicitudId,
+          spResponse.EstadoAnterior,
+          spResponse.NuevoEstado,
+          usuarioId,
+          `Observaciones del usuario: ${observaciones.trim()}`
+        );
+        logger.info("scanQR - Auditoría con observaciones del usuario registrada", { 
+          solicitudId: spResponse.SolicitudId, 
+          observaciones: observaciones.trim()
+        });
+      } catch (auditError) {
+        logger.error("scanQR - Error al registrar auditoría con observaciones del usuario", { 
+          error: auditError.message,
+          solicitudId: spResponse.SolicitudId
+        });
+        // No fallar el proceso completo por un error de auditoría adicional
+      }
+    }
 
     // Obtener el correo del usuario para notificaciones
     const correoUsuario = await obtenerCorreoUsuario(pool, usuarioId);
@@ -1515,16 +1554,58 @@ async function consultarDetalleTransferencia(req, res, next) {
     const { solicitudId } = req.body;
     const pool = await connectDB();
     const requestHeader = new sql.Request(pool);
-    requestHeader.input("solicitudId", sql.Int, solicitudId);
-    const headerResult = await requestHeader.query(`
-      SELECT * FROM SolicitudTransporte WHERE id = @solicitudId
+    requestHeader.input("solicitudId", sql.Int, solicitudId);    const headerResult = await requestHeader.query(`
+      SELECT st.*, c.nombre as clienteNombre
+      FROM SolicitudTransporte st
+      LEFT JOIN Cliente c ON st.clienteId = c.id
+      WHERE st.id = @solicitudId
     `);
     if (headerResult.recordset.length === 0) {
       return res
         .status(404)
-        .json({ error: `"Solicitud Numero: ${solicitudId} no encontrada."` });
-    }
+        .json({ error: `"Solicitud Numero: ${solicitudId} no encontrada."` });    }
     const solicitud = headerResult.recordset[0];
+      // Parsear observacionesUsuario desde JSON y enriquecer con nombres de usuarios
+    let observacionesTimeline = [];
+    if (solicitud.observacionesUsuario) {
+      try {
+        const observacionesParsed = JSON.parse(solicitud.observacionesUsuario);
+        
+        if (Array.isArray(observacionesParsed)) {
+          // Obtener IDs únicos de usuarios
+          const userIds = [...new Set(observacionesParsed.map(obs => obs.usuario).filter(id => id))];
+          
+          if (userIds.length > 0) {
+            // Consultar nombres de usuarios
+            const userQuery = await pool.request().query(`
+              SELECT id, nombre 
+              FROM Usuario 
+              WHERE id IN (${userIds.join(',')})
+            `);
+            
+            const userMap = {};
+            userQuery.recordset.forEach(user => {
+              userMap[user.id] = user.nombre;
+            });
+            
+            // Enriquecer observaciones con nombres de usuarios
+            observacionesTimeline = observacionesParsed.map(obs => ({
+              ...obs,
+              usuarioNombre: userMap[obs.usuario] || `Usuario ${obs.usuario}`
+            }));
+          } else {
+            observacionesTimeline = observacionesParsed;
+          }
+        }
+      } catch (parseError) {
+        logger.warn("consultarDetalleTransferencia - Error al parsear observacionesUsuario", { 
+          error: parseError.message, 
+          solicitudId,
+          observacionesRaw: solicitud.observacionesUsuario 
+        });
+        observacionesTimeline = [];
+      }
+    }
     
     // Obtener el detalle de la solicitud
     const requestDetalle = new sql.Request(pool);
@@ -1546,11 +1627,13 @@ async function consultarDetalleTransferencia(req, res, next) {
       WHERE sa.SolicitudID = @solicitudId
       ORDER BY sa.FechaEvento DESC
     `);
-    
-    logger.info(`Consulta de detalle para solicitud ${solicitudId} exitosa con historial de auditoría.`);
+      logger.info(`Consulta de detalle para solicitud ${solicitudId} exitosa con historial de auditoría.`);
     return res.status(200).json({
       message: "Consulta exitosa",
-      solicitud,
+      solicitud: {
+        ...solicitud,
+        observacionesTimeline // Agregar timeline parseado
+      },
       detalle: detailResult.recordset,
       historial: historialResult.recordset
     });
@@ -2015,9 +2098,37 @@ async function listarUbicaciones(req, res, next) {
     return res.status(200).json({
       message: "Ubicaciones consultadas exitosamente",
       data: result.recordset,
+    });  } catch (error) {
+    logger.error("Error en listarUbicaciones: " + error);
+    return next(error);
+  }
+}
+
+/**
+ * GET /api/transferencias/transportistas
+ * Obtiene la lista de transportistas activos
+ */
+async function listarTransportistas(req, res, next) {
+  try {
+    const pool = await connectDB();
+    
+    const result = await pool.request().query(`
+      SELECT 
+        id, 
+        nombre,
+        cc
+      FROM Usuario 
+      WHERE tipoUsuarioId = 5 AND activo = 1
+      ORDER BY nombre
+    `);
+    
+    logger.info("Transportistas consultados exitosamente.");
+    return res.status(200).json({
+      message: "Transportistas consultados exitosamente",
+      data: result.recordset,
     });
   } catch (error) {
-    logger.error("Error en listarUbicaciones: " + error);
+    logger.error("Error en listarTransportistas: " + error);
     return next(error);
   }
 }
@@ -2033,8 +2144,8 @@ module.exports = {
   asignarUbicaciones,
   recepcionar,
   asignarTransportador,
-  recoger,
-  listarUbicaciones,
+  recoger,  listarUbicaciones,
+  listarTransportistas,
   procesarTransferenciaInterna,
   detalleCompletoTransferencia,
   getEntregaDetails,

@@ -163,44 +163,6 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Interceptor para manejar respuestas con alertas
-apiClient.interceptors.response.use(
-  (response) => {
-    // Mostrar alertas de éxito desde el backend
-    if (response.data && response.data.showAlert) {
-      Swal.fire(response.data.showAlert);
-    }
-    return response;
-  },
-  (error) => {
-    // Mostrar alertas de error desde el backend
-    if (error.response && error.response.data && error.response.data.showAlert) {
-      Swal.fire(error.response.data.showAlert);
-    } else if (error.response && error.response.data && error.response.data.error) {
-      // Fallback para errores sin showAlert
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: error.response.data.error,
-        toast: true,
-        position: 'top-end',
-        timer: 4000,
-        showConfirmButton: false
-      });
-    } else {
-      // Error genérico de conexión
-      Swal.fire({
-        icon: 'error',
-        title: 'Error de Conexión',
-        text: 'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
-        toast: true,
-        position: 'top-end',
-        timer: 5000,
-        showConfirmButton: false
-      });
-    }
-    return Promise.reject(error);
-  }
-);
+
 
 export default apiClient;

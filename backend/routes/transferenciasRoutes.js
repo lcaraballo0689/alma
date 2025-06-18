@@ -11,8 +11,8 @@ const {
   asignarUbicaciones,
   recepcionar,
   asignarTransportador,
-  recoger,
-  listarUbicaciones,
+  recoger,  listarUbicaciones,
+  listarTransportistas,
   detalleCompletoTransferencia,
   getEntregaDetails
 } = require('../controllers/transferenciasController');
@@ -28,6 +28,7 @@ router.delete('/eliminar', authMiddleware, eliminarTransferencia);
 router.put('/asignarTransportador', authMiddleware, asignarTransportador);
 router.put('/recoger', authMiddleware, recoger);
 router.get('/ubicaciones', authMiddleware, listarUbicaciones);
+router.get('/transportistas', authMiddleware, listarTransportistas);
 router.post('/detalleCompleto', authMiddleware, detalleCompletoTransferencia);
 router.post('/entregaDetails', authMiddleware, getEntregaDetails);
 
