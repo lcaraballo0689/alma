@@ -149,8 +149,7 @@ export default {
     };
   },
   computed: {
-    direccionHeader() {
-      if (this.filteredTransferencias && this.filteredTransferencias.length > 0) {
+    direccionHeader() {      if (this.filteredTransferencias && this.filteredTransferencias.length > 0 && this.filteredTransferencias[0].modulo) {
         // Convertir a minúsculas para evitar problemas de mayúsculas/minúsculas
         const modulo = this.filteredTransferencias[0].modulo.toLowerCase();
         if (modulo === "transferencia" || modulo === "devolucion") {
@@ -161,19 +160,16 @@ export default {
       }
       return "";
     },
-    filteredTransferencias() {
-      return this.transferencias.filter((t) => {
-        const estadoLower = t.estado.toLowerCase();
-        const moduloLower = t.modulo ? t.modulo.toLowerCase() : "";
-        const matchModule = this.activeModule
-          ? moduloLower === this.activeModule.toLowerCase()
-          : true;
-        const matchEstado = this.selectedEstado
-          ? estadoLower === this.selectedEstado.toLowerCase()
-          : true;
-        const matchBusqueda = this.search
-          ? t.clienteId.toString().includes(this.search) ||
-          estadoLower.includes(this.search.toLowerCase())
+    filteredTransferencias() {      return this.transferencias.filter((t) => {
+        // Validar que estado exista antes de usar toLowerCase
+        const estadoLower = t.estado ? t.estado.toLowerCase() : "";
+        const moduloLower = t.modulo ? t.modulo.toLowerCase() : "";        const matchModule = this.activeModule
+          ? moduloLower === (this.activeModule ? this.activeModule.toLowerCase() : "")
+          : true;const matchEstado = this.selectedEstado
+          ? estadoLower === (this.selectedEstado ? this.selectedEstado.toLowerCase() : "")
+          : true;const matchBusqueda = this.search
+          ? (t.clienteId ? t.clienteId.toString().includes(this.search) : false) ||
+            (estadoLower ? estadoLower.includes(this.search.toLowerCase()) : false)
           : true;
         const isCompleted = estadoLower === "completado";
         if (this.activeTab === "completadas") {

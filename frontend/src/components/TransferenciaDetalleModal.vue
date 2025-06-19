@@ -170,7 +170,7 @@
                   </option>
                 </select>              </div>
             </div>
-            {{estadoPermitido.toLowerCase()}}
+
             <!-- Campo de observación para cambio de estado -->
             <div class="mt-3" v-if="processedTransferencia.estado.toLowerCase() !== 'entrega confirmada'">
               <hr />
