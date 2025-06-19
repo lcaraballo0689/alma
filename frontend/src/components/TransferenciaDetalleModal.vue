@@ -128,13 +128,18 @@
                     </div>
                   </div>
                 </div>
-                
-                <!-- Cuando no hay observaciones -->
-                <div v-else class="text-center py-4">
-                  <i class="bi bi-chat-square-dots text-muted" style="font-size: 2rem;"></i>
-                  <p class="text-muted mt-2 mb-0">No hay observaciones registradas</p>
-                  <small class="text-muted">Las observaciones aparecerán aquí cuando se agreguen durante los cambios de estado.</small>
+                    <!-- Cuando no hay observaciones -->
+              <div v-else class="text-center py-4">
+                <i class="bi bi-chat-square-dots text-muted" style="font-size: 2rem;"></i>
+                <p class="text-muted mt-2 mb-0">No hay observaciones registradas</p>
+                <small class="text-muted">Las observaciones aparecerán aquí cuando se agreguen durante los cambios de estado.</small>
+                <div v-if="selectedTransferencia?.observacionesUsuario === null" 
+                     class="alert alert-warning mt-3 mx-auto" style="max-width: 80%;">
+                  <i class="bi bi-exclamation-triangle me-2"></i>
+                  El registro tiene un valor <code>NULL</code> en observaciones.
+                  <small class="d-block mt-1">Se recomienda ejecutar la actualización de la base de datos.</small>
                 </div>
+              </div>
               </div>
               
               <!-- Sección de asignación de transportador -->
@@ -319,29 +324,60 @@ export default {
         }));
       }
       
-      // Si no existe, parsear observacionesUsuario
-      if (!this.selectedTransferencia?.observacionesUsuario) {
+      // Si no existe, parsear observacionesUsuario con manejo robusto para NULL
+      const observacionesUsuario = this.selectedTransferencia?.observacionesUsuario;
+      
+      // Si es NULL, indefinido, o un string vacío, devolver array vacío
+      if (!observacionesUsuario) {
+        console.info('📝 observacionesUsuario es NULL o indefinido, devolviendo array vacío');
         return [];
       }
       
       try {
+        // Si parece ser ya un array (puede ocurrir si el backend ya lo parseó)
+        if (Array.isArray(observacionesUsuario)) {
+          console.info('📝 observacionesUsuario ya es un array');
+          return observacionesUsuario.map(obs => ({
+            ...obs,
+            fecha: obs.fecha?.replace('Z', '') // Quitar la Z para que se trate como hora local
+          }));
+        }
+        
+        // Si es un string vacío o '[]', devolver array vacío
+        if (observacionesUsuario === '' || observacionesUsuario === '[]') {
+          console.info('📝 observacionesUsuario es un string vacío o "[]"');
+          return [];
+        }
+        
         // Limpiar caracteres especiales antes del parsing
-        const cleanJson = this.selectedTransferencia.observacionesUsuario
+        const cleanJson = observacionesUsuario
           .replace(/\r\n/g, '')  // Remover \r\n
           .replace(/\r/g, '')    // Remover \r
           .replace(/\n/g, '')    // Remover \n
           .trim();               // Remover espacios al inicio/final
         
-        const parsed = JSON.parse(cleanJson);
-        const timeline = Array.isArray(parsed) ? parsed : [];
+        // Si después de limpiar es vacío, devolver array vacío
+        if (!cleanJson) {
+          console.info('📝 observacionesUsuario limpio es vacío');
+          return [];
+        }
         
-        // Quitar la Z de todas las fechas
-        return timeline.map(obs => ({
-          ...obs,
-          fecha: obs.fecha?.replace('Z', '') // Quitar la Z para que se trate como hora local
-        }));
+        try {
+          const parsed = JSON.parse(cleanJson);
+          const timeline = Array.isArray(parsed) ? parsed : [];
+          
+          // Quitar la Z de todas las fechas
+          return timeline.map(obs => ({
+            ...obs,
+            fecha: obs.fecha?.replace('Z', '') // Quitar la Z para que se trate como hora local
+          }));
+        } catch (parseError) {
+          console.error('❌ Error al parsear observaciones JSON:', parseError);
+          console.log('⚠️ Contenido problemático:', cleanJson);
+          return [];
+        }
       } catch (error) {
-        console.error('❌ Error al parsear observaciones:', error);
+        console.error('❌ Error general al procesar observaciones:', error);
         return [];
       }
     },
@@ -567,12 +603,42 @@ export default {
         'devuelto': 'secondary'
       };
       return colorMap[estadoNuevo?.toLowerCase()] || 'primary';
+    },
+    
+    // Método para imprimir debugging info sobre observaciones
+    debugObservaciones() {
+      if (!this.selectedTransferencia) {
+        console.log('📊 No hay transferencia seleccionada');
+        return;
+      }
+      
+      const obsValue = this.selectedTransferencia.observacionesUsuario;
+      console.log('📊 Tipo de observacionesUsuario:', typeof obsValue);
+      console.log('📊 Es NULL:', obsValue === null);
+      console.log('📊 Es undefined:', obsValue === undefined);
+      console.log('📊 Es array:', Array.isArray(obsValue));
+      console.log('📊 Valor raw:', obsValue);
+      
+      try {
+        if (typeof obsValue === 'string' && obsValue) {
+          console.log('📊 Parsing test:', JSON.parse(obsValue));
+        }
+      } catch (e) {
+        console.error('📊 Error de parsing:', e);
+      }
     }
   },
   
   beforeUnmount() {
     if (this.detalleModalInstance) {
       this.detalleModalInstance.dispose();
+    }
+  },
+  
+  mounted() {
+    // Ejecutar debugging solo en desarrollo
+    if (process.env.NODE_ENV !== 'production' && this.selectedTransferencia) {
+      this.debugObservaciones();
     }
   }
 };
