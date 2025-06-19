@@ -10,7 +10,17 @@ const smsService = require("../services/smsService");
 const whatsappService = require("../services/whatsappService");
 const { storeNotification } = require("../services/notificationService");
 const { getSolicitudTransporteDetails } = require('../utils/solicitudTransporteHelper');
-const { formatDate } = require('../utils/dateUtils');
+// Definición interna de formatDate para evitar dependencias externas
+function formatDate(fecha) {
+  const date = new Date(fecha);
+  return date.toLocaleDateString('es-CO', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
 
 
 
@@ -1125,18 +1135,14 @@ async function scanQR(req, res, next) {
 
     // Envío de correos de notificación
     try {
-      const destinatario = `"${correoUsuario}"`;
-      const TransporteDetails = await getSolicitudTransporteDetails(spResponse.SolicitudId, ["modulo", "usuarioSolicitante"]);
-      const emailCLiente = await obtenerCorreoUsuario(pool, TransporteDetails.adicionales.usuarioSolicitante)
-
-      const fechaActual = new Date();
-      const emailData = {
+      const destinatario = `"${correoUsuario}"`;      const TransporteDetails = await getSolicitudTransporteDetails(spResponse.SolicitudId, ["modulo", "usuarioSolicitante"]);
+      const emailCLiente = await obtenerCorreoUsuario(pool, TransporteDetails.adicionales.usuarioSolicitante);
+      const fechaActual = new Date();const emailData = {
         solicitudId: TransporteDetails.consecutivo,
         solicitudTransporteId: spResponse.SolicitudId,
         estadoAnterior: spResponse.EstadoAnterior,
-        estadoActual: spResponse.NuevoEstado,
-        fechaActualizacion: formatDate(fechaActual),
-        observaciones: spResponse.Observaciones,
+        estadoActual: spResponse.NuevoEstado,        fechaActualizacion: formatDate(fechaActual),
+        observaciones: observaciones || spResponse.ObservacionesUsuario || spResponse.Observaciones,
         modulo: spResponse.Modulo,
         placa,
         documentoIdentidad,

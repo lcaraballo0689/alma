@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+observaciones: observaciones || spResponse.Observaciones,<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -142,7 +142,12 @@
         {{#if placa}}
         <tr>
           <th>Placa</th>
-          <td>{{placa}}</td>
+          <td>{{placa}}</td>        </tr>
+        {{/if}}
+        {{#if observaciones}}
+        <tr>
+          <th>Observaciones</th>
+          <td>{{observaciones}}</td>
         </tr>
         {{/if}}
       </table>
