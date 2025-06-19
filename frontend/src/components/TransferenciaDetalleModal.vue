@@ -149,13 +149,20 @@
                     @change="onTransportistaChange" required :disabled="!transportistas || transportistas.length === 0">
                     <option value="" disabled>
                       {{ !transportistas || transportistas.length === 0 ? 'Cargando transportadores...' : 'Seleccione un transportador' }}
+                    </option>                    <option 
+                      v-for="transportista in transportistas" 
+                      :key="transportista.id" 
+                      :value="transportista.id"
+                      :title="transportista.tipoUsuarioId === 5 ? 'Transportista' : 'Bodega-Transportista'"
+                    >
+                      {{ transportista.nombre }} 
+                      {{ transportista.tipoUsuarioId === 6 ? '(Bodega)' : '' }}
                     </option>
-                    <option v-for="transportista in transportistas" :key="transportista.id" :value="transportista.id">
-                      {{ transportista.nombre }}
-                    </option>
-                  </select>
-                  <div v-if="!transportistas || transportistas.length === 0" class="form-text text-warning mt-1">
+                  </select>                  <div v-if="!transportistas || transportistas.length === 0" class="form-text text-warning mt-1">
                     <i class="bi bi-exclamation-triangle-fill me-1"></i> Cargando lista de transportadores...
+                    <button type="button" class="btn btn-sm btn-outline-warning ms-2" @click="$emit('reload-transportistas')">
+                      <i class="bi bi-arrow-clockwise me-1"></i> Reintentar
+                    </button>
                   </div>
                 </div>
                 <div class="mb-3" v-if="selectedTransportistaId">
@@ -176,10 +183,12 @@
               </div>
 
               <!-- Asignación de Ubicaciones (solo si el estado permitido es 'completado') -->              <div v-if="estadoPermitido === 'completado'" class="mt-3">
-                <h6>Asignación de Ubicaciones:</h6>
-                <div v-if="!availableUbicaciones || availableUbicaciones.length === 0" class="alert alert-warning">
+                <h6>Asignación de Ubicaciones:</h6>                <div v-if="!availableUbicaciones || availableUbicaciones.length === 0" class="alert alert-warning">
                   <i class="bi bi-exclamation-triangle-fill me-2"></i>
                   Cargando ubicaciones disponibles...
+                  <button type="button" class="btn btn-sm btn-outline-warning ms-2" @click="$emit('reload-ubicaciones')">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Reintentar
+                  </button>
                 </div>
                 <div v-for="(item, idx) in detalle" :key="item.id" class="mb-2">
                   <label class="form-label">
@@ -481,7 +490,19 @@ export default {
     }
   },
   
-  emits: ['close', 'cambiar-estado', 'retry', 'update:selectedTransportistaId', 'update:transportista', 'update:documentoIdentidad', 'update:placa', 'update:sticker', 'update:observaciones'],
+  emits: [
+    'close', 
+    'cambiar-estado', 
+    'retry', 
+    'reload-transportistas',
+    'reload-ubicaciones',
+    'update:selectedTransportistaId', 
+    'update:transportista', 
+    'update:documentoIdentidad', 
+    'update:placa', 
+    'update:sticker', 
+    'update:observaciones'
+  ],
   
   methods: {
     show() {

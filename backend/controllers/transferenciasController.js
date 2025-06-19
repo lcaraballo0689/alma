@@ -2117,14 +2117,14 @@ async function listarUbicaciones(req, res, next) {
 async function listarTransportistas(req, res, next) {
   try {
     const pool = await connectDB();
-    
-    const result = await pool.request().query(`
+      const result = await pool.request().query(`
       SELECT 
         id, 
         nombre,
-        cc
+        cc,
+        tipoUsuarioId
       FROM Usuario 
-      WHERE tipoUsuarioId = 5 AND activo = 1
+      WHERE tipoUsuarioId IN (5, 6) AND activo = 1
       ORDER BY nombre
     `);
     

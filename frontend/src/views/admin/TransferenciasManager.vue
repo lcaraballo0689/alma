@@ -107,10 +107,12 @@
       v-model:selectedTransportistaId="selectedTransportistaId"
       v-model:transportista="transportista"
       v-model:documentoIdentidad="documentoIdentidad"      v-model:placa="placa"
-      v-model:sticker="sticker"
-      v-model:observaciones="observaciones"@close="closeDetalle"
+      v-model:sticker="sticker"      v-model:observaciones="observaciones"
+      @close="closeDetalle"
       @cambiar-estado="cambiarEstado"
       @retry="retryLoadModal"
+      @reload-transportistas="reloadTransportistas"
+      @reload-ubicaciones="reloadUbicaciones"
     />
   </div>
 </template>
@@ -296,21 +298,32 @@ export default {
         
         // Cargar estado permitido
         await this.fetchEstadoPermitido();
-        
-        // Cargar datos adicionales basados en el estado
+          // Cargar datos adicionales necesarios
         const loadingPromises = [];
         
+        // Siempre cargar transportistas para tener la lista disponible
+        // incluso si aún no se necesitan (para casos donde cambia el estado)
+        loadingPromises.push(
+          this.fetchTransportistas()
+            .catch(err => console.warn("No se pudieron cargar los transportistas, pero continuamos", err))
+        );
+        
+        // Cargar ubicaciones si es necesario
         if (this.estadoPermitido === 'completado') {
-          loadingPromises.push(this.fetchUbicacionesDisponibles());
+          loadingPromises.push(
+            this.fetchUbicacionesDisponibles()
+              .catch(err => console.warn("No se pudieron cargar las ubicaciones, pero continuamos", err))
+          );
         }
         
-        if (this.estadoPermitido === 'asignado a transportador') {
-          loadingPromises.push(this.fetchTransportistas());
-        }
-        
-        // Esperar a que se carguen todos los datos adicionales necesarios
+        // Esperar a que se carguen todos los datos adicionales
         if (loadingPromises.length > 0) {
-          await Promise.all(loadingPromises);
+          try {
+            await Promise.allSettled(loadingPromises); // Usamos allSettled en lugar de all para continuar incluso si hay errores
+            console.log("✅ Carga de datos adicionales completada (transportistas y/o ubicaciones)");
+          } catch (error) {
+            console.warn("⚠️ Algunos recursos no pudieron cargarse, pero continuamos", error);
+          }
         }
         
         // Pequeña pausa para asegurar que el renderizado se complete
@@ -359,26 +372,65 @@ export default {
       } catch (error) {
         console.error("Error fetching detalle:", error);
       }
-    },
-    async fetchUbicacionesDisponibles() {
+    },    async fetchUbicacionesDisponibles() {
       try {
+        console.log("📡 Iniciando carga de ubicaciones...");
         const response = await apiClient.get("/api/transferencias/ubicaciones");
         this.availableUbicaciones = response.data.data.filter(
-          (u) => !u.ocupado && u.estado.toUpperCase() === "DISPONIBLE"        );
-        // console.log("Ubicaciones:", this.availableUbicaciones);
+          (u) => !u.ocupado && u.estado.toUpperCase() === "DISPONIBLE"
+        );
+        console.log(`✅ Ubicaciones disponibles cargadas: ${this.availableUbicaciones.length} encontradas`);
+        return this.availableUbicaciones;
       } catch (error) {
-        console.error("Error fetching ubicaciones:", error);
+        console.error("❌ Error cargando ubicaciones:", error);
+        // No establecemos this.availableUbicaciones = [] para mantener valores previos si hay alguno
+        
+        // Notificar al usuario del error
+        await import("sweetalert2").then((Swal) => {
+          Swal.default.fire({
+            toast: true,
+            position: "bottom-right",
+            icon: "error",
+            title: "Error al cargar ubicaciones",
+            text: "No se pudieron cargar las ubicaciones disponibles. Intente nuevamente.",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+          });
+        });
+        
+        throw error; // Re-lanzar el error para manejo externo
       }
     },
-    
-    async fetchTransportistas() {
+      async fetchTransportistas() {
       try {
+        console.log("📡 Iniciando carga de transportistas...");
         const response = await apiClient.get("/api/transferencias/transportistas");
         this.transportistas = response.data.data || [];
-        // console.log("Transportistas:", this.transportistas);
+        // Contar tipos de transportistas para logging
+        const transportistas = this.transportistas.filter(t => t.tipoUsuarioId === 5).length;
+        const bodegaTransportistas = this.transportistas.filter(t => t.tipoUsuarioId === 6).length;
+        console.log(`✅ Transportistas cargados: ${this.transportistas.length} encontrados (${transportistas} transportistas, ${bodegaTransportistas} bodega-transportistas)`);
+        return this.transportistas;
       } catch (error) {
-        console.error("Error fetching transportistas:", error);
-        this.transportistas = [];
+        console.error("❌ Error cargando transportistas:", error);
+        // No establecemos this.transportistas = [] para mantener los valores previos si hay alguno
+        
+        // Notificar al usuario del error
+        await import("sweetalert2").then((Swal) => {
+          Swal.default.fire({
+            toast: true,
+            position: "bottom-right",
+            icon: "error",
+            title: "Error al cargar transportistas",
+            text: "No se pudieron cargar los transportistas. Intente nuevamente.",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+          });
+        });
+        
+        throw error; // Re-lanzar el error para manejo externo
       }
     },showDetalleModal() {      this.$refs.detalleModal.show();
     },      closeDetalle() {
@@ -497,6 +549,85 @@ export default {
       }
     },
 
+    // Método para recargar solo los transportistas
+    async reloadTransportistas() {
+      try {
+        await import("sweetalert2").then((Swal) => {
+          const toast = Swal.default.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+          });
+          
+          toast.fire({
+            icon: "info",
+            title: "Recargando transportistas..."
+          });
+        });
+        
+        await this.fetchTransportistas();
+        
+        // Notificación de éxito
+        await import("sweetalert2").then((Swal) => {
+          const toast = Swal.default.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+          });
+          
+          toast.fire({
+            icon: "success",
+            title: `${this.transportistas.length} transportistas cargados`
+          });
+        });
+      } catch (error) {
+        console.error("Error al recargar transportistas:", error);
+      }
+    },
+    
+    // Método para recargar solo las ubicaciones
+    async reloadUbicaciones() {
+      try {
+        await import("sweetalert2").then((Swal) => {
+          const toast = Swal.default.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+          });
+          
+          toast.fire({
+            icon: "info",
+            title: "Recargando ubicaciones..."
+          });
+        });
+        
+        await this.fetchUbicacionesDisponibles();
+        
+        // Notificación de éxito
+        await import("sweetalert2").then((Swal) => {
+          const toast = Swal.default.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+          });
+          
+          toast.fire({
+            icon: "success",
+            title: `${this.availableUbicaciones.length} ubicaciones cargadas`
+          });
+        });
+      } catch (error) {
+        console.error("Error al recargar ubicaciones:", error);
+      }
+    },
   }, mounted() {
     this.fetchTransferencias();
     this.cargarTransportistas(); // Cargar transportistas al inicializar el componente
