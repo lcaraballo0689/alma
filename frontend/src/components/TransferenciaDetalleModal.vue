@@ -19,7 +19,8 @@
         </div>        <!-- Cuerpo del Modal -->
         <div class="modal-body">
           <!-- Loader cuando está cargando -->
-          <transition name="fade" mode="out-in">            <div v-if="isLoading" key="loading" class="loading-container text-center py-5">
+          <transition name="fade" mode="out-in">
+            <div v-if="isLoading" key="loading" class="loading-container text-center py-5">
               <div class="loading-spinner">
                 <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
                   <span class="visually-hidden">Cargando...</span>
@@ -34,181 +35,204 @@
                   <span></span>
                 </div>
               </div>
-            </div>          <!-- Contenido del modal cuando no está cargando y todos los datos están listos -->
-          <div v-else-if="isDataReady" key="content">
-            <p><strong>Cliente:</strong> {{ getClienteDisplayName() }}</p>
-            <p><strong>Modulo:</strong> {{ processedTransferencia.modulo }}</p>
-            <p><strong>Estado Actual:</strong> {{ processedTransferencia.estado }}</p>
-            <p><strong>Observacion:</strong> {{ processedTransferencia.observaciones }}</p>
-            <p>
-              <strong>Fecha Solicitud:</strong>
-              {{ formatDate(processedTransferencia.fechaSolicitud) }} - 
-              {{ formatTime(processedTransferencia.fechaSolicitud) }}
-            </p>
-            <p>
-              <strong>Ultima Actualizacion:</strong>
-              {{ formatDate(processedTransferencia.updatedAt) }} - 
-              {{ formatTime(processedTransferencia.updatedAt) }}
-            </p>
-              <hr />
-            <h6>Detalles:</h6>
-            <div class="table-responsive">
-              <table class="table table-bordered">
-                <thead class="table-light">
-                  <tr>
-                    <th>ID</th>
-                    <th>Referencia2</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="item in detalle" :key="item.id">
-                    <td>{{ item.id }}</td>
-                    <td>{{ item.referencia2 }}</td>
-                    <td>{{ item.estado }}</td>
-                  </tr>
-                </tbody>              </table>
-            </div>            <!-- Timeline de Observaciones -->
-            <div class="mt-4">
-              <hr />
-              <h6>
-                <i class="bi bi-chat-square-text me-2"></i>
-                Historial de Observaciones
-                <span v-if="observacionesTimeline && observacionesTimeline.length > 0" class="badge bg-secondary ms-2">
-                  {{ observacionesTimeline.length }}
-                </span>
-              </h6>
+            </div>
+            
+            <!-- Contenido del modal cuando no está cargando y todos los datos están listos -->
+            <div v-else-if="isDataReady" key="content">
+              <p><strong>Cliente:</strong> {{ getClienteDisplayName() }}</p>
+              <p><strong>Modulo:</strong> {{ processedTransferencia.modulo }}</p>
+              <p><strong>Estado Actual:</strong> {{ processedTransferencia.estado }}</p>
+              <p><strong>Observacion:</strong> {{ processedTransferencia.observaciones }}</p>
+              <p>
+                <strong>Fecha Solicitud:</strong>
+                {{ formatDate(processedTransferencia.fechaSolicitud) }} - 
+                {{ formatTime(processedTransferencia.fechaSolicitud) }}
+              </p>
+              <p>
+                <strong>Ultima Actualizacion:</strong>
+                {{ formatDate(processedTransferencia.updatedAt) }} - 
+                {{ formatTime(processedTransferencia.updatedAt) }}
+              </p>
               
-              <!-- Cuando hay observaciones -->
-              <div v-if="observacionesTimeline && observacionesTimeline.length > 0" class="timeline-container"><div 
-                  v-for="(observacion, index) in observacionesTimelineOrdenado" 
-                  :key="index"
-                  class="timeline-item"
-                  :class="{ 'timeline-item-latest': index === 0 }"
-                >                  <div class="timeline-marker" :class="`timeline-marker-${getTimelineColor(observacion.nuevoEstado)}`">
-                    <div class="timeline-marker-icon">
-                      <i :class="getTimelineIcon(observacion.nuevoEstado)"></i>
+              <hr />
+              <h6>Detalles:</h6>
+              <div v-if="!detalle || detalle.length === 0" class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                No hay detalles disponibles para esta solicitud en el estado actual.
+              </div>
+              <div v-else class="table-responsive">
+                <table class="table table-bordered">
+                  <thead class="table-light">
+                    <tr>
+                      <th>ID</th>
+                      <th>Referencia2</th>
+                      <th>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="item in detalle" :key="item.id">
+                      <td>{{ item.id }}</td>
+                      <td>{{ item.referencia2 }}</td>
+                      <td>{{ item.estado }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- Timeline de Observaciones -->
+              <div class="mt-4">
+                <hr />
+                <h6>
+                  <i class="bi bi-chat-square-text me-2"></i>
+                  Historial de Observaciones
+                  <span v-if="observacionesTimeline && observacionesTimeline.length > 0" class="badge bg-secondary ms-2">
+                    {{ observacionesTimeline.length }}
+                  </span>
+                </h6>
+                
+                <!-- Cuando hay observaciones -->
+                <div v-if="observacionesTimeline && observacionesTimeline.length > 0" class="timeline-container">
+                  <div 
+                    v-for="(observacion, index) in observacionesTimelineOrdenado" 
+                    :key="index"
+                    class="timeline-item"
+                    :class="{ 'timeline-item-latest': index === 0 }"
+                  >
+                    <div class="timeline-marker" :class="`timeline-marker-${getTimelineColor(observacion.nuevoEstado)}`">
+                      <div class="timeline-marker-icon">
+                        <i :class="getTimelineIcon(observacion.nuevoEstado)"></i>
+                      </div>
                     </div>
-                  </div>
-                  <div class="timeline-content">
-                    <div class="timeline-header">                      <div class="timeline-state-change">
-                        <span class="state-from">{{ observacion.estadoAnterior || 'N/A' }}</span>
-                        <i class="bi bi-arrow-right mx-2"></i>
-                        <span class="state-to">{{ observacion.nuevoEstado || 'N/A' }}</span>
+                    <div class="timeline-content">
+                      <div class="timeline-header">
+                        <div class="timeline-state-change">
+                          <span class="state-from">{{ observacion.estadoAnterior || 'N/A' }}</span>
+                          <i class="bi bi-arrow-right mx-2"></i>
+                          <span class="state-to">{{ observacion.nuevoEstado || 'N/A' }}</span>
+                        </div>
+                        <div class="timeline-meta">
+                          <span class="timeline-user">
+                            <i class="bi bi-person-fill me-1"></i>
+                            {{ getUserDisplayName(observacion.usuario, observacion.usuarioNombre) }}
+                          </span>
+                          <span class="timeline-time">
+                            <i class="bi bi-clock-fill me-1"></i>
+                            {{ formatTimelineDate(observacion.fecha) }}
+                            <small class="text-muted ms-2">({{ getTimeAgo(observacion.fecha) }})</small>
+                          </span>
+                        </div>
                       </div>
-                      <div class="timeline-meta">                        <span class="timeline-user">
-                          <i class="bi bi-person-fill me-1"></i>
-                          {{ getUserDisplayName(observacion.usuario, observacion.usuarioNombre) }}
-                        </span><span class="timeline-time">
-                          <i class="bi bi-clock-fill me-1"></i>
-                          {{ formatTimelineDate(observacion.fecha) }}
-                          <small class="text-muted ms-2">({{ getTimeAgo(observacion.fecha) }})</small>
-                        </span>
+                      <div class="timeline-body">
+                        <p class="mb-0">{{ observacion.observacion || 'Sin observaciones' }}</p>
                       </div>
-                    </div>                    <div class="timeline-body">
-                      <p class="mb-0">{{ observacion.observacion || 'Sin observaciones' }}</p>
                     </div>
                   </div>
                 </div>
+                
+                <!-- Cuando no hay observaciones -->
+                <div v-else class="text-center py-4">
+                  <i class="bi bi-chat-square-dots text-muted" style="font-size: 2rem;"></i>
+                  <p class="text-muted mt-2 mb-0">No hay observaciones registradas</p>
+                  <small class="text-muted">Las observaciones aparecerán aquí cuando se agreguen durante los cambios de estado.</small>
+                </div>
               </div>
               
-              <!-- Cuando no hay observaciones -->
-              <div v-else class="text-center py-4">
-                <i class="bi bi-chat-square-dots text-muted" style="font-size: 2rem;"></i>
-                <p class="text-muted mt-2 mb-0">No hay observaciones registradas</p>
-                <small class="text-muted">Las observaciones aparecerán aquí cuando se agreguen durante los cambios de estado.</small>
+              <!-- Sección de asignación de transportador -->
+              <div v-if="estadoPermitido === 'asignado a transportador'">
+                <div class="mb-3">
+                  <label for="transportista" class="form-label">Transportador:</label>
+                  <select id="transportista" class="form-select" v-model="selectedTransportistaId"
+                    @change="onTransportistaChange" required>
+                    <option value="" disabled>Seleccione un transportador</option>
+                    <option v-for="transportista in transportistas" :key="transportista.id" :value="transportista.id">
+                      {{ transportista.nombre }}
+                    </option>
+                  </select>
+                </div>
+                <div class="mb-3" v-if="selectedTransportistaId">
+                  <label for="documentoIdentidad" class="form-label">Documento de Identidad:</label>
+                  <input type="text" id="documentoIdentidad" class="form-control input-disabled"
+                    v-model="documentoIdentidad" readonly />
+                </div>
+                <div class="mb-3">
+                  <label for="placa" class="form-label">Placa:</label>
+                  <input type="text" id="placa" class="form-control" v-model="placa"
+                    placeholder="Ingrese la placa del vehículo" required />
+                </div>
+                <div class="mb-3">
+                  <label for="sticker" class="form-label">Sticker Seguridad:</label>
+                  <input type="text" id="sticker" class="form-control" v-model="sticker"
+                    placeholder="Ingrese el codigo del sticker" />
+                </div>
+              </div>
+
+              <!-- Asignación de Ubicaciones (solo si el estado permitido es 'completado') -->
+              <div v-if="estadoPermitido === 'completado'" class="mt-3">
+                <h6>Asignación de Ubicaciones:</h6>
+                <div v-for="(item, idx) in detalle" :key="item.id" class="mb-2">
+                  <label class="form-label">
+                    Detalle ID {{ item.id }} - Ref.2: {{ item.referencia2 }}
+                  </label>
+                  <select class="form-select form-select-sm" v-model.number="item.nuevaUbicacionId">
+                    <option disabled value="">Seleccione ubicación...</option>
+                    <option 
+                      v-for="u in availableUbicaciones.filter(
+                        (u) =>
+                          !detalle.some(
+                            (d) =>
+                              d.nuevaUbicacionId === u.id &&
+                              d.id !== item.id
+                          )
+                      )" 
+                      :key="u.id" 
+                      :value="u.id"
+                    >
+                      {{ u.codigo }} - {{ u.estado }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Campo de observación para cambio de estado -->
+              <div class="mt-3" v-if="processedTransferencia.estado.toLowerCase() !== 'entrega confirmada'">
+                <hr />
+                <h6>Observaciones del Cambio de Estado:</h6>
+                <div class="mb-3">
+                  <label for="observaciones" class="form-label">
+                    Agregar observación <span class="text-muted">(opcional)</span>:
+                  </label>
+                  <textarea 
+                    id="observaciones" 
+                    class="form-control" 
+                    v-model="observaciones"
+                    placeholder="Ingrese observaciones sobre el cambio de estado..."
+                    rows="3"
+                    maxlength="500"
+                  ></textarea>
+                  <div class="form-text">
+                    {{ observaciones ? observaciones.length : 0 }}/500 caracteres
+                  </div>
+                </div>
               </div>
             </div>
             
-            <!-- Sección de asignación de transportador -->
-            <div v-if="estadoPermitido === 'asignado a transportador'">
-              <div class="mb-3">
-                <label for="transportista" class="form-label">Transportador:</label>
-                <select id="transportista" class="form-select" v-model="selectedTransportistaId"
-                  @change="onTransportistaChange" required>
-                  <option value="" disabled>Seleccione un transportador</option>
-                  <option v-for="transportista in transportistas" :key="transportista.id" :value="transportista.id">
-                    {{ transportista.nombre }}
-                  </option>
-                </select>
+            <!-- Estado de error -->
+            <div v-else-if="hasError" key="error" class="error-container text-center py-5">
+              <div class="error-icon mb-3">
+                <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
               </div>
-              <div class="mb-3" v-if="selectedTransportistaId">
-                <label for="documentoIdentidad" class="form-label">Documento de Identidad:</label>
-                <input type="text" id="documentoIdentidad" class="form-control input-disabled"
-                  v-model="documentoIdentidad" readonly />
-              </div>
-              <div class="mb-3">
-                <label for="placa" class="form-label">Placa:</label>
-                <input type="text" id="placa" class="form-control" v-model="placa"
-                  placeholder="Ingrese la placa del vehículo" required />
-              </div>
-              <div class="mb-3">
-                <label for="sticker" class="form-label">Sticker Seguridad:</label>
-                <input type="text" id="sticker" class="form-control" v-model="sticker"
-                  placeholder="Ingrese el codigo del sticker" />
-              </div>
+              <h6 class="text-muted mb-2">{{ errorMessage }}</h6>
+              <button 
+                type="button" 
+                class="btn btn-outline-primary btn-sm mt-2"
+                @click="$emit('retry')"
+              >
+                <i class="bi bi-arrow-clockwise me-1"></i>
+                Reintentar
+              </button>
             </div>
-
-            <!-- Asignación de Ubicaciones (solo si el estado permitido es 'completado') -->
-            <div v-if="estadoPermitido === 'completado'" class="mt-3">
-              <h6>Asignación de Ubicaciones:</h6>
-              <div v-for="(item, idx) in detalle" :key="item.id" class="mb-2">
-                <label class="form-label">
-                  Detalle ID {{ item.id }} - Ref.2: {{ item.referencia2 }}
-                </label>
-                <select class="form-select form-select-sm" v-model.number="item.nuevaUbicacionId">
-                  <option disabled value="">Seleccione ubicación...</option>
-                  <option v-for="u in availableUbicaciones.filter(
-                    (u) =>
-                      !detalle.some(
-                        (d) =>
-                          d.nuevaUbicacionId === u.id &&
-                          d.id !== item.id
-                      )
-                  )" :key="u.id" :value="u.id">
-                    {{ u.codigo }} - {{ u.estado }}
-                  </option>
-                </select>              </div>
-            </div>
-
-            <!-- Campo de observación para cambio de estado -->
-            <div class="mt-3" v-if="processedTransferencia.estado.toLowerCase() !== 'entrega confirmada'">
-              <hr />
-              <h6>Observaciones del Cambio de Estado:</h6>
-              <div class="mb-3">
-                <label for="observaciones" class="form-label">
-                  Agregar observación <span class="text-muted">(opcional)</span>:
-                </label>
-                <textarea 
-                  id="observaciones" 
-                  class="form-control" 
-                  v-model="observaciones"
-                  placeholder="Ingrese observaciones sobre el cambio de estado..."
-                  rows="3"
-                  maxlength="500"
-                ></textarea>
-                <div class="form-text">
-                  {{ observaciones ? observaciones.length : 0 }}/500 caracteres
-                </div>
-              </div>
-            </div>
-          </div><!-- Estado de error -->
-          <div v-else-if="hasError" key="error" class="error-container text-center py-5">
-            <div class="error-icon mb-3">
-              <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
-            </div>
-            <h6 class="text-muted mb-2">{{ errorMessage }}</h6>
-            <button 
-              type="button" 
-              class="btn btn-outline-primary btn-sm mt-2"
-              @click="$emit('retry')"
-            >
-              <i class="bi bi-arrow-clockwise me-1"></i>
-              Reintentar            </button>
-          </div>
+            
             <!-- Estado cuando no hay datos -->
-          
-            
           </transition>
         </div>
         
@@ -284,7 +308,8 @@ export default {
       observaciones: ''
     };
   },
-    computed: {    // Extraer el timeline de observaciones de la transferencia seleccionada
+    computed: {
+    // Extraer el timeline de observaciones de la transferencia seleccionada
     observacionesTimeline() {
       // Primero intentar usar observacionesTimeline (ya parseado por backend)
       if (this.selectedTransferencia?.observacionesTimeline) {
@@ -326,13 +351,15 @@ export default {
       if (!this.observacionesTimeline || this.observacionesTimeline.length === 0) {
         return [];
       }
-        return [...this.observacionesTimeline].sort((a, b) => {
+      
+      return [...this.observacionesTimeline].sort((a, b) => {
         const dateA = new Date(a.fecha);
         const dateB = new Date(b.fecha);
         return dateB - dateA; // Más reciente primero
       });
     },
-      // Verifica que todos los datos necesarios estén cargados
+      
+    // Verifica que todos los datos necesarios estén cargados
     isDataReady() {
       // Si está cargando, no está listo
       if (this.isLoading) return false;
@@ -340,11 +367,10 @@ export default {
       // Si hay error, no está listo
       if (this.hasError) return false;
       
-      // Verificar que hay detalles básicos
-      if (!this.detalle || this.detalle.length === 0) return false;
-      
       // Verificar que hay información de la transferencia seleccionada
       if (!this.selectedTransferencia) return false;
+      
+      // No necesitamos verificar si hay detalles para mostrar la información básica
       
       // Si el estado es "completado", verificar que las ubicaciones están cargadas
       if (this.estadoPermitido === 'completado' && (!this.availableUbicaciones || this.availableUbicaciones.length === 0)) {
@@ -355,17 +381,27 @@ export default {
       if (this.estadoPermitido === 'asignado a transportador' && (!this.transportistas || this.transportistas.length === 0)) {
         return false;
       }
-        return true;
+      
+      return true;
     },
     
     // Procesar las fechas del selectedTransferencia para quitar la Z
     processedTransferencia() {
-      if (!this.selectedTransferencia) return null;
+      if (!this.selectedTransferencia) {
+        return {
+          id: 'N/A',
+          modulo: 'N/A',
+          estado: 'N/A',
+          observaciones: 'Sin observaciones',
+          fechaSolicitud: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+      }
       
       return {
         ...this.selectedTransferencia,
-        fechaSolicitud: this.selectedTransferencia.fechaSolicitud?.replace('Z', ''),
-        updatedAt: this.selectedTransferencia.updatedAt?.replace('Z', ''),
+        fechaSolicitud: this.selectedTransferencia.fechaSolicitud?.replace('Z', '') || new Date().toISOString(),
+        updatedAt: this.selectedTransferencia.updatedAt?.replace('Z', '') || new Date().toISOString(),
         createdAt: this.selectedTransferencia.createdAt?.replace('Z', ''),
         fechaVerificacion: this.selectedTransferencia.fechaVerificacion?.replace('Z', ''),
         fechaCarga: this.selectedTransferencia.fechaCarga?.replace('Z', ''),
@@ -433,7 +469,9 @@ export default {
     formatTime(dateString) {
       if (!dateString) return "";
       return DateTime.fromISO(dateString).toFormat("HH:mm:ss");
-    },formatTimelineDate(timestamp) {
+    },
+    
+    formatTimelineDate(timestamp) {
       if (!timestamp) return "";
       
       try {
@@ -451,7 +489,9 @@ export default {
         console.error('❌ Error en formatTimelineDate:', error);
         return "Fecha inválida";
       }
-    },resetFields() {
+    },
+    
+    resetFields() {
       this.selectedTransportistaId = null;
       this.transportista = '';
       this.documentoIdentidad = '';
