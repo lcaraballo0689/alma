@@ -142,17 +142,21 @@
               </div>
               </div>
               
-              <!-- Sección de asignación de transportador -->
-              <div v-if="estadoPermitido === 'asignado a transportador'">
+              <!-- Sección de asignación de transportador -->              <div v-if="estadoPermitido === 'asignado a transportador'">
                 <div class="mb-3">
                   <label for="transportista" class="form-label">Transportador:</label>
                   <select id="transportista" class="form-select" v-model="selectedTransportistaId"
-                    @change="onTransportistaChange" required>
-                    <option value="" disabled>Seleccione un transportador</option>
+                    @change="onTransportistaChange" required :disabled="!transportistas || transportistas.length === 0">
+                    <option value="" disabled>
+                      {{ !transportistas || transportistas.length === 0 ? 'Cargando transportadores...' : 'Seleccione un transportador' }}
+                    </option>
                     <option v-for="transportista in transportistas" :key="transportista.id" :value="transportista.id">
                       {{ transportista.nombre }}
                     </option>
                   </select>
+                  <div v-if="!transportistas || transportistas.length === 0" class="form-text text-warning mt-1">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> Cargando lista de transportadores...
+                  </div>
                 </div>
                 <div class="mb-3" v-if="selectedTransportistaId">
                   <label for="documentoIdentidad" class="form-label">Documento de Identidad:</label>
@@ -171,15 +175,19 @@
                 </div>
               </div>
 
-              <!-- Asignación de Ubicaciones (solo si el estado permitido es 'completado') -->
-              <div v-if="estadoPermitido === 'completado'" class="mt-3">
+              <!-- Asignación de Ubicaciones (solo si el estado permitido es 'completado') -->              <div v-if="estadoPermitido === 'completado'" class="mt-3">
                 <h6>Asignación de Ubicaciones:</h6>
+                <div v-if="!availableUbicaciones || availableUbicaciones.length === 0" class="alert alert-warning">
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                  Cargando ubicaciones disponibles...
+                </div>
                 <div v-for="(item, idx) in detalle" :key="item.id" class="mb-2">
                   <label class="form-label">
                     Detalle ID {{ item.id }} - Ref.2: {{ item.referencia2 }}
                   </label>
-                  <select class="form-select form-select-sm" v-model.number="item.nuevaUbicacionId">
-                    <option disabled value="">Seleccione ubicación...</option>
+                  <select class="form-select form-select-sm" v-model.number="item.nuevaUbicacionId" 
+                    :disabled="!availableUbicaciones || availableUbicaciones.length === 0">
+                    <option disabled value="">{{ !availableUbicaciones || availableUbicaciones.length === 0 ? 'Cargando ubicaciones...' : 'Seleccione ubicación...' }}</option>
                     <option 
                       v-for="u in availableUbicaciones.filter(
                         (u) =>
@@ -421,17 +429,15 @@ export default {
       }
       
       // No necesitamos verificar si hay detalles para mostrar la información básica
-      
-      // Si el estado es "completado", verificar que las ubicaciones están cargadas
+        // Verificar ubicaciones pero no bloquear la visualización del modal
       if (this.estadoPermitido === 'completado' && (!this.availableUbicaciones || this.availableUbicaciones.length === 0)) {
-        console.log('❌ isDataReady: false (estado "completado" pero faltan ubicaciones)');
-        return false;
+        console.log('⚠️ isDataReady: true (estado "completado" pero faltan ubicaciones) - Mostrando de todas formas');
+        // Ya no retornamos false aquí, permitimos que se muestre el contenido
       }
-      
-      // Si el estado es "asignado a transportador", verificar que los transportistas están cargados
+        // Verificar transportistas pero no bloquear la visualización del modal
       if (this.estadoPermitido === 'asignado a transportador' && (!this.transportistas || this.transportistas.length === 0)) {
-        console.log('❌ isDataReady: false (estado "asignado a transportador" pero faltan transportistas)');
-        return false;
+        console.log('⚠️ isDataReady: true (estado "asignado a transportador" pero faltan transportistas) - Mostrando de todas formas');
+        // Ya no retornamos false aquí, permitimos que se muestre el contenido
       }
       
       console.log('✅ isDataReady: true (todos los datos están disponibles)');
