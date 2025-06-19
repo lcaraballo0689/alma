@@ -198,8 +198,7 @@
                 </div>
               </div>
 
-              <!-- Campo de observación para cambio de estado -->
-              <div class="mt-3" v-if="processedTransferencia.estado.toLowerCase() !== 'entrega confirmada'">
+              <!-- Campo de observación para cambio de estado -->              <div class="mt-3" v-if="processedTransferencia && processedTransferencia.estado && processedTransferencia.estado.toLowerCase() !== 'entrega confirmada'">
                 <hr />
                 <h6>Observaciones del Cambio de Estado:</h6>
                 <div class="mb-3">
@@ -241,11 +240,15 @@
           </transition>
         </div>
         
-        <!-- Pie del Modal -->
-        <div v-if="!botonDisabled && isDataReady && !hasError" class="modal-footer">
+        <!-- Pie del Modal -->        <div v-if="isDataReady && !hasError" class="modal-footer">
           <div class="d-flex align-items-center w-100 justify-content-end">
             <h6 class="me-2 mb-0">Actualizar estado a:</h6>
-            <button class="btn btn-success" :disabled="botonDisabled || isLoading" @click="$emit('cambiar-estado')">
+            <button 
+              class="btn btn-success" 
+              :disabled="botonDisabled || isLoading" 
+              @click="$emit('cambiar-estado')"
+              :title="botonDisabled ? 'No disponible para su rol' : 'Actualizar estado'"
+            >
               <i class="bi bi-qr-code-scan me-1"></i>
               {{
                 botonDisabled
@@ -397,27 +400,41 @@ export default {
       
     // Verifica que todos los datos necesarios estén cargados
     isDataReady() {
+      console.log('🔄 Calculando isDataReady');
+      
       // Si está cargando, no está listo
-      if (this.isLoading) return false;
+      if (this.isLoading) {
+        console.log('⏳ isDataReady: false (isLoading es true)');
+        return false;
+      }
       
       // Si hay error, no está listo
-      if (this.hasError) return false;
+      if (this.hasError) {
+        console.log('❌ isDataReady: false (hasError es true)');
+        return false;
+      }
       
       // Verificar que hay información de la transferencia seleccionada
-      if (!this.selectedTransferencia) return false;
+      if (!this.selectedTransferencia) {
+        console.log('❌ isDataReady: false (selectedTransferencia es null/undefined)');
+        return false;
+      }
       
       // No necesitamos verificar si hay detalles para mostrar la información básica
       
       // Si el estado es "completado", verificar que las ubicaciones están cargadas
       if (this.estadoPermitido === 'completado' && (!this.availableUbicaciones || this.availableUbicaciones.length === 0)) {
+        console.log('❌ isDataReady: false (estado "completado" pero faltan ubicaciones)');
         return false;
       }
       
       // Si el estado es "asignado a transportador", verificar que los transportistas están cargados
       if (this.estadoPermitido === 'asignado a transportador' && (!this.transportistas || this.transportistas.length === 0)) {
+        console.log('❌ isDataReady: false (estado "asignado a transportador" pero faltan transportistas)');
         return false;
       }
       
+      console.log('✅ isDataReady: true (todos los datos están disponibles)');
       return true;
     },
     
@@ -462,19 +479,38 @@ export default {
   
   methods: {
     show() {
+      console.log('🚀 TransferenciaDetalleModal - show() iniciado');
       const modalEl = this.$refs.detalleModal;
-      if (!this.detalleModalInstance) {
-        this.detalleModalInstance = new Modal(modalEl, {
-          backdrop: 'static',
-          keyboard: true
-        });
+      console.log('🔍 TransferenciaDetalleModal - Elemento del modal:', modalEl ? 'Encontrado' : 'No encontrado');
+      
+      try {
+        if (!this.detalleModalInstance) {
+          console.log('🔍 TransferenciaDetalleModal - Creando instancia de Modal');
+          this.detalleModalInstance = new Modal(modalEl, {
+            backdrop: 'static',
+            keyboard: true
+          });
+        }
+        
+        console.log('🔍 TransferenciaDetalleModal - Llamando a show()');
+        this.detalleModalInstance.show();
+        console.log('✅ TransferenciaDetalleModal - show() completado');
+      } catch (error) {
+        console.error('❌ TransferenciaDetalleModal - Error en show():', error);
       }
-      this.detalleModalInstance.show();
     },
     
     hide() {
-      if (this.detalleModalInstance) {
-        this.detalleModalInstance.hide();
+      console.log('🚪 TransferenciaDetalleModal - hide() iniciado');
+      try {
+        if (this.detalleModalInstance) {
+          this.detalleModalInstance.hide();
+          console.log('✅ TransferenciaDetalleModal - hide() completado');
+        } else {
+          console.warn('⚠️ TransferenciaDetalleModal - No hay instancia para ocultar');
+        }
+      } catch (error) {
+        console.error('❌ TransferenciaDetalleModal - Error en hide():', error);
       }
     },
     
@@ -607,25 +643,51 @@ export default {
     
     // Método para imprimir debugging info sobre observaciones
     debugObservaciones() {
+      console.group('📊 DEBUG - Análisis de observaciones');
+      
       if (!this.selectedTransferencia) {
-        console.log('📊 No hay transferencia seleccionada');
+        console.log('❌ No hay transferencia seleccionada');
+        console.groupEnd();
         return;
       }
       
       const obsValue = this.selectedTransferencia.observacionesUsuario;
-      console.log('📊 Tipo de observacionesUsuario:', typeof obsValue);
-      console.log('📊 Es NULL:', obsValue === null);
-      console.log('📊 Es undefined:', obsValue === undefined);
-      console.log('📊 Es array:', Array.isArray(obsValue));
-      console.log('📊 Valor raw:', obsValue);
+      console.log('Tipo:', typeof obsValue);
+      console.log('Es NULL:', obsValue === null);
+      console.log('Es undefined:', obsValue === undefined);
+      console.log('Es array:', Array.isArray(obsValue));
+      console.log('Valor raw:', obsValue);
       
+      // Tratar de mostrar JSON válido en la consola para depuración
       try {
         if (typeof obsValue === 'string' && obsValue) {
-          console.log('📊 Parsing test:', JSON.parse(obsValue));
+          const parsed = JSON.parse(obsValue);
+          console.log('✅ Parsing exitoso');
+          console.table(parsed);
+          
+          if (Array.isArray(parsed)) {
+            console.log(`📝 Array con ${parsed.length} elementos`);
+          } else {
+            console.log('⚠️ Contenido parseado no es un array');
+          }
         }
       } catch (e) {
-        console.error('📊 Error de parsing:', e);
+        console.error('❌ Error de parsing:', e.message);
+        
+        if (typeof obsValue === 'string') {
+          console.log('⚠️ Primeros 100 caracteres:', obsValue.substring(0, 100));
+          
+          // Intentar identificar caracteres problemáticos
+          const charCodes = Array.from(obsValue.substring(0, 20)).map(c => c.charCodeAt(0));
+          console.log('Códigos de caracteres:', charCodes);
+        }
       }
+      
+      // Analizar el estado calculado en observacionesTimeline
+      console.log('📊 observacionesTimeline calculado:', this.observacionesTimeline);
+      console.log(`📊 Contiene ${this.observacionesTimeline?.length || 0} elementos`);
+      
+      console.groupEnd();
     }
   },
   
@@ -636,10 +698,27 @@ export default {
   },
   
   mounted() {
-    // Ejecutar debugging solo en desarrollo
-    if (process.env.NODE_ENV !== 'production' && this.selectedTransferencia) {
+    console.log('🔍 TransferenciaDetalleModal - mounted', {
+      selectedTransferencia: this.selectedTransferencia ? `ID: ${this.selectedTransferencia.id}` : 'No seleccionado',
+      estadoPermitido: this.estadoPermitido || 'No definido',
+      isLoading: this.isLoading,
+      hasError: this.hasError,
+      detalleCount: this.detalle ? this.detalle.length : 0,
+      isDataReady: this.isDataReady
+    });
+    
+    // Ejecutar debugging solo en desarrollo o producción
+    if (this.selectedTransferencia) {
       this.debugObservaciones();
     }
+  },
+  
+  updated() {
+    console.log('🔄 TransferenciaDetalleModal - updated', {
+      isDataReady: this.isDataReady,
+      isLoading: this.isLoading,
+      hasError: this.hasError
+    });
   }
 };
 </script>
