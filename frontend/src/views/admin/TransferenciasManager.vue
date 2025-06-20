@@ -75,7 +75,7 @@
                 <td>{{ t.estado }}</td>
                 <td>{{ t.direccion }}</td>
                 <td style="width: 100px; text-align: justify;">{{ t.observaciones }}</td>
-                <td>{{ formatDate(t.fechaSolicitud) }} - {{ formatTime(t.fechaSolicitud) }}</td>
+                <td>{{ formatDate(t.fechaSolicitud) }} - {{ formatTime2(t.fechaSolicitud) }}</td>
 
                 <td>
                   <button class="btn btn-sm btn-outline-primary" @click="seleccionarTransferencia(t)">
@@ -205,6 +205,22 @@ export default {
       if (dateString.endsWith('Z')) {
         // Es UTC, convertir a Bogotá
         dt = DateTime.fromISO(dateString, { zone: "utc" }).setZone("America/Bogota");
+      } else {
+        // No es UTC, parsear directamente
+        dt = DateTime.fromISO(dateString);
+      }
+      
+      return dt.setLocale("es").toFormat("hh:mm a");
+    },
+    formatTime2(dateString) {
+      if (!dateString) return "N/A";
+      
+      let dt;
+      if (dateString.endsWith('Z')) {
+        // Es UTC, convertir a Bogotá
+        dt = dateString.endsWith('Z')
+          ? DateTime.fromISO(dateString, { zone: "utc" }).setZone("utc")
+          : DateTime.fromISO(dateString);
       } else {
         // No es UTC, parsear directamente
         dt = DateTime.fromISO(dateString);

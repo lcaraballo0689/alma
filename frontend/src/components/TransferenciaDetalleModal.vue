@@ -567,7 +567,7 @@ export default {
     
     formatTime(dateString) {
       if (!dateString) return "";
-      return DateTime.fromISO(dateString).toFormat("HH:mm:ss");
+      return DateTime.fromISO(dateString).toFormat("hh:mm a");
     },
     
     formatTimelineDate(timestamp) {
