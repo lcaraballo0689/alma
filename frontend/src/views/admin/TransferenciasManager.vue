@@ -707,7 +707,7 @@ export default {
 
 /* Estilos para la tabla con encabezado fijo */
 .table-container {
-  max-height: 400px;
+  max-height: calc(100vh - 290px);
   /* Altura máxima del contenedor de la tabla */
   overflow-y: auto;
   /* Habilita el scroll vertical si es necesario */

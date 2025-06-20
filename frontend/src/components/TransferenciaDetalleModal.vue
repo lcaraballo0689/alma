@@ -36,9 +36,8 @@
                 </div>
               </div>
             </div>
-            
-            <!-- Contenido del modal cuando no está cargando y todos los datos están listos -->
-            <div v-else-if="isDataReady" key="content">
+              <!-- Contenido del modal cuando no está cargando y todos los datos están listos -->
+            <div v-else-if="isDataReady" key="content" class="modal-content-scrollable">
               <p><strong>Cliente:</strong> {{ getClienteDisplayName() }}</p>
               <p><strong>Modulo:</strong> {{ processedTransferencia.modulo }}</p>
               <p><strong>Estado Actual:</strong> {{ processedTransferencia.estado }}</p>
@@ -59,8 +58,7 @@
               <div v-if="!detalle || detalle.length === 0" class="alert alert-info">
                 <i class="bi bi-info-circle me-2"></i>
                 No hay detalles disponibles para esta solicitud en el estado actual.
-              </div>
-              <div v-else class="table-responsive">
+              </div>              <div v-else class="table-responsive details-table">
                 <table class="table table-bordered">
                   <thead class="table-light">
                     <tr>
@@ -256,23 +254,33 @@
             <!-- Estado cuando no hay datos -->
           </transition>
         </div>
-        
-        <!-- Pie del Modal -->        <div v-if="isDataReady && !hasError" class="modal-footer">
-          <div class="d-flex align-items-center w-100 justify-content-end">
+          <!-- Pie del Modal -->        <div v-if="isDataReady && !hasError" class="modal-footer">
+          <!-- Solo mostrar el botón cuando NO es "Entrega Confirmada" -->
+          <div v-if="!isEntregaConfirmada" class="d-flex align-items-center w-100 justify-content-end">
             <h6 class="me-2 mb-0">Actualizar estado a:</h6>
             <button 
               class="btn btn-success" 
-              :disabled="botonDisabled || isLoading" 
-              @click="$emit('cambiar-estado')"
+              :disabled="botonDisabled || isLoading || isActualizandoEstado" 
+              @click="actualizarEstado"
               :title="botonDisabled ? 'No disponible para su rol' : 'Actualizar estado'"
             >
-              <i class="bi bi-qr-code-scan me-1"></i>
+              <span v-if="isActualizandoEstado" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              <i v-else class="bi bi-qr-code-scan me-1"></i>
               {{
-                botonDisabled
-                  ? "Confirmación Cliente Pendiente"
-                  : estadoPermitido || "Cambiar Estado"
+                isActualizandoEstado 
+                  ? "Actualizando..." 
+                  : (botonDisabled
+                      ? "Confirmación Cliente Pendiente"
+                      : estadoPermitido || "Cambiar Estado")
               }}
             </button>
+          </div>
+          <!-- Mostrar mensaje cuando es "Entrega Confirmada" -->
+          <div v-else class="d-flex align-items-center w-100 justify-content-end">
+            <p class="text-success mb-0">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <strong>Esta transferencia ya está completada</strong>
+            </p>
           </div>
         </div>
       </div>
@@ -322,15 +330,15 @@ export default {
       default: false
     }
   },
-  
-  data() {
+    data() {
     return {
       detalleModalInstance: null,      selectedTransportistaId: null,
       transportista: '',
       documentoIdentidad: '',
       placa: '',
       sticker: '',
-      observaciones: ''
+      observaciones: '',
+      isActualizandoEstado: false
     };
   },
     computed: {
@@ -452,8 +460,7 @@ export default {
       console.log('✅ isDataReady: true (todos los datos están disponibles)');
       return true;
     },
-    
-    // Procesar las fechas del selectedTransferencia para quitar la Z
+      // Procesar las fechas del selectedTransferencia para quitar la Z
     processedTransferencia() {
       if (!this.selectedTransferencia) {
         return {
@@ -476,6 +483,17 @@ export default {
         fechaAsignacion: this.selectedTransferencia.fechaAsignacion?.replace('Z', ''),
         fechaRecogida: this.selectedTransferencia.fechaRecogida?.replace('Z', '')
       };
+    },
+    
+    // Verificar si el estado actual es "Entrega Confirmada"
+    isEntregaConfirmada() {
+      if (!this.processedTransferencia || !this.processedTransferencia.estado) {
+        return false;
+      }
+      
+      // Normalizar a minúsculas y comparar
+      const estadoActual = this.processedTransferencia.estado.toLowerCase();
+      return estadoActual === 'entrega confirmada';
     }
   },
     watch: {
@@ -504,11 +522,13 @@ export default {
     'update:observaciones'
   ],
   
-  methods: {
-    show() {
+  methods: {    show() {
       console.log('🚀 TransferenciaDetalleModal - show() iniciado');
       const modalEl = this.$refs.detalleModal;
       console.log('🔍 TransferenciaDetalleModal - Elemento del modal:', modalEl ? 'Encontrado' : 'No encontrado');
+      
+      // Resetear el estado del botón actualizar
+      this.isActualizandoEstado = false;
       
       try {
         if (!this.detalleModalInstance) {
@@ -526,10 +546,12 @@ export default {
         console.error('❌ TransferenciaDetalleModal - Error en show():', error);
       }
     },
-    
-    hide() {
+      hide() {
       console.log('🚪 TransferenciaDetalleModal - hide() iniciado');
       try {
+        // Detener el loader cuando se cierra el modal
+        this.isActualizandoEstado = false;
+        
         if (this.detalleModalInstance) {
           this.detalleModalInstance.hide();
           console.log('✅ TransferenciaDetalleModal - hide() completado');
@@ -539,6 +561,15 @@ export default {
       } catch (error) {
         console.error('❌ TransferenciaDetalleModal - Error en hide():', error);
       }
+    },actualizarEstado() {
+      // Mostrar el loader
+      this.isActualizandoEstado = true;
+      
+      console.log('🔄 TransferenciaDetalleModal - Actualizando estado a:', this.estadoPermitido);
+      
+      // Emitir el evento al componente padre
+      // El loader permanecerá activo hasta que se cierre el modal
+      this.$emit('cambiar-estado');
     },
     
     onTransportistaChange() {
@@ -717,14 +748,20 @@ export default {
       console.groupEnd();
     }
   },
-  
-  beforeUnmount() {
+    beforeUnmount() {
+    // Eliminar el event listener para evitar memory leaks
+    const modalEl = this.$refs.detalleModal;
+    if (modalEl) {
+      modalEl.removeEventListener('hidden.bs.modal', () => {
+        this.isActualizandoEstado = false;
+      });
+    }
+    
     if (this.detalleModalInstance) {
       this.detalleModalInstance.dispose();
     }
   },
-  
-  mounted() {
+    mounted() {
     console.log('🔍 TransferenciaDetalleModal - mounted', {
       selectedTransferencia: this.selectedTransferencia ? `ID: ${this.selectedTransferencia.id}` : 'No seleccionado',
       estadoPermitido: this.estadoPermitido || 'No definido',
@@ -733,6 +770,17 @@ export default {
       detalleCount: this.detalle ? this.detalle.length : 0,
       isDataReady: this.isDataReady
     });
+    
+    // Añadir event listener para detectar cuando se cierra el modal
+    // y detener el loader en ese momento
+    const modalEl = this.$refs.detalleModal;
+    if (modalEl) {
+      modalEl.addEventListener('hidden.bs.modal', () => {
+        // Asegurarnos de que el loader se detenga cuando el modal se cierra
+        this.isActualizandoEstado = false;
+        console.log('🔄 TransferenciaDetalleModal - Modal cerrado, loader detenido');
+      });
+    }
     
     // Ejecutar debugging solo en desarrollo o producción
     if (this.selectedTransferencia) {
@@ -1119,5 +1167,62 @@ export default {
 .timeline-marker-secondary {
   border-color: #6c757d;
   background: #f1f3f4;
+}
+
+/* Estilos para el scroll vertical en el contenido del modal */
+.modal-content-scrollable {
+  max-height: 20vh; /* Altura máxima relativa a la ventana */
+  overflow-y: auto; /* Scroll vertical cuando el contenido excede la altura máxima */
+  padding-right: 5px; /* Espacio para el scrollbar */
+  scrollbar-width: thin; /* Para Firefox */
+}
+
+/* Estilos personalizados para el scrollbar en navegadores WebKit (Chrome, Safari, etc.) */
+.modal-content-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content-scrollable::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.modal-content-scrollable::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.modal-content-scrollable::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Mejora para la tabla de detalles */
+.details-table {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+}
+
+/* Fijar el encabezado de la tabla */
+.details-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Asegurarnos de que el modal tenga suficiente espacio */
+@media (min-height: 768px) {
+  .modal-content-scrollable {
+    max-height: 65vh;
+  }
+}
+
+@media (max-height: 576px) {
+  .modal-content-scrollable {
+    max-height: 50vh;
+  }
 }
 </style>
