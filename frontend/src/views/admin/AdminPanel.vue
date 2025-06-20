@@ -180,57 +180,59 @@ export default {
               requiredPermission: "Asignar Permisos a Roles"
             }
           ]
-        },
-        {
-          name: "Administrar Bodegas",
-          icon: "bx bx-building-house",
-          requiredPermission: "Acceso Administracion de Bodegas",
-          children: [
-            {
-              name: "Bodegas",
-              icon: "bx bx-buildings",
-              link: "#",
-              requiredPermission: "Visualizar Bodegas"
-            },
-            {
-              name: "Ubicaciones",
-              icon: "bx bx-map",
-              link: "#",
-              requiredPermission: "Visualizar Ubicaciones en Bodegas"
-            }
-          ]
-        },
-        {
-          name: "Administrar Flotas",
-          icon: "bx bxs-truck",
-          requiredPermission: "Acceso Administracion de Flotas",
-          children: [
-            {
-              name: "Flotas",
-              icon: "bx bx-truck",
-              link: "#",
-              requiredPermission: "Visualizar Flotas"
-            },
-            {
-              name: "Agregar Flota",
-              icon: "bx bx-plus",
-              link: "#",
-              requiredPermission: "Crear Flota"
-            },
-            {
-              name: "Ubicar Flotas",
-              icon: "bx bx-map-pin",
-              link: "#",
-              requiredPermission: "Visualizar Ubicación de Flotas"
-            },
-            {
-              name: "Ver Flotas en Ruta",
-              icon: "bx bx-route",
-              link: "#",
-              requiredPermission: "Visualizar Rutas de Flotas"
-            }
-          ]
         }
+        // ,
+        // {
+        //   name: "Administrar Bodegas",
+        //   icon: "bx bx-building-house",
+        //   requiredPermission: "Acceso Administracion de Bodegas",
+        //   children: [
+        //     {
+        //       name: "Bodegas",
+        //       icon: "bx bx-buildings",
+        //       link: "#",
+        //       requiredPermission: "Visualizar Bodegas"
+        //     },
+        //     {
+        //       name: "Ubicaciones",
+        //       icon: "bx bx-map",
+        //       link: "#",
+        //       requiredPermission: "Visualizar Ubicaciones en Bodegas"
+        //     }
+        //   ]
+        // }
+        //,
+        // {
+        //   name: "Administrar Flotas",
+        //   icon: "bx bxs-truck",
+        //   requiredPermission: "Acceso Administracion de Flotas",
+        //   children: [
+        //     {
+        //       name: "Flotas",
+        //       icon: "bx bx-truck",
+        //       link: "#",
+        //       requiredPermission: "Visualizar Flotas"
+        //     },
+        //     {
+        //       name: "Agregar Flota",
+        //       icon: "bx bx-plus",
+        //       link: "#",
+        //       requiredPermission: "Crear Flota"
+        //     },
+        //     {
+        //       name: "Ubicar Flotas",
+        //       icon: "bx bx-map-pin",
+        //       link: "#",
+        //       requiredPermission: "Visualizar Ubicación de Flotas"
+        //     },
+        //     {
+        //       name: "Ver Flotas en Ruta",
+        //       icon: "bx bx-route",
+        //       link: "#",
+        //       requiredPermission: "Visualizar Rutas de Flotas"
+        //     }
+        //   ]
+        // }
       ]
     };
   },
