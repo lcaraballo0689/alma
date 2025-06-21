@@ -62,6 +62,7 @@ function parseDate(value) {
  */
 async function createPrestamoCabecera(transaction, data) {
   let fechaEstimadaEntrega;
+  logger.warn("createPrestamoCabecera - Datos recibidos:\n" + JSON.stringify(data, null, 2));
   try {
     fechaEstimadaEntrega = parseDate(data.fechaEstimadaEntrega);
     logger.info("createPrestamoCabecera - Fecha estimada parseada", { fechaEstimadaEntrega });
@@ -79,7 +80,8 @@ async function createPrestamoCabecera(transaction, data) {
     .input('entregadoPor', sql.NVarChar, data.entregadoPor || '')
     .input('observaciones', sql.NVarChar, data.observaciones || '')
     .input('createdAt', sql.DateTime, new Date())
-    .input('updatedAt', sql.DateTime, new Date());
+    .input('updatedAt', sql.DateTime, new Date())
+    .input('prioridad', sql.NVarChar, data.urgencia || ''); // Asumiendo que prioridad es un campo opcional
 
   logger.info("createPrestamoCabecera - Ejecutando query de inserción", { data });
   const result = await request.query(`

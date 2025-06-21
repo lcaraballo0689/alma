@@ -308,13 +308,24 @@ async function registrarAuditoria(
 }
 
 async function procesarTransferenciaInterna(payload, pool, transaction) {
-  const { clienteId, usuarioId, items, observaciones, modulo, direccion_entrega, fecha_recoleccion, direccion_recoleccion, urgencia } = payload;
+  const { clienteId, usuarioId, items, observaciones, modulo, direccion_entrega, fecha_recoleccion, direccion_recoleccion, urgencia, prioridad } = payload;
 
 
   if (!clienteId || !usuarioId || !Array.isArray(items) || items.length === 0) {
     throw new Error("Datos incompletos para la transferencia.");
   }
-
+  console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>> : : : procesarTransferenciaInterna - Datos recibidos", {
+    clienteId,
+    usuarioId,
+    items,
+    observaciones,
+    modulo,
+    direccion_entrega,
+    fecha_recoleccion,
+    direccion_recoleccion,
+    urgencia,
+    prioridad
+  });
   // Determinar la columna de consecutivo según el módulo
   let columnaConsecutivo = "";
   switch (modulo) {
@@ -347,12 +358,24 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
   const nuevoConsecutivo = ultimoNumero + 1;
 
   // Actualizar consecutivo SOLO si el módulo NO es 'Prestamo' (para evitar doble incremento)
-  if (modulo !== "Prestamo") {
+  // if (modulo !== "Prestamo") {
     await new sql.Request(transaction)
       .input("nuevoNumero", sql.Int, nuevoConsecutivo)
       .input("clienteId", sql.Int, clienteId)
       .query(`UPDATE Consecutivos SET ${columnaConsecutivo} = @nuevoNumero WHERE clienteId = @clienteId`);
+  // }
+
+
+    const consecutivoActualizado = await new sql.Request(transaction)
+      .input("clienteId", sql.Int, clienteId)
+      .query(`SELECT ${columnaConsecutivo} AS ultimoNumero FROM Consecutivos WHERE clienteId = ${clienteId}`);
+  if (consecutivoActualizado.rowsAffected[0] === 0) {
+    throw new Error(`No se pudo actualizar el consecutivo para el cliente ${clienteId}`);
+  }else {
+    console.log("Consecutivo actualizado correctamente:", consecutivoActualizado.recordset[0].ultimoNumero);
   }
+
+
 
   // Se define la dirección (si no se pasa direccion_entrega se utiliza direccion_recoleccion)
   const direccion = direccion_entrega || direccion_recoleccion || null;

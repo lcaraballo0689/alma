@@ -214,6 +214,7 @@ async function createPrestamos(req, res) {
       fechaEstimadaEntrega,
       entregadoPor: "",
       observaciones,
+      urgencia
     });
     logger.info("createPrestamos - Cabecera del préstamo creada", { prestamoId });
 
@@ -258,6 +259,7 @@ async function createPrestamos(req, res) {
       modulo: "Prestamo",
       observaciones,
       direccion_entrega,
+      urgencia,
       items: custodias.map((custodia) => ({
         referencia2: custodia.referencia2,
       })),

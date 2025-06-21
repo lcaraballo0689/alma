@@ -67,6 +67,9 @@ export default {
           horaEntrega: String(rawData.horaEntrega ?? ""),
           stickerSeguridad: String(rawData.stickerSeguridad ?? ""),
           // Manejo seguro de las firmas, asegurando que sean cadenas válidas antes de procesarlas
+          warehouseSing: this.procesarFirma(rawData.bodegaInfo.bodegaFirma),
+          warehouseAux: String(rawData.bodegaInfo.bodegaNombre),
+          warehouseIdentificacion: String(rawData.bodegaInfo.bodegaIdentificacion),
           entregadoPor: this.procesarFirma(rawData.entregadoPor),
           recibidoPor: this.procesarFirma(rawData.recibidoPor),
           items: Array.isArray(rawData.items)
@@ -147,6 +150,7 @@ export default {
             // Verificar y agregar el prefijo a las firmas si no lo tienen
             let firmaA = data.entregadoPor || "";
             let firmaB = data.recibidoPor || "";
+            let firmaBodega = data.warehouseSing || "";
             
             // Agregar firmas solo si tienen datos válidos
             try {
@@ -159,11 +163,17 @@ export default {
             
             try {
               if (firmaB && firmaB.startsWith("data:image/png;base64,")) {
-                doc.addImage(firmaB, "PNG", logoX - 225, 220, logoWidth, logoHeight + 10);
                 doc.addImage(firmaB, "PNG", logoX - 115, 220, logoWidth, logoHeight + 10);
               }
             } catch (error) {
               console.error("Error al añadir firma B al PDF:", error);
+            }
+            try {
+              if (firmaBodega && firmaBodega.startsWith("data:image/png;base64,")) {
+                doc.addImage(firmaBodega, "PNG", logoX - 225, 220, logoWidth, logoHeight + 10);
+              }
+            } catch {
+               console.error("Error al añadir firmaBodega al PDF:", error);
             }
             
             let x = marginLeft;
@@ -218,9 +228,9 @@ export default {
             },
             {
               label: "VERIFICACION SALIDA CUSTODIA:",
-              name: data.solicitadoPor || "",
-              doc: data.contacto || "",
-              signature: data.verificadoPor || "",
+              name: data.warehouseAux || "",
+              doc: data.warehouseIdentificacion || "",
+              signature: data.warehouseSing || "",
             },
             {
               label: "RECIBIDO POR:",
