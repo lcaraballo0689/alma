@@ -431,8 +431,12 @@ async function obtenerDetalleSolicitudPrestamo(req, res) {
       horaEntrega: `${fechaRecogida} / ${horaEntrega}`,
       stickerSeguridad: solicitud.stickerSeguridad || "",
       items,
+      // Incluimos la info del transportista, bodega y receptor para el PDF
+      transportistaInfo,
+      bodegaInfo,
+      receptorInfo,
+      // Mantenemos los campos antiguos para retrocompatibilidad
       recibidoPor: firmaVerificador,
-      bodegaInfo: bodegaInfo,
       entregadoPor: firmaTransportista,
       nombreVerificador: VerificadorNombre,
       identificacionVerificador: VerificadorIdentificacion,

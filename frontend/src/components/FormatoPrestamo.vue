@@ -52,7 +52,7 @@ export default {
         const rawData = response.data;
         console.log("Datos obtenidos del servidor:", rawData);
 
-        // Convertir los campos a strings de forma segura
+                  // Convertir los campos a strings de forma segura
         const data = {
           ...rawData,
           noSolicitud: String(rawData.noSolicitud ?? ""),
@@ -66,10 +66,20 @@ export default {
           horaSolicitud: String(rawData.horaSolicitud ?? ""),
           horaEntrega: String(rawData.horaEntrega ?? ""),
           stickerSeguridad: String(rawData.stickerSeguridad ?? ""),
-          // Manejo seguro de las firmas, asegurando que sean cadenas válidas antes de procesarlas
-          warehouseSing: this.procesarFirma(rawData.bodegaInfo.bodegaFirma),
-          warehouseAux: String(rawData.bodegaInfo.bodegaNombre),
-          warehouseIdentificacion: String(rawData.bodegaInfo.bodegaIdentificacion),
+          // Manejo seguro de las firmas y datos personales de bodega, transportista y receptor
+          // Datos de bodega (warehouse)
+          warehouseAux: String(rawData.bodegaInfo?.bodegaNombre ?? ""),
+          warehouseIdentificacion: String(rawData.bodegaInfo?.bodegaIdentificacion ?? ""),
+          warehouseSing: this.procesarFirma(rawData.bodegaInfo?.bodegaFirma ?? ""),
+          // Datos de transportista
+          transportistaNombre: String(rawData.transportistaInfo?.transportistaNombre ?? ""),
+          transportistaIdentificacion: String(rawData.transportistaInfo?.transportistaIdentificacion ?? ""),
+          transportistaFirma: this.procesarFirma(rawData.transportistaInfo?.transportistaFirma ?? ""),
+          // Datos del receptor
+          receptorNombre: String(rawData.receptorInfo?.receptorNombre ?? ""),
+          receptorIdentificacion: String(rawData.receptorInfo?.receptorIdentificacion ?? ""),
+          receptorFirma: this.procesarFirma(rawData.receptorInfo?.receptorFirma ?? ""),
+          // Compatibilidad con campos antiguos
           entregadoPor: this.procesarFirma(rawData.entregadoPor),
           recibidoPor: this.procesarFirma(rawData.recibidoPor),
           items: Array.isArray(rawData.items)
@@ -147,33 +157,39 @@ export default {
               console.error("Error al agregar logo de SDH:", error);
             }
             
-            // Verificar y agregar el prefijo a las firmas si no lo tienen
-            let firmaA = data.entregadoPor || "";
-            let firmaB = data.recibidoPor || "";
+            // Obtenemos las firmas de las diferentes fuentes (compatibilidad con ambos formatos de datos)
+            let transportistaFirma = data.transportistaFirma || data.entregadoPor || "";
+            let receptorFirma = data.receptorFirma || data.recibidoPor || "";
             let firmaBodega = data.warehouseSing || "";
+            
+            // Para debugging - mostrar si tenemos las firmas
+            console.log("Firma transportista presente:", !!transportistaFirma);
+            console.log("Firma receptor presente:", !!receptorFirma);
+            console.log("Firma bodega presente:", !!firmaBodega);
             
             // Agregar firmas solo si tienen datos válidos
             try {
-              if (firmaA && firmaA.startsWith("data:image/png;base64,")) {
-                doc.addImage(firmaA, "PNG", logoX, 220, logoWidth, logoHeight + 10);
+              if (transportistaFirma && transportistaFirma.startsWith("data:image/png;base64,")) {
+                doc.addImage(transportistaFirma, "PNG", logoX, 220, logoWidth, logoHeight + 10);
               }
             } catch (error) {
-              console.error("Error al añadir firma A al PDF:", error);
+              console.error("Error al añadir firma transportista al PDF:", error);
             }
             
             try {
-              if (firmaB && firmaB.startsWith("data:image/png;base64,")) {
-                doc.addImage(firmaB, "PNG", logoX - 115, 220, logoWidth, logoHeight + 10);
+              if (receptorFirma && receptorFirma.startsWith("data:image/png;base64,")) {
+                doc.addImage(receptorFirma, "PNG", logoX - 115, 220, logoWidth, logoHeight + 10);
               }
             } catch (error) {
-              console.error("Error al añadir firma B al PDF:", error);
+              console.error("Error al añadir firma receptor al PDF:", error);
             }
+            
             try {
               if (firmaBodega && firmaBodega.startsWith("data:image/png;base64,")) {
                 doc.addImage(firmaBodega, "PNG", logoX - 225, 220, logoWidth, logoHeight + 10);
               }
-            } catch {
-               console.error("Error al añadir firmaBodega al PDF:", error);
+            } catch (error) {
+              console.error("Error al añadir firma bodega al PDF:", error);
             }
             
             let x = marginLeft;
@@ -222,9 +238,9 @@ export default {
           const persons = [
             {
               label: "ENTREGADO POR:",
-              name: data.solicitadoPor || "",
-              doc: data.contacto || "",
-              signature: data.verificadoPor || "",
+              name: data.transportistaNombre || "",
+              doc: data.transportistaIdentificacion || "",
+              signature: data.transportistaFirma || data.entregadoPor || "",
             },
             {
               label: "VERIFICACION SALIDA CUSTODIA:",
@@ -234,9 +250,9 @@ export default {
             },
             {
               label: "RECIBIDO POR:",
-              name: data.nombreVerificador || "",
-              doc: data.identificacionVerificador || "",
-              signature: data.entregadoPor || "",
+              name: data.receptorNombre || data.nombreVerificador || "",
+              doc: data.receptorIdentificacion || data.identificacionVerificador || "",
+              signature: data.receptorFirma || data.recibidoPor || "",
             },
           ];
 
