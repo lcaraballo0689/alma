@@ -72,21 +72,23 @@ console.log("Componente FormatoPrestamo montado con consecutivo:", this.consecut
           horaEntrega: String(rawData.horaEntrega ?? ""),
           stickerSeguridad: String(rawData.stickerSeguridad ?? ""),
           // Manejo seguro de las firmas y datos personales de bodega, transportista y receptor
+          
           // Datos de bodega (warehouse)
           warehouseAux: String(rawData.bodegaInfo?.bodegaNombre ?? ""),
           warehouseIdentificacion: String(rawData.bodegaInfo?.bodegaIdentificacion ?? ""),
           warehouseSing: this.procesarFirma(rawData.bodegaInfo?.bodegaFirma ?? ""),
+          
           // Datos de transportista
           transportistaNombre: String(rawData.transportistaInfo?.transportistaNombre ?? ""),
           transportistaIdentificacion: String(rawData.transportistaInfo?.transportistaIdentificacion ?? ""),
           transportistaFirma: this.procesarFirma(rawData.transportistaInfo?.transportistaFirma ?? ""),
+          
           // Datos del receptor
           receptorNombre: String(rawData.receptorInfo?.receptorNombre ?? ""),
           receptorIdentificacion: String(rawData.receptorInfo?.receptorIdentificacion ?? ""),
           receptorFirma: this.procesarFirma(rawData.receptorInfo?.receptorFirma ?? ""),
+          
           // Compatibilidad con campos antiguos
-          entregadoPor: this.procesarFirma(rawData.entregadoPor),
-          recibidoPor: this.procesarFirma(rawData.recibidoPor),
           items: Array.isArray(rawData.items)
             ? rawData.items.map((item) => ({
                 item: String(item.item ?? ""),
@@ -175,7 +177,8 @@ console.log("Componente FormatoPrestamo montado con consecutivo:", this.consecut
             // Agregar firmas solo si tienen datos válidos
             try {
               if (transportistaFirma && transportistaFirma.startsWith("data:image/png;base64,")) {
-                doc.addImage(transportistaFirma, "PNG", logoX, 220, logoWidth, logoHeight + 10);
+                doc.addImage(transportistaFirma, "PNG", logoX - 225, 220, logoWidth, logoHeight + 10);
+                //doc.text("A", logoX - 115, 240, { align: "center" });
               }
             } catch (error) {
               console.error("Error al añadir firma transportista al PDF:", error);
@@ -183,7 +186,8 @@ console.log("Componente FormatoPrestamo montado con consecutivo:", this.consecut
             
             try {
               if (receptorFirma && receptorFirma.startsWith("data:image/png;base64,")) {
-                doc.addImage(receptorFirma, "PNG", logoX - 115, 220, logoWidth, logoHeight + 10);
+                doc.addImage(receptorFirma, "PNG", logoX , 220, logoWidth, logoHeight + 10);
+                //doc.text("B", logoX , 240, { align: "center" });
               }
             } catch (error) {
               console.error("Error al añadir firma receptor al PDF:", error);
@@ -191,7 +195,8 @@ console.log("Componente FormatoPrestamo montado con consecutivo:", this.consecut
             
             try {
               if (firmaBodega && firmaBodega.startsWith("data:image/png;base64,")) {
-                doc.addImage(firmaBodega, "PNG", logoX - 225, 220, logoWidth, logoHeight + 10);
+                doc.addImage(firmaBodega, "PNG", logoX - 115 , 220, logoWidth, logoHeight + 10);
+                //doc.text("C", logoX - 225, 240, { align: "center" });
               }
             } catch (error) {
               console.error("Error al añadir firma bodega al PDF: ", error);
@@ -246,7 +251,7 @@ console.log("Componente FormatoPrestamo montado con consecutivo:", this.consecut
               label: "ENTREGADO POR:",
               name: data.transportistaNombre || "",
               doc: data.transportistaIdentificacion || "",
-              signature: data.transportistaFirma || data.entregadoPor || "",
+              signature: data.transportistaFirma || "",
             },
             {
               label: "VERIFICACION SALIDA CUSTODIA:",
