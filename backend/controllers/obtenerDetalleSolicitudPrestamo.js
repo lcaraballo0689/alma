@@ -2,9 +2,44 @@ const { log } = require("winston");
 const { connectDB, sql } = require("../config/db");
 const logger = require("../logger");
 const { DateTime } = require("luxon");
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 const { resolveFilePath, filePathToBase64 } = require("../config/environment");
+
+// Función auxiliar para procesar la firma
+async function procesarFirma(firma) {
+  try {
+    // Si la firma ya es base64, la retornamos tal cual
+    if (firma && (firma.startsWith('data:image') || firma.startsWith('iVBORw0KGgo'))) {
+      return firma;
+    }
+
+    // Si es una ruta de archivo
+    if (firma && typeof firma === 'string' && (firma.includes('\\') || firma.includes('/'))) {
+      try {
+        // Leer el archivo
+        const buffer = await fs.readFile(firma);
+        // Convertir a base64
+        const base64 = buffer.toString('base64');
+        // Determinar el tipo de imagen basado en la extensión
+        const ext = path.extname(firma).toLowerCase();
+        const mimeType = ext === '.png' ? 'image/png' : 
+                        ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' : 
+                        'image/png'; // default a PNG si no se puede determinar
+        
+        return `data:${mimeType};base64,${base64}`;
+      } catch (error) {
+        logger.error(`Error al procesar la firma desde archivo: ${error.message}`);
+        return null;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    logger.error(`Error general al procesar la firma: ${error.message}`);
+    return null;
+  }
+}
 
 async function obtenerDetalleSolicitudPrestamo(req, res) {
   const { id } = req.body;
@@ -301,41 +336,40 @@ async function obtenerDetalleSolicitudPrestamo(req, res) {
     let receptorInfo = {
       receptorNombre: "",
       receptorIdentificacion: "",
-      receptorFirma: "",
+      receptorFirma: ""
     };
 
     try {
-      const receptorGetData = await pool
+      const receptorResult = await pool
         .request()
-        .input("id", sql.Int, solicitudIdReal).query(`
-      SELECT 
-          receptorNombre,
-          receptorIdentificacion,
-          firmaPath
-          FROM Entregas
-          WHERE solicitudId = @id
-    `);
+        .input("id", sql.Int, id)
+        .query(`
+          SELECT 
+            receptorNombre,
+            receptorIdentificacion,
+            firmaPath as receptorFirma
+          FROM SolicitudTransporte 
+          WHERE consecutivo = @id
+        `);
 
-      if (
-        receptorGetData &&
-        receptorGetData.recordset &&
-        receptorGetData.recordset.length > 0
-      ) {
-        const row = receptorGetData.recordset[0];
+      if (receptorResult && receptorResult.recordset && receptorResult.recordset.length > 0) {
+        const row = receptorResult.recordset[0];
         receptorInfo = {
           receptorNombre: row.receptorNombre || "",
           receptorIdentificacion: row.receptorIdentificacion || "",
-          receptorFirma: row.firmaPath || "",
+          receptorFirma: ""  // Se procesará después
         };
 
+        // Procesar la firma (convertir de ruta a base64 si es necesario)
+        receptorInfo.receptorFirma = await procesarFirma(row.receptorFirma);
+        
         const firmaPresente = !!receptorInfo.receptorFirma;
-
         logger.warn(
-          `👤 Informacion del Receptor de Solicitud de Prestamo: ${receptorInfo.receptorNombre} | CC: ${receptorInfo.receptorIdentificacion} | Firma presente: ${firmaPresente}`
+          `👤 Información del Receptor de Solicitud de Prestamo: ${receptorInfo.receptorNombre} | CC: ${receptorInfo.receptorIdentificacion} | Firma presente: ${firmaPresente}`
         );
       } else {
         logger.warn(
-          `⚠️ No se encontraron registros del Receptor de Solicitud de Prestamo: ${solicitudIdReal}`
+          `⚠️ No se encontraron registros del Receptor de Solicitud de Prestamo: ${id}`
         );
       }
     } catch (error) {
