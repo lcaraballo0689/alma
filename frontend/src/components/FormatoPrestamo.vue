@@ -183,7 +183,7 @@ console.log("Componente FormatoPrestamo montado con consecutivo:", this.consecut
             
             try {
               if (receptorFirma && receptorFirma.startsWith("data:image/png;base64,")) {
-                doc.addImage(receptorFirma, "PNG", logoX - 115, 220, logoWidth, logoHeight + 10);
+                doc.addImage(firmaBodega, "PNG", logoX - 225, 220, logoWidth, logoHeight + 10);
               }
             } catch (error) {
               console.error("Error al añadir firma receptor al PDF:", error);
@@ -191,7 +191,7 @@ console.log("Componente FormatoPrestamo montado con consecutivo:", this.consecut
             
             try {
               if (firmaBodega && firmaBodega.startsWith("data:image/png;base64,")) {
-                doc.addImage(firmaBodega, "PNG", logoX - 225, 220, logoWidth, logoHeight + 10);
+                doc.addImage(receptorFirma, "PNG", logoX - 115, 220, logoWidth, logoHeight + 10);
               }
             } catch (error) {
               console.error("Error al añadir firma bodega al PDF:", error);
