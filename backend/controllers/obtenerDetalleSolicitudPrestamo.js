@@ -348,8 +348,8 @@ async function obtenerDetalleSolicitudPrestamo(req, res) {
             receptorNombre,
             receptorIdentificacion,
             firmaPath as receptorFirma
-          FROM SolicitudTransporte 
-          WHERE consecutivo = @id
+          FROM Entregas 
+          WHERE solicitudId = @id
         `);
 
       if (receptorResult && receptorResult.recordset && receptorResult.recordset.length > 0) {
