@@ -347,35 +347,46 @@ async function procesarTransferenciaInterna(payload, pool, transaction) {
   const querys = `SELECT ${columnaConsecutivo} AS ultimoNumero FROM Consecutivos WHERE clienteId = ${clienteId}`
   console.log(querys);
 
-  // Consulta el consecutivo actual de la columna determinada
-  const resultCons = await new sql.Request(transaction)
-    .input("clienteId", sql.Int, clienteId)
-    .query(querys);
+  // --- BLOQUE DE INCREMENTO DE CONSECUTIVO CON TRY-CATCH-FINALLY ---
+  let consecutivoActualizado = null;
+  try {
+    // Consulta el consecutivo actual de la columna determinada
+    const resultCons = await new sql.Request(transaction)
+      .input("clienteId", sql.Int, clienteId)
+      .query(querys);
 
+    let ultimoNumero = resultCons.recordset[0]?.ultimoNumero || 0;
+    const nuevoConsecutivo = ultimoNumero + 1;
 
-
-  let ultimoNumero = resultCons.recordset[0]?.ultimoNumero || 0;
-  const nuevoConsecutivo = ultimoNumero + 1;
-
-  // Actualizar consecutivo SOLO si el módulo NO es 'Prestamo' (para evitar doble incremento)
-  // if (modulo !== "Prestamo") {
+    // Actualizar consecutivo SOLO si el módulo NO es 'Prestamo' (para evitar doble incremento)
+    // if (modulo !== "Prestamo") {
     await new sql.Request(transaction)
       .input("nuevoNumero", sql.Int, nuevoConsecutivo)
       .input("clienteId", sql.Int, clienteId)
       .query(`UPDATE Consecutivos SET ${columnaConsecutivo} = @nuevoNumero WHERE clienteId = @clienteId`);
-  // }
+    // }
 
-
-    const consecutivoActualizado = await new sql.Request(transaction)
+    consecutivoActualizado = await new sql.Request(transaction)
       .input("clienteId", sql.Int, clienteId)
       .query(`SELECT ${columnaConsecutivo} AS ultimoNumero FROM Consecutivos WHERE clienteId = ${clienteId}`);
-  if (consecutivoActualizado.rowsAffected[0] === 0) {
-    throw new Error(`No se pudo actualizar el consecutivo para el cliente ${clienteId}`);
-  }else {
-    console.log("Consecutivo actualizado correctamente:", consecutivoActualizado.recordset[0].ultimoNumero);
+    if (consecutivoActualizado.rowsAffected[0] === 0) {
+      throw new Error(`No se pudo actualizar el consecutivo para el cliente ${clienteId}`);
+    } else {
+      console.log("Consecutivo actualizado correctamente:", consecutivoActualizado.recordset[0].ultimoNumero);
+    }
+  } catch (error) {
+    console.error("Error al incrementar/actualizar consecutivo:", error);
+    // Aquí puedes agregar lógica adicional, como rollback o notificación
+    throw error;
+  } finally {
+    // Log para depuración final
+    if (consecutivoActualizado && consecutivoActualizado.recordset && consecutivoActualizado.recordset[0]) {
+      console.log("[FINALLY] Valor final del consecutivo:", consecutivoActualizado.recordset[0].ultimoNumero);
+    } else {
+      console.log("[FINALLY] No se pudo obtener el valor final del consecutivo.");
+    }
   }
-
-
+  // --- FIN BLOQUE ---
 
   // Se define la dirección (si no se pasa direccion_entrega se utiliza direccion_recoleccion)
   const direccion = direccion_entrega || direccion_recoleccion || null;
@@ -909,7 +920,7 @@ async function createTransferencia(req, res, next) {
       data: bodegaEmailData,
       attachments,
     });
-    logger.info("createTransferencia - Correo enviado a bodega", { correoBodega, consecutivo: nuevoConsecutivo });
+    logger.info("createTransferencia - Correo enviado a bodega", { bodegaEmail: process.env.BODEGA_EMAIL, solicitudId: spResponse.SolicitudId });
 
     logger.info("createTransferencia - Transferencia creada exitosamente", { solicitudId, consecutivo: nuevoConsecutivo });
     return res.status(201).json({
