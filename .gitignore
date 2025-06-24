@@ -58,3 +58,7 @@ Thumbs.db
 /junit.xml
 /karma-results.xml
 /mocha-results.json
+
+backend/uploads/**
+# Temporary files
+/tmp/
