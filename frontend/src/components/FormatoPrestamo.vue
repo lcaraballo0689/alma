@@ -163,8 +163,8 @@ console.log("Componente FormatoPrestamo montado con consecutivo:", this.consecut
             }
             
             // Obtenemos las firmas de las diferentes fuentes (compatibilidad con ambos formatos de datos)
-            let transportistaFirma = data.transportistaFirma || data.entregadoPor || "";
-            let receptorFirma = data.receptorFirma || data.recibidoPor || "";
+            let transportistaFirma = data.transportistaFirma || "";
+            let receptorFirma = data.receptorFirma || "";
             let firmaBodega = data.warehouseSing || "";
             
             // Para debugging - mostrar si tenemos las firmas
