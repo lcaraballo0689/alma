@@ -29,6 +29,9 @@ export default {
       pdfPreviewUrl: null,
     };
   },
+  mounted() {
+console.log("Componente FormatoPrestamo montado con consecutivo:", this.consecutivo);
+  },
   methods: {
     async handleClick(event) {
       // Detenemos la propagación para que no se active el clic del <tr>
@@ -50,6 +53,8 @@ export default {
           id: this.consecutivo,
         });
         const rawData = response.data;
+        console.log("numero de consecutivo:", this.consecutivo);
+
         console.log("Datos obtenidos del servidor:", rawData);
 
                   // Convertir los campos a strings de forma segura
