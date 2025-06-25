@@ -45,6 +45,7 @@ const permissionRoutes = require("./routes/permissionRoutes");
 const rolePermissionRoutes = require("./routes/rolePermissionRoutes");
 const entregaRoutes = require('./routes/entregaRoute');
 const apkRoutes = require('./routes/apkRoutes');
+const bulkRoutes = require('./routes/bulk');
 
 
 const app = express();
@@ -84,6 +85,7 @@ app.use("/api/role-permissions", rolePermissionRoutes);
 app.use('/api', dashboardRouter);
 app.use('/api/pwa/entregas', entregaRoutes);
 app.use('/api/apk', apkRoutes);
+app.use('/api/bulk', bulkRoutes);
 
 // Servir archivos estáticos desde la carpeta public
 app.use(express.static(path.join(__dirname, 'public')));
