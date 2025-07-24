@@ -180,8 +180,97 @@
                 </div>
               </div>
 
-              <!-- Asignación de Ubicaciones (solo si el estado permitido es 'completado') -->              <div v-if="estadoPermitido === 'completado'" class="mt-3">
-                <h6>Asignación de Ubicaciones:</h6>                <div v-if="!availableUbicaciones || availableUbicaciones.length === 0" class="alert alert-warning">
+              <!-- Asignación de Ubicaciones (solo si el estado permitido es 'completado') -->
+              <div v-if="estadoPermitido === 'completado'" class="mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="mb-0">Asignación de Ubicaciones:</h6>
+                  <div class="btn-group" role="group">
+                    <button 
+                      type="button" 
+                      class="btn btn-outline-success btn-sm"
+                      @click="descargarPlantillaExcel"
+                      :disabled="isLoadingExcel"
+                      title="Descargar plantilla Excel para asignación masiva"
+                    >
+                      <i class="bi bi-file-earmark-excel me-1"></i>
+                      Descargar Plantilla
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn btn-outline-primary btn-sm"
+                      @click="$refs.fileInput.click()"
+                      :disabled="isLoadingExcel"
+                      title="Cargar archivo Excel con asignaciones"
+                    >
+                      <i class="bi bi-upload me-1"></i>
+                      Cargar Excel
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Input oculto para seleccionar archivo -->
+                <input 
+                  ref="fileInput" 
+                  type="file" 
+                  accept=".xlsx,.xls" 
+                  @change="procesarArchivoExcel" 
+                  style="display: none;"
+                />
+                
+                <!-- Indicador de carga de Excel -->
+                <div v-if="isLoadingExcel" class="alert alert-info">
+                  <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status">
+                      <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <span>{{ excelLoadingMessage }}</span>
+                  </div>
+                </div>
+                
+                <!-- Resultados de carga de Excel -->
+                <div v-if="excelResults" class="alert" :class="excelResults.exitosas && excelResults.exitosas.length > 0 ? 'alert-success' : 'alert-warning'">
+                  <h6 class="alert-heading">
+                    <i :class="excelResults.exitosas && excelResults.exitosas.length > 0 ? 'bi bi-check-circle-fill' : 'bi bi-exclamation-triangle-fill'" class="me-2"></i>
+                    Resultados del procesamiento Excel
+                  </h6>
+                  <div class="small mb-3">
+                    <strong>Resumen:</strong> 
+                    {{ excelResults.totalExitosas || 0 }} exitosas, 
+                    {{ excelResults.totalErrores || 0 }} errores de {{ excelResults.totalProcesadas || 0 }} registros procesados.
+                  </div>
+                  
+                  <!-- Botones de acción -->
+                  <div class="d-flex gap-2 mb-2">
+                    <button 
+                      v-if="excelResults.exitosas && excelResults.exitosas.length > 0"
+                      type="button" 
+                      class="btn btn-sm btn-success"
+                      @click="aplicarAsignacionesExcel"
+                    >
+                      <i class="bi bi-check-circle me-1"></i>
+                      Aplicar {{ excelResults.exitosas.length }} Asignaciones
+                    </button>
+                    
+                    <button 
+                      v-if="excelResults.errores && excelResults.errores.length > 0"
+                      type="button" 
+                      class="btn btn-sm btn-outline-danger"
+                      @click="descargarArchivoErrores"
+                    >
+                      <i class="bi bi-file-earmark-excel me-1"></i>
+                      Descargar Errores ({{ excelResults.errores.length }})
+                    </button>
+                  </div>
+                  
+                  <button 
+                    type="button" 
+                    class="btn-close" 
+                    @click="cerrarResultadosExcel"
+                    aria-label="Cerrar"
+                  ></button>
+                </div>
+                
+                <div v-if="!availableUbicaciones || availableUbicaciones.length === 0" class="alert alert-warning">
                   <i class="bi bi-exclamation-triangle-fill me-2"></i>
                   Cargando ubicaciones disponibles...
                   <button type="button" class="btn btn-sm btn-outline-warning ms-2" @click="$emit('reload-ubicaciones')">
@@ -291,6 +380,9 @@
 <script>
 import { Modal } from "bootstrap";
 import { DateTime } from "luxon";
+import { useAuthStore } from "@/stores/authStore";
+import * as XLSX from 'xlsx';
+import apiClient from '@/services/api';
 
 export default {
   name: "TransferenciaDetalleModal",
@@ -338,7 +430,12 @@ export default {
       placa: '',
       sticker: '',
       observaciones: '',
-      isActualizandoEstado: false
+      isActualizandoEstado: false,
+      // Variables para funcionalidad de Excel
+      isLoadingExcel: false,
+      excelResults: null,
+      showExcelResults: false,
+      excelErrorFile: null
     };
   },
     computed: {
@@ -519,7 +616,8 @@ export default {
     'update:documentoIdentidad', 
     'update:placa', 
     'update:sticker', 
-    'update:observaciones'
+    'update:observaciones',
+    'aplicar-asignaciones-excel'
   ],
   
   methods: {    show() {
@@ -746,6 +844,299 @@ export default {
       console.log(`📊 Contiene ${this.observacionesTimeline?.length || 0} elementos`);
       
       console.groupEnd();
+    },
+
+    // Métodos para funcionalidad de Excel
+    async descargarPlantillaExcel() {
+      try {
+        console.log('📥 Descargando plantilla Excel...');
+        
+        // Crear datos para la plantilla con referencia2, referencia3 y codigo (vacío)
+        const plantillaData = this.detalle.map(item => ({
+          referencia2: item.referencia2 || '',
+          referencia3: item.referencia3 || '',
+          codigo: '' // Campo vacío para que el usuario lo llene
+        }));
+        
+        // Crear workbook y worksheet
+        const XLSX = await import('xlsx');
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(plantillaData);
+        
+        // Agregar la hoja al workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Asignaciones');
+        
+        // Descargar el archivo
+        const fileName = `plantilla_ubicaciones_${this.selectedTransferencia.id}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        
+        console.log('✅ Plantilla descargada exitosamente');
+      } catch (error) {
+        console.error('❌ Error al descargar plantilla:', error);
+        alert('Error al descargar la plantilla. Por favor, intente nuevamente.');
+      }
+    },
+
+    triggerFileInput() {
+      this.$refs.excelFileInput.click();
+    },
+
+    async procesarArchivoExcel(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      this.isLoadingExcel = true;
+      this.excelResults = null;
+      this.showExcelResults = false;
+      this.excelErrorFile = null;
+      
+      try {
+        console.log('📊 Procesando archivo Excel...');
+        
+        // Leer el archivo Excel
+        const XLSX = await import('xlsx');
+        const data = await this.readFileAsArrayBuffer(file);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        
+        console.log('📋 Datos del Excel:', jsonData);
+        
+        // Procesar las asignaciones
+        const resultado = await this.procesarAsignaciones(jsonData);
+        
+        this.excelResults = resultado;
+        this.showExcelResults = true;
+        
+        // Si hay errores, generar archivo de errores
+        if (resultado.errores.length > 0) {
+          await this.generarArchivoErrores(resultado.errores);
+        }
+        
+      } catch (error) {
+        console.error('❌ Error al procesar archivo Excel:', error);
+        alert('Error al procesar el archivo Excel. Verifique el formato y contenido.');
+      } finally {
+        this.isLoadingExcel = false;
+        // Limpiar el input file
+        event.target.value = '';
+      }
+    },
+
+    readFileAsArrayBuffer(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(new Uint8Array(e.target.result));
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    },
+
+    async procesarAsignaciones(excelData) {
+      const asignacionesExitosas = [];
+      const errores = [];
+      const advertencias = [];
+      
+      for (let i = 0; i < excelData.length; i++) {
+        const fila = excelData[i];
+        const numeroFila = i + 2; // +2 porque Excel empieza en 1 y tiene header
+        
+        try {
+          // Validar que tenga los campos requeridos
+          if (!fila.referencia2 || !fila.referencia3 || !fila.codigo) {
+            errores.push({
+              fila: numeroFila,
+              referencia2: fila.referencia2 || '',
+              referencia3: fila.referencia3 || '',
+              codigo: fila.codigo || '',
+              error: 'Faltan campos requeridos (referencia2, referencia3, codigo)'
+            });
+            continue;
+          }
+          
+          // Buscar el detalle correspondiente
+          const detalleItem = this.detalle.find(d => 
+            d.referencia2 === fila.referencia2 && d.referencia3 === fila.referencia3
+          );
+          
+          if (!detalleItem) {
+            errores.push({
+              fila: numeroFila,
+              referencia2: fila.referencia2,
+              referencia3: fila.referencia3,
+              codigo: fila.codigo,
+              error: 'No se encontró un registro con esas referencias en la transferencia'
+            });
+            continue;
+          }
+          
+          // Verificar si la ubicación existe
+          let ubicacion = this.availableUbicaciones.find(u => u.codigo === fila.codigo);
+          
+          if (ubicacion) {
+            // La ubicación existe, verificar si está disponible
+            if (ubicacion.estado !== 'DISPONIBLE') {
+              errores.push({
+                fila: numeroFila,
+                referencia2: fila.referencia2,
+                referencia3: fila.referencia3,
+                codigo: fila.codigo,
+                error: `La ubicación ${fila.codigo} existe pero no está disponible (estado: ${ubicacion.estado})`
+              });
+              continue;
+            }
+          } else {
+            // La ubicación no existe, simular creación
+            advertencias.push({
+              fila: numeroFila,
+              referencia2: fila.referencia2,
+              referencia3: fila.referencia3,
+              codigo: fila.codigo,
+              mensaje: `Se creará nueva ubicación: ${fila.codigo}`
+            });
+            
+            // Simular la nueva ubicación (en el backend se creará realmente)
+            ubicacion = {
+              id: `new_${Date.now()}_${i}`, // ID temporal
+              codigo: fila.codigo,
+              estado: 'DISPONIBLE',
+              ocupado: 0,
+              bodegaId: 2
+            };
+          }
+          
+          // Agregar a asignaciones exitosas
+          asignacionesExitosas.push({
+            ubicacionId: ubicacion.id,
+            detalleId: detalleItem.id,
+            codigo: fila.codigo,
+            referencia2: fila.referencia2,
+            referencia3: fila.referencia3,
+            esNueva: ubicacion.id.toString().startsWith('new_')
+          });
+          
+        } catch (error) {
+          console.error(`❌ Error procesando fila ${numeroFila}:`, error);
+          errores.push({
+            fila: numeroFila,
+            referencia2: fila.referencia2 || '',
+            referencia3: fila.referencia3 || '',
+            codigo: fila.codigo || '',
+            error: `Error interno: ${error.message}`
+          });
+        }
+      }
+      
+      return {
+        exitosas: asignacionesExitosas,
+        errores,
+        advertencias,
+        totalProcesadas: excelData.length,
+        totalExitosas: asignacionesExitosas.length,
+        totalErrores: errores.length,
+        totalAdvertencias: advertencias.length
+      };
+    },
+
+    async generarArchivoErrores(errores) {
+      try {
+        const XLSX = await import('xlsx');
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(errores);
+        
+        XLSX.utils.book_append_sheet(wb, ws, 'Errores');
+        
+        // Convertir a blob para descarga posterior
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        this.excelErrorFile = new Blob([wbout], { type: 'application/octet-stream' });
+        
+        console.log('📄 Archivo de errores generado');
+      } catch (error) {
+        console.error('❌ Error al generar archivo de errores:', error);
+      }
+    },
+
+    descargarArchivoErrores() {
+      if (!this.excelErrorFile) return;
+      
+      const url = URL.createObjectURL(this.excelErrorFile);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `errores_ubicaciones_${this.selectedTransferencia.id}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+
+    async aplicarAsignacionesExcel() {
+      if (!this.excelResults || this.excelResults.exitosas.length === 0) {
+        alert('No hay asignaciones válidas para aplicar.');
+        return;
+      }
+      
+      try {
+        this.isLoadingExcel = true;
+        
+        // Extraer códigos únicos del Excel
+        const codigosUnicos = [...new Set(this.excelResults.exitosas.map(item => item.codigo))];
+        
+        console.log('📋 Códigos extraídos del Excel:', codigosUnicos);
+        
+        // Llamar al nuevo endpoint para validar códigos
+        const response = await apiClient.post('/api/transferencias/validarCodigosUbicacion', {
+          codigos: codigosUnicos
+        });
+        
+        console.log('✅ Respuesta del endpoint validarCodigosUbicacion:', response.data);
+        
+        const ubicacionesValidadas = response.data.resultados || [];
+        
+        // Mapear las asignaciones del Excel con las ubicaciones validadas
+        const asignacionesConIds = this.excelResults.exitosas.map(asignacion => {
+          const ubicacionValidada = ubicacionesValidadas.find(u => u.codigo === asignacion.codigo);
+          
+          if (!ubicacionValidada) {
+            console.error(`❌ No se encontró ubicación validada para código: ${asignacion.codigo}`);
+            return null;
+          }
+          
+          return {
+            detalleId: asignacion.detalleId,
+            ubicacionId: ubicacionValidada.ubicacionId,
+            codigo: asignacion.codigo,
+            referencia2: asignacion.referencia2,
+            referencia3: asignacion.referencia3,
+            esNueva: ubicacionValidada.creada || false
+          };
+        }).filter(Boolean); // Filtrar elementos null
+        
+        console.log('🎯 Asignaciones con IDs reales:', asignacionesConIds);
+         
+         // Emitir evento para actualizar el frontend con las asignaciones procesadas
+         this.$emit('aplicar-asignaciones-excel', asignacionesConIds);
+         
+         // Mostrar mensaje de éxito
+         const mensaje = `✅ ${asignacionesConIds.length} asignaciones aplicadas correctamente`;
+         alert(mensaje);
+        
+        // Limpiar resultados
+        this.excelResults = null;
+        this.showExcelResults = false;
+        this.excelErrorFile = null;
+        
+      } catch (error) {
+        console.error('❌ Error al aplicar asignaciones:', error);
+        alert('Error al aplicar las asignaciones. Por favor, intente nuevamente.');
+      } finally {
+        this.isLoadingExcel = false;
+      }
+    },
+
+    cerrarResultadosExcel() {
+      this.excelResults = null;
+      this.showExcelResults = false;
+      this.excelErrorFile = null;
     }
   },
     beforeUnmount() {

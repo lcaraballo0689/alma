@@ -113,6 +113,7 @@
       @retry="retryLoadModal"
       @reload-transportistas="reloadTransportistas"
       @reload-ubicaciones="reloadUbicaciones"
+      @aplicar-asignaciones-excel="aplicarAsignacionesExcel"
     />
   </div>
 </template>
@@ -531,16 +532,43 @@ export default {
           this.observaciones = this.$refs.detalleModal.observaciones || this.observaciones;
         }
 
-        const asignaciones =
-          accion === "completado"
-            ? this.detalle
-              .filter((d) => d.nuevaUbicacionId)
-              .map((d) => ({
-                detalleId: d.id,
-                ubicacionId: d.nuevaUbicacionId,
-              }))
-            : [];
-        const idUsuario = this.authStore.user?.id;        const body = {
+        let asignaciones = [];
+        
+        // Si la acción es 'completado', preparar las asignaciones para enviar al SP_ScanQR
+        if (accion === "completado") {
+          console.log("🎯 DEBUG cambiarEstado - Procesando acción 'completado'");
+          console.log("📋 Estado actual del detalle antes de filtrar:", this.detalle);
+          
+          const ubicacionesParaAsignar = this.detalle
+            .filter((d) => d.nuevaUbicacionId)
+            .map((d) => ({
+              detalleId: d.id,
+              ubicacionId: d.nuevaUbicacionId,
+            }));
+          
+          console.log("🔍 DEBUG cambiarEstado - Ubicaciones para asignar:", ubicacionesParaAsignar);
+          console.log("📊 Total de ubicaciones para asignar:", ubicacionesParaAsignar.length);
+          
+          // Validar que hay asignaciones antes de proceder
+          if (ubicacionesParaAsignar.length === 0) {
+            await import("sweetalert2").then((Swal) => {
+              Swal.default.fire({
+                icon: "warning",
+                title: "Asignaciones requeridas",
+                text: "Debe asignar ubicaciones a todas las cajas antes de completar la transferencia.",
+                confirmButtonText: "Entendido"
+              });
+            });
+            return;
+          }
+          
+          // Asignar las ubicaciones para enviar al SP_ScanQR
+          asignaciones = ubicacionesParaAsignar;
+          console.log("🎯 DEBUG cambiarEstado - Asignaciones que se enviarán a scanQR:", asignaciones);
+        }
+        
+        const idUsuario = this.authStore.user?.id;
+        const body = {
           qrToken: `solicitud_${this.selectedTransferencia.id}`,
           accion,
           modulo: this.selectedTransferencia.modulo,
@@ -554,7 +582,14 @@ export default {
           observaciones: this.observaciones || '', // Observaciones del cambio de estado
         };
 
-        // console.log("Cambio de estado antes:", body);
+        console.log("🚀 DEBUG cambiarEstado - Body completo que se enviará a scanQR:", body);
+        console.log("🔍 DEBUG cambiarEstado - Detalles de asignaciones en el body:", {
+          asignaciones: body.asignaciones,
+          esArray: Array.isArray(body.asignaciones),
+          longitud: Array.isArray(body.asignaciones) ? body.asignaciones.length : 'N/A',
+          tipo: typeof body.asignaciones
+        });
+        
         const response = await apiClient.post("/api/transferencias/qr/scan", body);
         // console.log("Cambio de estado después:", response.data);
         this.selectedTransferencia.estado = response.data.NuevoEstado || accion;
@@ -625,6 +660,24 @@ export default {
         
         await this.fetchUbicacionesDisponibles();
         
+        // DEBUG: Mostrar el array de asignaciones que se pasará al scanQR
+        console.log("🔍 DEBUG - Comprobar ubicaciones clickeado");
+        console.log("📋 Estado actual del detalle:", this.detalle);
+        
+        const ubicacionesParaAsignar = this.detalle
+          ?.filter((d) => d.nuevaUbicacionId)
+          .map((d) => ({
+            detalleId: d.id,
+            ubicacionId: d.nuevaUbicacionId,
+          })) || [];
+        
+        console.log("🎯 Array de asignaciones que se pasará al scanQR:", ubicacionesParaAsignar);
+        console.log("📊 Total de asignaciones preparadas:", ubicacionesParaAsignar.length);
+        
+        if (ubicacionesParaAsignar.length === 0) {
+          console.warn("⚠️ ADVERTENCIA: El array de asignaciones está vacío. Esto causará el error 400 en scanQR.");
+        }
+        
         // Notificación de éxito
         await import("sweetalert2").then((Swal) => {
           const toast = Swal.default.mixin({
@@ -643,6 +696,39 @@ export default {
       } catch (error) {
         console.error("Error al recargar ubicaciones:", error);
       }
+    },
+
+    // Método para aplicar las asignaciones del Excel al detalle
+    async aplicarAsignacionesExcel(asignaciones) {
+      console.log("📊 DEBUG aplicarAsignacionesExcel - Asignaciones recibidas:", asignaciones);
+      console.log("📋 DEBUG aplicarAsignacionesExcel - Estado actual del detalle:", this.detalle);
+      
+      // Actualizar el detalle con las asignaciones del Excel
+      asignaciones.forEach(asignacion => {
+        const detalleItem = this.detalle.find(d => d.id === asignacion.detalleId);
+        if (detalleItem) {
+          detalleItem.nuevaUbicacionId = asignacion.ubicacionId;
+          console.log(`✅ Asignación aplicada: Detalle ${asignacion.detalleId} -> Ubicación ${asignacion.ubicacionId} (${asignacion.codigo})`);
+        } else {
+          console.warn(`⚠️ No se encontró detalle con ID ${asignacion.detalleId}`);
+        }
+      });
+      
+      console.log("📋 DEBUG aplicarAsignacionesExcel - Estado del detalle después de aplicar asignaciones:", this.detalle);
+      
+      // Mostrar notificación de éxito
+      await import("sweetalert2").then((Swal) => {
+        Swal.default.fire({
+          icon: "success",
+          title: "Asignaciones aplicadas",
+          text: `Se aplicaron ${asignaciones.length} asignaciones desde el Excel`,
+          timer: 3000,
+          showConfirmButton: false
+        });
+      });
+      
+      // Recargar las ubicaciones disponibles para reflejar los cambios
+      await this.fetchUbicacionesDisponibles();
     },
   }, mounted() {
     this.fetchTransferencias();

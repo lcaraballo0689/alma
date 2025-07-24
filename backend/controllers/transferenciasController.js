@@ -1077,6 +1077,22 @@ async function scanQR(req, res, next) {
       });
     }
 
+    // DEBUG: Logs adicionales para debuguear el problema de asignaciones vacías
+    logger.info("🔍 DEBUG scanQR - Datos recibidos:", {
+      qrToken,
+      accion,
+      usuarioId,
+      clienteId,
+      asignaciones: asignaciones || 'undefined',
+      asignacionesLength: Array.isArray(asignaciones) ? asignaciones.length : 'no es array',
+      asignacionesType: typeof asignaciones,
+      transportista,
+      documentoIdentidad,
+      placa,
+      sticker,
+      observaciones
+    });
+
     // Log de inicio de la función con detalles de entrada (nivel debug para evitar exponer datos sensibles en producción)
     logger.debug("scanQR iniciado con datos", { body: req.body });
 
@@ -1097,8 +1113,21 @@ async function scanQR(req, res, next) {
 
     // Manejo de asignaciones según la acción
     if (accion.toLowerCase() === 'completado') {
+      logger.info("🎯 DEBUG scanQR - Procesando acción 'completado'", {
+        accion,
+        asignacionesRecibidas: asignaciones,
+        esArray: Array.isArray(asignaciones),
+        longitud: Array.isArray(asignaciones) ? asignaciones.length : 'N/A'
+      });
+      
       if (!Array.isArray(asignaciones) || asignaciones.length === 0) {
-        logger.error("scanQR - Asignaciones faltantes para acción 'completado'", { accion, asignaciones });
+        logger.error("❌ scanQR - Asignaciones faltantes para acción 'completado'", { 
+          accion, 
+          asignaciones,
+          tipoAsignaciones: typeof asignaciones,
+          esArray: Array.isArray(asignaciones),
+          longitud: Array.isArray(asignaciones) ? asignaciones.length : 'N/A'
+        });
         return res.status(400).json({ error: "Debe enviar asignaciones de ubicaciones para cada caja a custodiar." });
       }
 
@@ -1106,18 +1135,20 @@ async function scanQR(req, res, next) {
       tableAsignaciones.columns.add('detalleId', sql.Int);
       tableAsignaciones.columns.add('ubicacionId', sql.Int);
 
-      asignaciones.forEach(({ detalleId, ubicacionId }) => {
+      logger.info("📋 DEBUG scanQR - Procesando cada asignación:");
+      asignaciones.forEach(({ detalleId, ubicacionId }, index) => {
+        logger.info(`  Asignación ${index + 1}: detalleId=${detalleId}, ubicacionId=${ubicacionId}`);
         tableAsignaciones.rows.add(detalleId, ubicacionId);
       });
 
       request.input("asignaciones", tableAsignaciones);
-      logger.info("scanQR - Asignaciones procesadas", { totalAsignaciones: asignaciones.length });
+      logger.info("✅ scanQR - Asignaciones procesadas exitosamente", { totalAsignaciones: asignaciones.length });
     } else {
       const emptyTable = new sql.Table();
       emptyTable.columns.add('detalleId', sql.Int);
       emptyTable.columns.add('ubicacionId', sql.Int);
       request.input("asignaciones", emptyTable);
-      logger.info("scanQR - Asignaciones no requeridas para la acción", { accion });
+      logger.info("ℹ️ scanQR - Asignaciones no requeridas para la acción", { accion });
     }
 
     // Ejecución del procedimiento almacenado
