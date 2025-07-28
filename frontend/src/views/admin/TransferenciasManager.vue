@@ -544,6 +544,8 @@ export default {
             .map((d) => ({
               detalleId: d.id,
               ubicacionId: d.nuevaUbicacionId,
+              // ✅ Priorizar referencia1 del Excel sobre la de la BD
+              referencia1: d.referencia1Excel || d.referencia1,
             }));
           
           console.log("🔍 DEBUG cambiarEstado - Ubicaciones para asignar:", ubicacionesParaAsignar);
@@ -669,6 +671,8 @@ export default {
           .map((d) => ({
             detalleId: d.id,
             ubicacionId: d.nuevaUbicacionId,
+            // ✅ Priorizar referencia1 del Excel sobre la de la BD
+            referencia1: d.referencia1Excel || d.referencia1,
           })) || [];
         
         console.log("🎯 Array de asignaciones que se pasará al scanQR:", ubicacionesParaAsignar);
@@ -708,7 +712,9 @@ export default {
         const detalleItem = this.detalle.find(d => d.id === asignacion.detalleId);
         if (detalleItem) {
           detalleItem.nuevaUbicacionId = asignacion.ubicacionId;
-          console.log(`✅ Asignación aplicada: Detalle ${asignacion.detalleId} -> Ubicación ${asignacion.ubicacionId} (${asignacion.codigo})`);
+          // ✅ AGREGAR: Guardar referencia1 del Excel
+          detalleItem.referencia1Excel = asignacion.referencia1;
+          console.log(`✅ Asignación aplicada: Detalle ${asignacion.detalleId} -> Ubicación ${asignacion.ubicacionId} (${asignacion.codigo}) - Referencia1: ${asignacion.referencia1}`);
         } else {
           console.warn(`⚠️ No se encontró detalle con ID ${asignacion.detalleId}`);
         }

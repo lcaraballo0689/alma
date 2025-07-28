@@ -851,8 +851,9 @@ export default {
       try {
         console.log('📥 Descargando plantilla Excel...');
         
-        // Crear datos para la plantilla con referencia2, referencia3 y codigo (vacío)
+        // Crear datos para la plantilla con referencia1, referencia2, referencia3 y codigo (vacío)
         const plantillaData = this.detalle.map(item => ({
+          referencia1: item.referencia1 || '',
           referencia2: item.referencia2 || '',
           referencia3: item.referencia3 || '',
           codigo: '' // Campo vacío para que el usuario lo llene
@@ -943,13 +944,14 @@ export default {
         
         try {
           // Validar que tenga los campos requeridos
-          if (!fila.referencia2 || !fila.referencia3 || !fila.codigo) {
+          if (!fila.referencia1 || !fila.referencia2 || !fila.referencia3 || !fila.codigo) {
             errores.push({
               fila: numeroFila,
+              referencia1: fila.referencia1 || '',
               referencia2: fila.referencia2 || '',
               referencia3: fila.referencia3 || '',
               codigo: fila.codigo || '',
-              error: 'Faltan campos requeridos (referencia2, referencia3, codigo)'
+              error: 'Faltan campos requeridos (referencia1, referencia2, referencia3, codigo)'
             });
             continue;
           }
@@ -962,6 +964,7 @@ export default {
           if (!detalleItem) {
             errores.push({
               fila: numeroFila,
+              referencia1: fila.referencia1,
               referencia2: fila.referencia2,
               referencia3: fila.referencia3,
               codigo: fila.codigo,
@@ -978,6 +981,7 @@ export default {
             if (ubicacion.estado !== 'DISPONIBLE') {
               errores.push({
                 fila: numeroFila,
+                referencia1: fila.referencia1,
                 referencia2: fila.referencia2,
                 referencia3: fila.referencia3,
                 codigo: fila.codigo,
@@ -989,6 +993,7 @@ export default {
             // La ubicación no existe, simular creación
             advertencias.push({
               fila: numeroFila,
+              referencia1: fila.referencia1,
               referencia2: fila.referencia2,
               referencia3: fila.referencia3,
               codigo: fila.codigo,
@@ -1010,6 +1015,7 @@ export default {
             ubicacionId: ubicacion.id,
             detalleId: detalleItem.id,
             codigo: fila.codigo,
+            referencia1: fila.referencia1,
             referencia2: fila.referencia2,
             referencia3: fila.referencia3,
             esNueva: ubicacion.id.toString().startsWith('new_')
@@ -1019,6 +1025,7 @@ export default {
           console.error(`❌ Error procesando fila ${numeroFila}:`, error);
           errores.push({
             fila: numeroFila,
+            referencia1: fila.referencia1 || '',
             referencia2: fila.referencia2 || '',
             referencia3: fila.referencia3 || '',
             codigo: fila.codigo || '',
@@ -1105,6 +1112,7 @@ export default {
             detalleId: asignacion.detalleId,
             ubicacionId: ubicacionValidada.ubicacionId,
             codigo: asignacion.codigo,
+            referencia1: asignacion.referencia1,
             referencia2: asignacion.referencia2,
             referencia3: asignacion.referencia3,
             esNueva: ubicacionValidada.creada || false

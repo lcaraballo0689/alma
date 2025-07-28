@@ -14,6 +14,10 @@ import siglo_logo from "@/assets/img/siglo.png";
 import apiClient from "@/services/api";
 import SHA256 from "crypto-js/sha256";
 import stringify from "json-stable-stringify";
+import { useHoraZonificada } from '@/composables/useHoraZonificada';
+
+
+const { convertirZona } = useHoraZonificada();
 
 export default {
   name: "FormatoDevolucionManual",
@@ -51,7 +55,7 @@ export default {
           contacto: String(rawData.contacto ?? ""),
           fechaElaboracion: String(rawData.fechaElaboracion ?? ""),
           horaSolicitud: String(rawData.horaSolicitud ?? ""),
-          horaEntrega: String(rawData.horaEntrega ?? ""),
+          horaEntrega: String(convertirZona(rawData.horaEntrega, 'UTC', 'UTC+5') ?? ""),
           stickerSeguridad: String(rawData.stickerSeguridad ?? ""),
           // Se asume que las firmas pueden venir sin el prefijo, por lo que se corrige:
           entregadoPor: rawData.entregadoPor

@@ -15,6 +15,9 @@ import apiClient from "@/services/api";
 import SHA256 from "crypto-js/sha256";
 import stringify from "json-stable-stringify";
 import Swal from "sweetalert2";
+import { useHoraZonificada } from '@/composables/useHoraZonificada';
+
+const { convertirZona } = useHoraZonificada();
 
 export default {
   name: "FormatoPrestamo",
@@ -56,7 +59,7 @@ console.log("Componente FormatoPrestamo montado con consecutivo:", this.consecut
         console.log("numero de consecutivo:", this.consecutivo);
 
         console.log("Datos obtenidos del servidor:", rawData);
-
+ 
                   // Convertir los campos a strings de forma segura
         const data = {
           ...rawData,
@@ -69,7 +72,7 @@ console.log("Componente FormatoPrestamo montado con consecutivo:", this.consecut
           contacto: String(rawData.contacto ?? ""),
           fechaElaboracion: String(rawData.fechaElaboracion ?? ""),
           horaSolicitud: String(rawData.horaSolicitud ?? ""),
-          horaEntrega: String(rawData.horaEntrega ?? ""),
+          horaEntrega: String(convertirZona(rawData.horaEntrega, 'UTC', 'UTC+5') ?? ""),
           stickerSeguridad: String(rawData.stickerSeguridad ?? ""),
           // Manejo seguro de las firmas y datos personales de bodega, transportista y receptor
           
@@ -130,6 +133,14 @@ console.log("Componente FormatoPrestamo montado con consecutivo:", this.consecut
           confirmButtonColor: '#3085d6',
         });
       }
+    },
+    addFiveHours(time) {
+      const [hours, minutes] = time.split(':');
+      let newHours = parseInt(hours, 10) + 5;
+      if (newHours >= 24) {
+        newHours -= 24;
+      }
+      return `${newHours.toString().padStart(2, '0')}:${minutes}`;
     },
     createPDF(data) {
       try {

@@ -1134,11 +1134,17 @@ async function scanQR(req, res, next) {
       const tableAsignaciones = new sql.Table();
       tableAsignaciones.columns.add('detalleId', sql.Int);
       tableAsignaciones.columns.add('ubicacionId', sql.Int);
+      tableAsignaciones.columns.add('referencia1', sql.NVarChar(255));
 
       logger.info("📋 DEBUG scanQR - Procesando cada asignación:");
-      asignaciones.forEach(({ detalleId, ubicacionId }, index) => {
-        logger.info(`  Asignación ${index + 1}: detalleId=${detalleId}, ubicacionId=${ubicacionId}`);
-        tableAsignaciones.rows.add(detalleId, ubicacionId);
+      asignaciones.forEach(({ detalleId, ubicacionId, referencia1 }, index) => {
+        // Validar que los valores no sean null o undefined y convertir a tipos correctos
+        const detalleIdSafe = parseInt(detalleId) || 0;
+        const ubicacionIdSafe = parseInt(ubicacionId) || 0;
+        const referencia1Safe = String(referencia1 || '');
+        
+        logger.info(`  Asignación ${index + 1}: detalleId=${detalleIdSafe}, ubicacionId=${ubicacionIdSafe}, referencia1=${referencia1Safe}`);
+        tableAsignaciones.rows.add(detalleIdSafe, ubicacionIdSafe, referencia1Safe);
       });
 
       request.input("asignaciones", tableAsignaciones);
@@ -1147,6 +1153,7 @@ async function scanQR(req, res, next) {
       const emptyTable = new sql.Table();
       emptyTable.columns.add('detalleId', sql.Int);
       emptyTable.columns.add('ubicacionId', sql.Int);
+      emptyTable.columns.add('referencia1', sql.NVarChar(255));
       request.input("asignaciones", emptyTable);
       logger.info("ℹ️ scanQR - Asignaciones no requeridas para la acción", { accion });
     }
