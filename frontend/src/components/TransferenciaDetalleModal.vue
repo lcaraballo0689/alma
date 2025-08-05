@@ -851,11 +851,11 @@ export default {
       try {
         console.log('📥 Descargando plantilla Excel...');
         
-        // Crear datos para la plantilla con referencia1, referencia2, referencia3 y codigo (vacío)
+        // Crear datos para la plantilla con referencia1, referencia2, referencia3 (opcional) y codigo (vacío)
         const plantillaData = this.detalle.map(item => ({
           referencia1: item.referencia1 || '',
           referencia2: item.referencia2 || '',
-          referencia3: item.referencia3 || '',
+          referencia3: item.referencia3 || '', // Campo opcional
           codigo: '' // Campo vacío para que el usuario lo llene
         }));
         
@@ -943,23 +943,31 @@ export default {
         const numeroFila = i + 2; // +2 porque Excel empieza en 1 y tiene header
         
         try {
-          // Validar que tenga los campos requeridos
-          if (!fila.referencia1 || !fila.referencia2 || !fila.referencia3 || !fila.codigo) {
+          // Validar que tenga los campos requeridos (referencia3 es opcional)
+          if (!fila.referencia1 || !fila.referencia2 || !fila.codigo) {
             errores.push({
               fila: numeroFila,
               referencia1: fila.referencia1 || '',
               referencia2: fila.referencia2 || '',
               referencia3: fila.referencia3 || '',
               codigo: fila.codigo || '',
-              error: 'Faltan campos requeridos (referencia1, referencia2, referencia3, codigo)'
+              error: 'Faltan campos requeridos (referencia1, referencia2, codigo)'
             });
             continue;
           }
           
           // Buscar el detalle correspondiente
-          const detalleItem = this.detalle.find(d => 
-            d.referencia2 === fila.referencia2 && d.referencia3 === fila.referencia3
-          );
+          // Si referencia3 está disponible, usarla en la búsqueda, sino buscar solo por referencia2
+          let detalleItem;
+          if (fila.referencia3 && fila.referencia3.trim() !== '') {
+            detalleItem = this.detalle.find(d => 
+              d.referencia2 === fila.referencia2 && d.referencia3 === fila.referencia3
+            );
+          } else {
+            detalleItem = this.detalle.find(d => 
+              d.referencia2 === fila.referencia2
+            );
+          }
           
           if (!detalleItem) {
             errores.push({
