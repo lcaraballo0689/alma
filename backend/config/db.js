@@ -6,8 +6,6 @@ const dbConfig = {
   server: process.env.DB_SERVER,
   port: parseInt(process.env.DB_PORT, 10),
   database: process.env.DB_DATABASE,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
   options: {
     encrypt: true,
     trustServerCertificate: process.env.DB_TRUSTCERTIFICATE === 'true'
@@ -16,6 +14,18 @@ const dbConfig = {
   connectionTimeout: 60000,  // 60 segundos
   requestTimeout: 60000
 };
+
+// Configurar autenticación según las variables de entorno
+if (process.env.DB_INTEGRATED_SECURITY === 'true') {
+  // Usar autenticación integrada de Windows
+  dbConfig.options.trustedConnection = true;
+  console.log('Usando autenticación integrada de Windows');
+} else {
+  // Usar autenticación SQL Server
+  dbConfig.user = process.env.DB_USER;
+  dbConfig.password = process.env.DB_PASSWORD;
+  console.log('Usando autenticación SQL Server con usuario:', process.env.DB_USER);
+}
 
 let pool;
 

@@ -109,7 +109,6 @@
                   <thead>
                     <tr class="text-center">
                       <th>#</th>
-                      <th>Referencia1</th>
                       <th>Referencia2</th>
                       <th>Referencia3</th>
                       <th>Tipo</th>
@@ -119,9 +118,6 @@
                   <tbody>
                     <tr v-for="(item, index) in itemsForm" :key="index" class="text-center">
                       <td>{{ index + 1 }}</td>
-                      <td>
-                        <input type="text" v-model="item.referencia1" class="form-control form-control-sm" placeholder="Referencia1" />
-                      </td>
                       <td>{{ item.referencia2 }}</td>
                       <td>
                         <input type="text" v-model="item.referencia3" class="form-control form-control-sm" placeholder="Referencia3" />
@@ -267,7 +263,7 @@ export default {
         });
         return;
       }
-      this.itemsForm.push({ referencia1: '', referencia2: ref, referencia3: '', tipo: '' });
+      this.itemsForm.push({ referencia2: ref, referencia3: '', tipo: '' });
       this.newItemReferencia = "";
     },
     removeItem(index) {
@@ -323,15 +319,15 @@ export default {
             return;
           }
           const header = jsonData[0];
-          const idx1 = header.findIndex(col => typeof col === 'string' && col.toLowerCase() === 'referencia1');
           const idx2 = header.findIndex(col => typeof col === 'string' && col.toLowerCase() === 'referencia2');
           const idx3 = header.findIndex(col => typeof col === 'string' && col.toLowerCase() === 'referencia3');
           const idxTipo = header.findIndex(col => typeof col === 'string' && col.toLowerCase() === 'tipo');
-          if (idx1 === -1 || idx2 === -1 || idx3 === -1 || idxTipo === -1) {
+
+          if (idx2 === -1 || idxTipo === -1) {
             Swal.fire({
               icon: 'error',
               title: 'Error',
-              text: 'El archivo debe contener los encabezados referencia1, referencia2, referencia3 y tipo.',
+              text: 'El archivo debe contener los encabezados referencia2 y tipo (obligatorios). Referencia3 es opcional.',
               toast: true,
               position: 'bottom-end',
               timer: 3000,
@@ -340,29 +336,57 @@ export default {
             return;
           }
           const refsFile = [];
-          const duplicateInFile = [];          const refRegex = /^[A-Za-z0-9]+$/; // Permitir referencias de 1 o más caracteres
+          const duplicateInFile = [];          const refRegex = /^[A-Za-z0-9-]+$/; // Permitir referencias con letras, números y guiones
           const validTipos = ['x100', 'x200', 'x300', 'CAJA-X100', 'CAJA-X200', 'CAJA-X300'];
-          jsonData.slice(1).forEach(row => {
-            const ref1 = row[idx1] || '';
+          console.log('📊 Datos del Excel (primeras 5 filas):', jsonData.slice(0, 5));
+          console.log('📋 Índices encontrados - idx2:', idx2, 'idx3:', idx3, 'idxTipo:', idxTipo);
+          console.log('📋 Encabezados:', header);
+          
+          jsonData.slice(1).forEach((row, rowIndex) => {
             const ref2 = row[idx2];
             const ref3 = row[idx3] || '';
             const tipoVal = row[idxTipo] || '';
-            if (ref2 && typeof ref2 === "string" && ref2.trim() !== "") {
+            
+            console.log(`🔍 Fila ${rowIndex + 2}: ref2='${ref2}', ref3='${ref3}', tipo='${tipoVal}'`);
+
+            if (ref2 && typeof ref2 === "string" && ref2.trim() !== "" && tipoVal && tipoVal.trim() !== "") {
               const trimmedRef = ref2.trim();
+              console.log(`✅ Procesando referencia válida: ${trimmedRef}`);
+              
               if (!refRegex.test(trimmedRef)) {
-                console.warn(`Referencia inválida: ${trimmedRef}`);
+                console.warn(`❌ Referencia inválida (regex): ${trimmedRef}`);
                 return;
               }
-              if (!validTipos.includes(tipoVal)) {
-                console.warn(`Tipo inválido: ${tipoVal}`);
+              
+              // Normalizar el tipo para validación (convertir a mayúsculas y agregar CAJA- si no lo tiene)
+              let normalizedTipo = tipoVal.toString().trim().toUpperCase();
+              console.log(`🔄 Tipo original: '${tipoVal}' -> normalizado: '${normalizedTipo}'`);
+              
+              if (normalizedTipo.match(/^X\d+$/)) {
+                normalizedTipo = 'CAJA-' + normalizedTipo;
+                console.log(`🔄 Agregando prefijo CAJA-: '${normalizedTipo}'`);
+              }
+              
+              const validTiposUpper = validTipos.map(t => t.toUpperCase());
+              console.log(`🔍 Validando tipo '${normalizedTipo}' contra:`, validTiposUpper);
+              
+              if (!validTiposUpper.includes(normalizedTipo)) {
+                console.warn(`❌ Tipo inválido: ${tipoVal} (normalizado: ${normalizedTipo})`);
                 return;
               }
-              if (refsFile.includes(trimmedRef + tipoVal + ref3)) {
+              
+              const duplicateKey = trimmedRef + normalizedTipo + ref3;
+              if (refsFile.includes(duplicateKey)) {
+                console.warn(`⚠️ Duplicado encontrado: ${trimmedRef}`);
                 duplicateInFile.push(trimmedRef);
               } else {
-                refsFile.push(trimmedRef + tipoVal + ref3);
-                this.itemsForm.push({ referencia1: ref1, referencia2: trimmedRef, referencia3: ref3, tipo: tipoVal });
+                refsFile.push(duplicateKey);
+                const newItem = { referencia2: trimmedRef, referencia3: ref3, tipo: normalizedTipo };
+                console.log(`✅ Agregando item:`, newItem);
+                this.itemsForm.push(newItem);
               }
+            } else {
+              console.warn(`❌ Fila ${rowIndex + 2} inválida - ref2: '${ref2}', tipo: '${tipoVal}'`);
             }
           });
           console.log("Items cargados desde el archivo:", this.itemsForm);
@@ -418,7 +442,7 @@ export default {
     },
     downloadTemplate() {
       const wb = XLSX.utils.book_new();
-      const wsData = [["referencia1", "referencia2", "referencia3", "tipo"]];
+      const wsData = [["referencia2", "referencia3", "tipo"]];
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       XLSX.utils.book_append_sheet(wb, ws, "Template");
       XLSX.writeFile(wb, "template_referencias.xlsx");

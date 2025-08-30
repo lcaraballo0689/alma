@@ -23,17 +23,33 @@ if (fs.existsSync(envPath)) {
 
 // Verificar variables de entorno
 console.log('\n2. Verificando variables de entorno...');
-const requiredVars = ['DB_SERVER', 'DB_DATABASE', 'DB_USER', 'DB_PASSWORD'];
+const baseRequiredVars = ['DB_SERVER', 'DB_DATABASE'];
 const missingVars = [];
 
-requiredVars.forEach(varName => {
+baseRequiredVars.forEach(varName => {
   if (process.env[varName]) {
-    console.log(`✅ ${varName}: ${varName === 'DB_PASSWORD' ? '***' : process.env[varName]}`);
+    console.log(`✅ ${varName}: ${process.env[varName]}`);
   } else {
     console.log(`❌ ${varName}: NO DEFINIDA`);
     missingVars.push(varName);
   }
 });
+
+// Verificar tipo de autenticación
+if (process.env.DB_INTEGRATED_SECURITY === 'true') {
+  console.log('✅ DB_INTEGRATED_SECURITY: true (Autenticación Windows)');
+} else {
+  console.log('🔍 Verificando credenciales SQL Server...');
+  const sqlVars = ['DB_USER', 'DB_PASSWORD'];
+  sqlVars.forEach(varName => {
+    if (process.env[varName]) {
+      console.log(`✅ ${varName}: ${varName === 'DB_PASSWORD' ? '***' : process.env[varName]}`);
+    } else {
+      console.log(`❌ ${varName}: NO DEFINIDA`);
+      missingVars.push(varName);
+    }
+  });
+}
 
 if (missingVars.length > 0) {
   console.log(`💡 Faltan variables: ${missingVars.join(', ')}`);
@@ -45,8 +61,6 @@ const dbConfig = {
   server: process.env.DB_SERVER,
   port: parseInt(process.env.DB_PORT, 10) || 1433,
   database: process.env.DB_DATABASE,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
   options: {
     encrypt: true,
     trustServerCertificate: process.env.DB_TRUSTCERTIFICATE === 'true'
@@ -55,13 +69,31 @@ const dbConfig = {
   requestTimeout: 30000
 };
 
+// Configurar autenticación según las variables de entorno
+if (process.env.DB_INTEGRATED_SECURITY === 'true') {
+  // Usar autenticación integrada de Windows
+  dbConfig.options.trustedConnection = true;
+  console.log('🔧 Configurando autenticación integrada de Windows');
+} else {
+  // Usar autenticación SQL Server
+  dbConfig.user = process.env.DB_USER;
+  dbConfig.password = process.env.DB_PASSWORD;
+  console.log('🔧 Configurando autenticación SQL Server');
+}
+
 console.log('\n3. Configuración de conexión:');
 console.log(`   Servidor: ${dbConfig.server}`);
 console.log(`   Puerto: ${dbConfig.port}`);
 console.log(`   Base de datos: ${dbConfig.database}`);
-console.log(`   Usuario: ${dbConfig.user}`);
+if (dbConfig.options.trustedConnection) {
+  console.log('   Autenticación: Windows Integrada');
+} else {
+  console.log(`   Usuario: ${dbConfig.user}`);
+  console.log('   Autenticación: SQL Server');
+}
 console.log(`   Encrypt: ${dbConfig.options.encrypt}`);
 console.log(`   Trust Certificate: ${dbConfig.options.trustServerCertificate}`);
+console.log(`   Trusted Connection: ${dbConfig.options.trustedConnection || false}`);
 
 // Intentar conexión
 console.log('\n4. Intentando conexión...');
